@@ -1,0 +1,10 @@
+# tested with: python 3.13, torch 2.x (CPU), mace-torch 0.3.17, phonopy 4.10, ase 3.29
+numpy
+scipy
+matplotlib
+ase>=3.23
+phonopy>=2.20
+mace-torch>=0.3.10
+torch-dftd        # D3 dispersion for bonding.py
+rdkit             # PMMA repeat-unit geometry for bonding.py
+pymupdf           # only for re-digitising the reference figure

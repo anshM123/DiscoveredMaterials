@@ -1,0 +1,8 @@
+{"source": "Sandell et al., Nanomaterials 10, 670 (2020), Table 2 and Eq. (2) (Europe PMC full text PMC7221886). FDTR at room temperature. G is the combined (series) boundary conductance of metal/PMMA and PMMA/native-SiO2/Si: 1/G = 1/G_metal-PMMA + 1/G_PMMA-Si. Effective film conductance G_eff(t) = 1/(t/kPMMA + 1/G). Total experimental error 10%.",
+ "T": 300,
+ "systems": {
+   "Au/PMMA/Si":    {"G": 59,  "kPMMA": 0.198, "adhesion": null, "adhesion_nm": 0},
+   "Au/Ti/PMMA/Si": {"G": 115, "kPMMA": 0.211, "adhesion": "Ti", "adhesion_nm": 2.4},
+   "Au/Ni/PMMA/Si": {"G": 139, "kPMMA": 0.212, "adhesion": "Ni", "adhesion_nm": 2.0}},
+ "units": "G in MW m^-2 K^-1, kPMMA in W m^-1 K^-1",
+ "native_oxide_nm": 2.05, "PMMA_thickness_range_nm": [1, 15]}
