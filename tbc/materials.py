@@ -273,3 +273,33 @@ def register_structure(path, miller, name=None):
         import warnings
         warnings.warn(f"{name}: no Born charges given; LO-TO splitting omitted (add 'nac' in materials.CRYSTALS if polar)")
     return name, m
+
+
+# ---------------------------------------------------------------- valence classes
+_GROUP = {**{e: "II" for e in ("Zn", "Cd", "Mg", "Hg", "Be")}, **{e: "III" for e in ("B", "Al", "Ga", "In")},
+          **{e: "IV" for e in ("C", "Si", "Ge", "Sn")}, **{e: "V" for e in ("N", "P", "As", "Sb")},
+          **{e: "VI" for e in ("O", "S", "Se", "Te")}}
+
+
+@__import__('functools').lru_cache(maxsize=None)
+def compound_class(name):
+    """'IV', 'III-V', 'II-VI', ... for covalent/ionic semiconductors; None otherwise."""
+    if name not in CRYSTALS or name in METALS or name in SOMMERFELD:
+        return None
+    try:
+        el = sorted(set(CRYSTALS[name]["build"]().get_chemical_symbols()))
+    except Exception:
+        return None
+    g = sorted({_GROUP.get(e) for e in el}, key=lambda x: (x is None, x))
+    if None in g:
+        return None
+    return "-".join(sorted(g, key=lambda x: ["II", "III", "IV", "V", "VI"].index(x)))
+
+
+def heterovalent(a, b):
+    """Label like 'III-V/IV' if the two semiconductors have different valence classes
+    and one of them is elemental group IV (polar-on-nonpolar); else ''."""
+    ca, cb = compound_class(a), compound_class(b)
+    if ca and cb and ca != cb and "IV" in (ca, cb):
+        return f"{ca}/{cb}"
+    return ""

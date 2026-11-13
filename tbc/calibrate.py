@@ -44,8 +44,7 @@ old = json.load(open(PARAM_FILE)) if os.path.exists(PARAM_FILE) else {}
 P = dict(alpha=round(float(np.exp(best.x[0])), 4), b=round(float(np.exp(best.x[1])), 4),
          calibrated_on="Li et al. 2022 Al/Si sample 1 (12 points, 82-705 K); objective: log error + %g x (slope >400 K error)^2" % W_SLOPE,
          rms_log_error=round(float(np.sqrt(best.fun)), 4))
-for k in ("spec_efficiency", "spec_efficiency_note"):
-    if k in old:
-        P[k] = old[k]
+for k, v in old.items():          # keep every other global parameter (eta, w, ...)
+    P.setdefault(k, v)
 json.dump(P, open(PARAM_FILE, "w"), indent=1)
 print(json.dumps(P))

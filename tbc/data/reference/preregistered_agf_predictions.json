@@ -41,5 +41,21 @@
  "third_round_result_note": "GaAs(100)/Ge(100): MACE-AGF (nk=12, 2x2 in-plane FC supercell, Ge strained +0.5%) = 116.7 MW m^-2 K^-1 vs pre-registered 238 (+104%). Second failed blind test; with GaP/Si it identifies heterovalent III-V/IV (100) interfaces as a class the fast tier over-predicts: MACE relaxes the interfacial cation-group-IV bonds to 2.64 A (Ga-Ge) and 2.68 A (Ga-Si, partly 5-fold coordinated) vs ~2.45/2.36 A in bulk; the isovalent GaAs/AlAs interface shows no such distortion.",
  "fourth_round_note": "Si(110)/Ge(110) (132, coherent setting; CLI path 135) and GaAs(111)/AlAs(111) (138) predicted and committed on 2026-11-13 ~11:40 EST before their MACE-AGF runs: non-III-V/IV pairs in new orientations, to test the 'within ~13%' statement.",
  "fourth_round_result_note": "Si(110)/Ge(110): MACE-AGF 157.0 vs pre-registered 132 (-16%). GaAs(111)/AlAs(111): the first AGF run returned 15.3 from a wrongly built (AAA-stacked) superlattice, caught by the new coordination check; after fixing agf.oriented_unit (three bilayers per (111) period) the AGF gives 226.8 (structure check passed), vs pre-registered 138: -39%. The fast tier predicts ~135 for GaAs/AlAs in all three orientations, the AGF 154 (110), 170 (100), 227 (111).",
- "fifth_round_note": "InP(100)/GaAs(100) (105; CLI 106) and TiN(110)/MgO(110) (388; CLI 389) predicted and committed on 2026-11-13 ~14:15 EST before their MACE-AGF runs (non-III-V/IV pairs)."
+ "fifth_round_note": "InP(100)/GaAs(100) (105; CLI 106) and TiN(110)/MgO(110) (388; CLI 389) predicted and committed on 2026-11-13 ~14:15 EST before their MACE-AGF runs (non-III-V/IV pairs).",
+ "round6_two_class_eta": {
+  "note": "Fresh blind test of the two-class specular efficiency (H14: eta = 0.74, eta_hetero = 0.44 for III-V/IV, calibrated on the 14 earlier AGF references). Predictions committed before any of these AGF runs.",
+  "params": {
+   "spec_efficiency": 0.74,
+   "spec_efficiency_hetero": 0.44
+  },
+  "predictions_MW_m2K": {
+   "AlAs(100)/Ge(100)": 103,
+   "GaP(100)/AlAs(100)": 264,
+   "TiC(100)/TiN(100)": 374,
+   "InP(110)/GaAs(110)": 123,
+   "GaP(110)/Si(110)": 117
+  },
+  "results_AGF_MW_m2K": {},
+  "deviation": {}
+ }
 }

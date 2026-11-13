@@ -22,6 +22,7 @@ LOWW_DEBYE_MESH = 3.0
 LOWW_CONTINUUM = False       # (H12, tested, not adopted) tau_spec held at its value at that frequency below it (continuum limit)
 K_IMPEDANCE = True            # impedance factor per (k_par, w) in the specular channel
 SPEC_EFFICIENCY = 1.0         # specular efficiency between different crystals (set from params.json)
+SPEC_EFFICIENCY_HETERO = None # same for heterovalent III-V/IV pairs (None: use SPEC_EFFICIENCY)
 W_DIFFUSON = 1.0              # interfacial coupling weight of glass diffusons (set from params.json)
 _GLASS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "glass")
 GLASS_FLUX = {"SiO2": os.path.join(_GLASS_DIR, "aSiO2_32_flux.npz"),       # glass.py SiO2
@@ -30,6 +31,8 @@ try:                          # frozen global parameters
     import json as _json, os as _os
     _P = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "params.json")))
     SPEC_EFFICIENCY = float(_P.get("spec_efficiency", SPEC_EFFICIENCY))
+    if "spec_efficiency_hetero" in _P:
+        SPEC_EFFICIENCY_HETERO = float(_P["spec_efficiency_hetero"])
     W_DIFFUSON = float(_P.get("w_diffuson", W_DIFFUSON))
 except Exception:             # pragma: no cover
     pass
@@ -201,6 +204,18 @@ def _smooth(y, sigma_thz, axis=-1):
     n = int(np.ceil(4 * sig))
     k = np.exp(-0.5 * (np.arange(-n, n + 1) / sig) ** 2); k /= k.sum()
     return np.apply_along_axis(lambda v: np.convolve(v, k, mode="same"), axis, y)
+
+
+def spec_efficiency(a, b):
+    """Specular efficiency for a pair of different crystals: channel counting cannot
+    see eigenvector (polarisation/sublattice) mismatch. Heterovalent III-V/group-IV
+    interfaces, whose electron-deficient interfacial bonds relax to soft, stretched
+    ones (MACE-AGF structures, EXPERIMENTS), get their own value. Both are global
+    constants calibrated on the MACE-AGF references (calibrate_spec.py)."""
+    from materials import heterovalent
+    if SPEC_EFFICIENCY_HETERO is not None and heterovalent(a, b) and "III-V" in heterovalent(a, b):
+        return SPEC_EFFICIENCY_HETERO
+    return SPEC_EFFICIENCY
 
 
 def plane_lattice(cell, normal, nmax=4):
@@ -390,7 +405,7 @@ class Interface:
             # channel counting cannot see eigenvector (polarisation/sublattice)
             # mismatch between two different crystals; the global efficiency is
             # calibrated against MACE-AGF on coherent pairs (calibrate_spec.py)
-            tau = tau * SPEC_EFFICIENCY
+            tau = tau * spec_efficiency(s1.name, s2.name)
         return tau
 
     def specularity(self, w):

@@ -1,10 +1,11 @@
 {
- "alpha": 1.4236,
- "b": 5.2037,
+ "alpha": 1.5774,
+ "b": 3.8349,
  "calibrated_on": "Li et al. 2022 Al/Si sample 1 (12 points, 82-705 K); objective: log error + 0 x (slope >400 K error)^2",
- "rms_log_error": 0.0596,
- "spec_efficiency": 0.63,
- "spec_efficiency_note": "fit to MACE-AGF on 5 coherent pairs at 300 K; LOO mean abs dev 19%",
+ "rms_log_error": 0.0583,
+ "spec_efficiency": 0.74,
+ "spec_efficiency_note": "fit to MACE-AGF at 300 K, two valence classes (III-V/IV vs all other pairs); spec_efficiency: 10 pairs, LOO mean abs dev 14%; spec_efficiency_hetero: 4 pairs, LOO mean abs dev 29%",
  "w_diffuson": 0.27,
- "w_diffuson_note": "fit to Li 2022 Al/native-SiO2/Si G(T) assuming 1.5 nm oxide (1.0 nm -> 0.24, 2.0 nm -> 0.32); Sandell stacks not used in this fit"
+ "w_diffuson_note": "fit to Li 2022 Al/native-SiO2/Si G(T) assuming 1.5 nm oxide (1.0 nm -> 0.24, 2.0 nm -> 0.32); Sandell stacks not used in this fit",
+ "spec_efficiency_hetero": 0.44
 }

@@ -33,6 +33,14 @@ AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
              ("InP100_GaAs100", ("InP", "100"), ("GaAs", "100")),  # fifth round (pre-registered 105)
              ("TiN110_MgO110", ("TiN", "110"), ("MgO", "110"))]    # fifth round (pre-registered 388)
 
+# Round 6: fresh blind test of the two-class specular efficiency (H14), predicted
+# with eta = 0.74 / 0.44 before the AGF runs; never used in any calibration.
+AGF_BLIND2 = [("AlAs100_Ge100", ("AlAs", "100"), ("Ge", "100")),
+              ("GaP100_AlAs100", ("GaP", "100"), ("AlAs", "100")),
+              ("TiC100_TiN100", ("TiC", "100"), ("TiN", "100")),
+              ("InP110_GaAs110", ("InP", "110"), ("GaAs", "110")),
+              ("GaP110_Si110", ("GaP", "110"), ("Si", "110"))]
+
 
 def agf_table(T=300.0, sets=None):
     P = load_params()
