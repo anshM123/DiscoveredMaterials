@@ -11,7 +11,7 @@
   "sources": [
    "Wafer-scale bonded GaN-AlN with high interface thermal conductance, APL 125, 032104 (2024)",
    "arXiv:2503.05084 (MLIP NEMD, standalone GaN/AlN)",
-   "Polanco & Lindsay, PRB 97, 014303 (2018), OSTI 1494888: DFT IFCs + NEGF, harmonic, same Landauer convention as this model"
+   "Polanco & Lindsay, PRB 99, 075202 (2019), OSTI 1494888: DFT IFCs + NEGF, harmonic, same Landauer convention as this model"
   ],
   "DFT_NEGF_harmonic_300K": 300,
   "DFT_NEGF_harmonic_highT_limit": [

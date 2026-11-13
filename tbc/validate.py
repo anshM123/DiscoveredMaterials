@@ -11,7 +11,7 @@ import json, os
 import numpy as np
 from predict import (load_params, interface, G_ep, bonding_for, sandell_stack,
                      chang_ratio, baselines)
-from model import Side, G_AMM_debye, G_DMM_debye
+from model import Side, Interface, G_AMM_debye, G_DMM_debye
 from materials import FILM_K
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,12 +31,16 @@ def series(*G):
 
 def li_block():
     out = {}
-    sets = [("Al/Si sample1", "Si", "111", ref_li["Al/Si sample1"]), ("Al/GaN", "GaN", "0001", ref_li["Al/GaN"]),
+    sets = [("Al/Si sample1", "Si", "111", ref_li["Al/Si sample1"]), ("Al/Si sample2", "Si", "111", ref_li["Al/Si sample2"]),
+            ("Al/GaN", "GaN", "0001", ref_li["Al/GaN"]),
             ("Al/sapphire (Cheng 2020)", "Al2O3", "0001", ref_cheng["Al(111)/sapphire(0001) Sub200"])]
     for key, sub, nsub, data in sets:
         bond = bonding_for("Al", sub, "111", nsub)
         I = interface("Al", sub, "111", nsub, bonding=bond)
         s1, s2 = Side("Al", "111"), Side(sub, nsub)
+        # fair baseline: full-dispersion DMM on the same MACE spectra (diffuse,
+        # no bonding factor, no inelastic channel) + the same e-ph resistance
+        Idmm = Interface(s1, s2, epitaxial=False)
         rows = []
         for T, Gm in data:
             gep = G_ep("Al", T)
@@ -45,7 +49,8 @@ def li_block():
                              model=series(gep, I.G_pp(T, P["alpha"], P["b"])) * MW,
                              model_elastic_only=series(gep, I.G_pp(T, 0.0)) * MW,
                              AMM=amm * MW, DMM=dmm * MW,
-                             AMM_eph=series(gep, amm) * MW, DMM_eph=series(gep, dmm) * MW))
+                             AMM_eph=series(gep, amm) * MW, DMM_eph=series(gep, dmm) * MW,
+                             FDDMM_eph=series(gep, Idmm.G_elastic(T)) * MW))
         out[key] = rows
     return out
 
@@ -75,6 +80,8 @@ def chang_block(cu_c_key):
         g1 = series(f(S["Cu"], S["TiC"], T), f(S["TiC"], S["C"], T), FILM_K["TiC"] / 10e-9)
         res[lab] = g1 / g0
         res[lab + "_eph"] = series(gep, g1) / series(gep, g0)
+    fd = lambda a, b: Interface(S[a], S[b], epitaxial=False).G_elastic(T)
+    res["FDDMM_eph"] = series(gep, fd("Cu", "TiC"), fd("TiC", "C"), FILM_K["TiC"] / 10e-9) / series(gep, fd("Cu", "C"))
     return res
 
 
@@ -123,18 +130,18 @@ def write_md(res):
     L = ["# Validation against the three published datasets", "",
          f"Global parameters (calibrated on Al/Si sample 1 only): alpha = {P['alpha']}, b = {P['b']}", ""]
     for key, rows in res["li2022"].items():
-        tag = "calibration set" if "Al/Si" in key else "PREDICTION (not fitted)"
+        tag = "calibration set" if "sample1" in key else ("not fitted: second Al/Si specimen of the same study" if "sample2" in key else "PREDICTION (not fitted)")
         src = "" if "Cheng" in key else "Li et al. 2022 - "
         L += [f"## {src}{key} ({tag})", "",
-              "| T (K) | measured | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|---|---|"]
+              "| T (K) | measured | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |", "|---|---|---|---|---|---|---|---|---|"]
         for r in rows:
-            L.append("| {T:.0f} | {measured:.0f} | **{model:.0f}** | {model_elastic_only:.0f} | {AMM:.0f} | {DMM:.0f} | {AMM_eph:.0f} | {DMM_eph:.0f} |".format(**r))
+            L.append("| {T:.0f} | {measured:.0f} | **{model:.0f}** | {model_elastic_only:.0f} | {AMM:.0f} | {DMM:.0f} | {AMM_eph:.0f} | {DMM_eph:.0f} | {FDDMM_eph:.0f} |".format(**r))
         L.append("")
-        L.append("| metric | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph |")
-        L.append("|---|---|---|---|---|---|---|")
-        L.append("| mean abs. error (%) | " + " | ".join(f"{err(rows, k)['MAPE']:.1f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph"]) + " |")
-        L.append("| max abs. error (%) | " + " | ".join(f"{err(rows, k)['max_abs_pct']:.1f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph"]) + " |")
-        L.append("| slope above 400 K (MW m^-2 K^-2), measured " + f"{slope_above(rows, 'measured'):.2f} | " + " | ".join(f"{slope_above(rows, k):.2f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph"]) + " |")
+        L.append("| metric | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |")
+        L.append("|---|---|---|---|---|---|---|---|")
+        L.append("| mean abs. error (%) | " + " | ".join(f"{err(rows, k)['MAPE']:.1f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph", "FDDMM_eph"]) + " |")
+        L.append("| max abs. error (%) | " + " | ".join(f"{err(rows, k)['max_abs_pct']:.1f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph", "FDDMM_eph"]) + " |")
+        L.append("| slope above 400 K (MW m^-2 K^-2), measured " + f"{slope_above(rows, 'measured'):.2f} | " + " | ".join(f"{slope_above(rows, k):.2f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph", "FDDMM_eph"]) + " |")
         L.append("")
     L += ["## Sandell et al. 2020 - combined metal/PMMA + PMMA/Si boundary conductance at 300 K (PREDICTION)", "",
           "| stack | measured | model | variant: w/o bonding factor | variant: inelastic channel also on amorphous | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|---|---|---|"]
@@ -153,7 +160,7 @@ def plots(res):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    fig, axs = plt.subplots(1, 3, figsize=(15, 4.2))
+    fig, axs = plt.subplots(1, 4, figsize=(20, 4.2))
     for ax, (key, rows) in zip(axs, res["li2022"].items()):
         T = [r["T"] for r in rows]
         ax.plot(T, [r["measured"] for r in rows], "o", color="k", label="measured (Li 2022)")
@@ -168,7 +175,7 @@ def plots(res):
         ax.plot(Tf, [series(G_ep("Al", t), G_DMM_debye(s1, s2, t)) * MW for t in Tf], ":", color="C0", alpha=0.5, label="DMM + e-ph")
         ax.set_xscale("log"); ax.set_yscale("log")
         ax.set_xlabel("T (K)"); ax.set_ylabel("G (MW m$^{-2}$ K$^{-1}$)")
-        ax.set_title(f"{key}" + (" (calibration)" if "Al/Si" in key else " (prediction)"))
+        ax.set_title(f"{key}" + (" (calibration)" if "sample1" in key else " (not fitted)"))
         ax.set_ylim(80, 2500)
         ax.legend(fontsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "li2022.png"), dpi=150)

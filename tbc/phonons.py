@@ -18,7 +18,11 @@ w is angular frequency (rad/s). Results are cached in data/phonons/<name>.npz.
 import os, sys, warnings, json
 import numpy as np
 
-warnings.filterwarnings("ignore")
+# silence third-party library noise only; this package's own warnings
+# (missing e-ph data, estimated g, fallbacks) must reach the user
+for _cat in (DeprecationWarning, FutureWarning):
+    warnings.filterwarnings("ignore", category=_cat)
+warnings.filterwarnings("ignore", module=r"(torch|e3nn|mace|ase|phonopy|spglib|numpy|torch_dftd)(\.|$)")
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "data", "phonons")
 MODEL = "medium-omat-0"

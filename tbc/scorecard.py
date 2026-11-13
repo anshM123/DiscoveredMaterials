@@ -26,7 +26,7 @@ def score(P=None, verbose=False):
     validate.P.clear(); validate.P.update(P)
     out = {}
     li = validate.li_block()
-    for key, tag in [("Al/Si sample1", "AlSi"), ("Al/GaN", "AlGaN"), ("Al/sapphire (Cheng 2020)", "Alsapph")]:
+    for key, tag in [("Al/Si sample1", "AlSi"), ("Al/Si sample2", "AlSi2"), ("Al/GaN", "AlGaN"), ("Al/sapphire (Cheng 2020)", "Alsapph")]:
         r = li[key]
         m = np.array([x["measured"] for x in r]); p = np.array([x["model"] for x in r]); T = [x["T"] for x in r]
         out[f"{tag}_mape"] = float(np.mean(np.abs(p / m - 1)) * 100)

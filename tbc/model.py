@@ -60,6 +60,15 @@ class Side:
             nvec = np.asarray(CRYSTALS[name]["normals"][normal], float)
             self.plane = plane_lattice(d["a_cell"], nvec)
             self.a_surf = float(np.linalg.norm(self.plane[0]))
+            # MACE (PBE-like) lattice constants carry errors of 1-2%, which are
+            # comparable to the misfits that decide coherence. The coherence
+            # test therefore uses the plane rescaled to the input (experimental)
+            # atomic volume: lat_scale = (V_input / V_MACE)^(1/3) per atom.
+            try:
+                ref = CRYSTALS[name]["build"]()
+                self.lat_scale = float((ref.get_volume() / len(ref) * 1e-30 / (d["V"] / d["nat"])) ** (1 / 3))
+            except Exception:
+                self.lat_scale = 1.0
             self.rho = float(d["rho"])
             self.vL, self.vT = float(d["vL"]), float(d["vT"])
             self.n_atoms = float(d["n_atoms"])
@@ -136,16 +145,18 @@ def _amm_angle_avg(Z1, Z2, v1, v2, n=2000):
     ok = s2 < 1
     c1 = np.cos(th)
     c2 = np.sqrt(np.clip(1 - s2 ** 2, 0, 1))
-    tau = np.where(ok, 4 * Z1 * Z2 * c1 * c2 / (Z1 * c1 + Z2 * c2) ** 2, 0.0)
+    tau = np.where(ok, 4 * Z1 * Z2 * c1 * c2 / (Z1 * c2 + Z2 * c1) ** 2, 0.0)   # acoustic Fresnel (energy)
     return 2 * np.sum(tau * c1 * np.sin(th)) * (np.pi / 2) / n
 
 
 def G_AMM_debye(s1, s2, T):
-    """Acoustic mismatch model, Debye dispersion (Little 1959), evaluated from side 1."""
+    """Acoustic mismatch model, Debye dispersion (Little 1959), evaluated from side 1.
+    Each branch transmits only below both sides' Debye cutoffs (elastic
+    scattering), which makes it reciprocal: G(1,2) = G(2,1)."""
     G = 0.0
     for (v1, wc1, g), (v2, wc2, _) in zip(s1.debye_branches(), s2.debye_branches()):
         a = _amm_angle_avg(s1.rho * v1, s2.rho * v2, v1, v2)
-        M1 = np.where(W <= wc1, g * W ** 2 / (2 * np.pi ** 2 * v1 ** 3) * v1 / 4, 0.0)
+        M1 = np.where(W <= min(wc1, wc2), g * W ** 2 / (2 * np.pi ** 2 * v1 ** 3) * v1 / 4, 0.0)
         G += np.sum(HBAR * W * dfdT(W, T) * M1) * DW * a
     return G
 
@@ -202,11 +213,11 @@ def coincidence_cell(s1, s2, nmax=12, tol=COHERENCE_STRAIN, dtheta=1.0):
     def cand(b):
         U = I @ b
         return U, np.linalg.norm(U, axis=1), np.degrees(np.arctan2(U[:, 1], U[:, 0]))
-    U, LU, TU = cand(s1.plane)
-    Wv, LW, TW = cand(s2.plane)
+    U, LU, TU = cand(s1.plane * getattr(s1, "lat_scale", 1.0))
+    Wv, LW, TW = cand(s2.plane * getattr(s2, "lat_scale", 1.0))
     pairs = []
     for i in np.argsort(LU):
-        if LU[i] > nmax * max(s1.a_surf, s2.a_surf):
+        if LU[i] > nmax * max(s1.a_surf, s2.a_surf) * 1.05:
             break
         m = (np.abs(np.log(LW / LU[i])) <= tol) & (np.abs((TW - TU[i] + 180) % 360 - 180) <= dtheta)
         for j in np.nonzero(m)[0]:
@@ -232,7 +243,7 @@ def coincidence_cell(s1, s2, nmax=12, tol=COHERENCE_STRAIN, dtheta=1.0):
                 best = (A, Lc)
     if best is None:
         return None
-    p_inf = min(_area(s1.plane), _area(s2.plane)) / best[0]
+    p_inf = min(_area(s1.plane) * getattr(s1, "lat_scale", 1.0) ** 2, _area(s2.plane) * getattr(s2, "lat_scale", 1.0) ** 2) / best[0]
     return best[1], min(1.0, p_inf)
 
 
@@ -423,7 +434,7 @@ class Interface:
         if not noneq:
             return GL
         R = 1 / GL - 0.5 * (1 / self.s1.G_rad(T) + 1 / self.s2.G_rad(T))
-        return 1 / R if R > 0 else np.inf
+        return 1 / R if R > 1e-3 / GL else np.inf          # identical sides: no resistance
 
 
 

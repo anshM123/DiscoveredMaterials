@@ -146,6 +146,14 @@ KP_EXTRA = {"Ag": (5.59, 6.03), "Pt": (6.28, 8.72), "Co": (12.20, 20.60)}
 KP_NOMINAL = (10.0, 15.0)
 
 
+# Free-electron Fermi velocities (m/s), Ashcroft & Mermin, Solid State Physics,
+# Table 2.1, for the electron diffuse-mismatch channel of metal/metal
+# interfaces (predict.G_edmm). d-band metals without a tabulated free-electron
+# value get a nominal 1.0e6 m/s (flagged).
+FERMI_V = {"Al": 2.03e6, "Cu": 1.57e6, "Ag": 1.39e6, "Au": 1.40e6}
+FERMI_V_NOMINAL = 1.0e6
+
+
 # Standard formation enthalpy of each metal's most stable oxide per mole of O
 # (kJ/mol O; CRC Handbook / NIST-JANAF). Used to classify metal / molecular-
 # solid contacts: metals whose oxide is barely stable (> -100 kJ/mol O: Au, Ag,
@@ -169,6 +177,14 @@ def physisorbs(metal):
 FILM_K = {"TiC": 20.0, "PMMA": 0.20, "SiO2": 1.38,
           # 2 nm adhesion films: values used by Sandell et al. (2020), Table 1
           "Ti": 8.2, "Ni": 52.0}
+# Fallback for other crystalline films: room-temperature BULK conductivity
+# (W/mK, CRC Handbook), an upper bound for nm films, whose bulk resistance is
+# in any case small next to their interfaces. Amorphous films without a
+# measured value use the Cahill-Watson-Pohl minimum conductivity.
+BULK_K = {"Al": 237, "Cu": 401, "Ag": 429, "Au": 317, "Pt": 72, "Ni": 91, "Co": 100, "Ti": 22, "W": 173,
+          "Mo": 138, "Ta": 57, "Ru": 117, "TiN": 29, "TiC": 21, "Si": 148, "Ge": 60, "C": 2000, "GaN": 230,
+          "AlN": 285, "Al2O3": 35, "MgO": 55, "SiC4H": 370, "SiC3C": 360, "GaAs": 55, "AlAs": 91, "InP": 68,
+          "GaP": 110, "ZnO": 50, "cBN": 740, "Si3N4": 30}
 
 
 @dataclass

@@ -29,6 +29,7 @@ AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
 
 
 def agf_table(T=300.0, sets=None):
+    P = load_params()
     rows = []
     for lab, a, b in (sets or AGF_SETS):
         path = os.path.join(AGF_DIR, f"{lab}.json")
@@ -38,10 +39,15 @@ def agf_table(T=300.0, sets=None):
         g_agf = float(np.interp(T, r["T"], r["G"])) * MW
         s1, s2 = Side(*a), Side(*b)
         # AGF models a coherent (strained) interface: compare with the fast
-        # tier evaluated as coherent too (Lc = surface lattice parameter)
+        # tier evaluated as coherent too (Lc = surface lattice parameter), the
+        # setting in which eta was calibrated. The CLI's automatic coincidence
+        # matching recognises all these pairs as coherent (p_inf 0.92-1.0) and
+        # gives G_el within 2% of this (column "CLI path").
         I = Interface(s1, s2, Lc=min(s1.a_surf, s2.a_surf))
+        Icli = Interface(s1, s2)
         rows.append(dict(interface=f"{a[0]}({a[1]})/{b[0]}({b[1]})", strain=r["strain_R"], AGF=g_agf,
-                         fast_elastic=I.G_elastic(T) * MW, DMM_full=I.G_dmm_full(T) * MW,
+                         fast_elastic=I.G_elastic(T) * MW, fast_elastic_cli=Icli.G_elastic(T) * MW,
+                         fast_total=Icli.G_pp(T, P["alpha"], P["b"]) * MW, DMM_full=I.G_dmm_full(T) * MW,
                          AMM=G_AMM_debye(s1, s2, T) * MW, DMM=G_DMM_debye(s1, s2, T) * MW))
     return rows
 
@@ -55,43 +61,58 @@ def main():
     def mape(rows, k):
         return 100 * np.mean([abs(x[k] / x["measured"] - 1) for x in rows])
     li = res["li2022"]; sa = list(res["sandell2020"].values()); ch = res["chang2019"]["Cu_C_bare"]
-    cols = ["model", "AMM", "DMM", "AMM_eph", "DMM_eph"]
+    cols = ["model", "AMM", "DMM", "AMM_eph", "DMM_eph", "FDDMM_eph"]
     L = ["### A. Experiments (fast tier)", "",
          "Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and "
          "Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series "
-         "layers as this model (`+e-ph`). Only Al/Si is used for fitting (2 global parameters).", "",
-         "| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|"]
-    for key, role in [("Al/Si sample1", "calibration"), ("Al/GaN", "**held out**"), ("Al/sapphire (Cheng 2020)", "**held out**")]:
+         "layers as this model (`+e-ph`). The last column is the strongest baseline: full-dispersion DMM "
+         "on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or "
+         "inelastic channel). Only Al/Si sample 1 is used for fitting (2 global parameters).", "",
+         "| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |", "|---|---|---|---|---|---|---|"]
+    for key, role in [("Al/Si sample1", "calibration"), ("Al/Si sample2", "second specimen, not fitted"),
+                      ("Al/GaN", "**held out**"), ("Al/sapphire (Cheng 2020)", "**held out**")]:
         L.append(f"| {key}, 80–700 K ({role}) | " + " | ".join(f"{mape(li[key], k):.1f}%" for k in cols) + " |")
-    L.append("| Sandell 2020, 3 metal/PMMA/Si stacks (held out from all fits) | " + " | ".join(f"{mape(sa, k):.1f}%" for k in cols) + " |")
-    L.append(f"| Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | {ch['model']:.2f} | {ch['AMM']:.2f} | "
-             f"{ch['DMM']:.2f} | {ch['AMM_eph']:.2f} | {ch['DMM_eph']:.2f} |")
+    L.append("| Sandell 2020, 3 metal/PMMA/Si stacks (not fitted; used to choose the contact treatment, see EXPERIMENTS H8–H9) | "
+             + " | ".join(f"{mape(sa, k):.1f}%" for k in cols[:-1]) + " | – |")
+    L.append(f"| Chang 2019 TiC enhancement ratio, measured 1.48 (not fitted; bulk-terminated diamond assumed) | {ch['model']:.2f} | {ch['AMM']:.2f} | "
+             f"{ch['DMM']:.2f} | {ch['AMM_eph']:.2f} | {ch['DMM_eph']:.2f} | {ch['FDDMM_eph']:.2f} |")
+    s2 = li["Al/Si sample2"]; s1 = li["Al/Si sample1"]
+    i1 = int(np.argmin([abs(r["T"] - 300) for r in s1])); i2 = int(np.argmin([abs(r["T"] - 300) for r in s2]))
+    L += ["", f"The two Al/Si specimens of Li et al. differ by {100 * (s1[i1]['measured'] / s2[i2]['measured'] - 1):.0f}% "
+          f"at 300 K ({s1[i1]['measured']:.0f} vs {s2[i2]['measured']:.0f} MW m⁻² K⁻¹): specimen-to-specimen "
+          "variation of nominally identical interfaces is itself ~20–25%, which bounds the accuracy any "
+          "structure-only model can claim for real samples."]
     L += ["", "Sandell stacks (MW m⁻² K⁻¹, measured / model): " +
           ", ".join(f"{k} {v['measured']:.0f} / {v['model']:.0f}" for k, v in res["sandell2020"].items()), ""]
     L += ["### B. Coherent crystalline interfaces: fast tier vs MACE-AGF (300 K, harmonic)", "",
           "The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent interfaces. "
-          "Independent checks: AlN/GaN 281 vs ~300 MW m⁻² K⁻¹ from DFT-NEGF (Polanco & Lindsay, PRB 97, 014303, 2018); "
-          "AlN/4H-SiC 487 vs ~470 measured (TDTR).", "",
-          "| interface | strain in AGF | **AGF** | fast tier (elastic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |",
-          "|---|---|---|---|---|---|---|"]
+          "Independent check: AlN/GaN 281 vs ~300 MW m⁻² K⁻¹ from DFT-NEGF (Polanco & Lindsay, PRB 99, 075202, 2019). "
+          "Harmonic AGF describes a perfect interface without anharmonic channels; against measured wafers it is "
+          "−43% (AlN/GaN), +4% (AlN/SiC) and −52% (GaN/SiC) (section C). "
+          "**Which fast-tier output to compare with which reference:** harmonic AGF/NEGF ↔ `G_el`; anharmonic NEMD or "
+          "experiment ↔ `G` (adds the inelastic channel calibrated on Al/Si). The table gives both; `G` is "
+          "expected to exceed harmonic AGF. `G_el (CLI)` is the CLI's automatic coincidence-matching path, "
+          "`G_el` the coherent setting used to calibrate η.", "",
+          "| interface | strain in AGF | **AGF** | fast tier G_el | G_el (CLI) | fast tier G (anharmonic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |",
+          "|---|---|---|---|---|---|---|---|---|"]
     for r in agf:
         e = lambda k: f"{r[k]:.0f} ({100 * (r[k] / r['AGF'] - 1):+.0f}%)"
-        L.append(f"| {r['interface']} | {100 * r['strain']:+.1f}% | **{r['AGF']:.0f}** | {e('fast_elastic')} | {e('DMM_full')} | {e('DMM')} | {e('AMM')} |")
+        L.append(f"| {r['interface']} | {100 * r['strain']:+.1f}% | **{r['AGF']:.0f}** | {e('fast_elastic')} | {e('fast_elastic_cli')} | {r['fast_total']:.0f} | {e('DMM_full')} | {e('DMM')} | {e('AMM')} |")
     if agf:
         for k in ["fast_elastic", "DMM_full", "DMM", "AMM"]:
             pass
         mk = lambda k: np.mean([abs(r[k] / r["AGF"] - 1) for r in agf]) * 100
-        L.append(f"| **mean abs. deviation from AGF (calibration set of η)** | | | {mk('fast_elastic'):.0f}% | {mk('DMM_full'):.0f}% | {mk('DMM'):.0f}% | {mk('AMM'):.0f}% |")
+        L.append(f"| **mean abs. deviation from AGF (calibration set of η)** | | | {mk('fast_elastic'):.0f}% | {mk('fast_elastic_cli'):.0f}% | – | {mk('DMM_full'):.0f}% | {mk('DMM'):.0f}% | {mk('AMM'):.0f}% |")
     blind = agf_table(sets=AGF_BLIND)
     if blind:
         pre = json.load(open(os.path.join(HERE, "data", "reference", "preregistered_agf_predictions.json")))["predictions_MW_m2K"]
         L += ["", "**Blind tests** (fast-tier value committed before the AGF reference was computed; η frozen):", "",
-              "| interface | **AGF** | pre-registered fast tier | full-dispersion DMM | DMM (Debye) | AMM (Debye) |", "|---|---|---|---|---|---|"]
+              "| interface | **AGF** | pre-registered fast tier G_el | G_el (CLI, now) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |", "|---|---|---|---|---|---|---|"]
         for r in blind:
             pr = pre.get(r["interface"].replace("(", "(").replace("SiC4H", "4H-SiC"), None)
             pr = pre.get(r["interface"], r["fast_elastic"]) if pr is None else pr
             e = lambda v: f"{v:.0f} ({100 * (v / r['AGF'] - 1):+.0f}%)"
-            L.append(f"| {r['interface']} | **{r['AGF']:.0f}** | {e(pr)} | {e(r['DMM_full'])} | {e(r['DMM'])} | {e(r['AMM'])} |")
+            L.append(f"| {r['interface']} | **{r['AGF']:.0f}** | {e(pr)} | {e(r['fast_elastic_cli'])} | {e(r['DMM_full'])} | {e(r['DMM'])} | {e(r['AMM'])} |")
         agf = agf + blind
     L.append("")
     # C. measured conductances of real coherent semiconductor interfaces
@@ -119,7 +140,9 @@ def main():
         gt = I.G_pp(300.0, Pp["alpha"], Pp["b"]) * MW; ge = I.G_elastic(300.0) * MW
         if a[0] == "TiN":                       # metallic: electron-phonon term (no g data -> omitted, warned)
             from predict import G_ep as _gep
-            gt = 1 / (1 / gt + 1e-6 / _gep("TiN", 300.0))
+            with __import__("warnings").catch_warnings():
+                __import__("warnings").simplefilter("ignore")
+                gt = 1 / (1 / gt + 1e-6 / _gep("TiN", 300.0))
         pa = os.path.join(AGF_DIR, f"{lab}.json")
         ga = float(np.interp(300, json.load(open(pa))["T"], json.load(open(pa))["G"])) * MW if os.path.exists(pa) else float("nan")
         gd, gam = G_DMM_debye(s1, s2, 300.0) * MW, G_AMM_debye(s1, s2, 300.0) * MW

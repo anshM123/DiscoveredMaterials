@@ -23,7 +23,11 @@ t_quench = 4 ps, t_anneal = 0.5 ps, seed 0 (the defaults below).
 import os, sys, json, warnings
 import numpy as np
 
-warnings.filterwarnings("ignore")
+# silence third-party library noise only; this package's own warnings
+# (missing e-ph data, estimated g, fallbacks) must reach the user
+for _cat in (DeprecationWarning, FutureWarning):
+    warnings.filterwarnings("ignore", category=_cat)
+warnings.filterwarnings("ignore", module=r"(torch|e3nn|mace|ase|phonopy|spglib|numpy|torch_dftd)(\.|$)")
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "data", "glass")
 A_LAT = 11.45            # Angstrom: Al(111) 4x4 = 11.41, Si(111) 3x3 = 11.51

@@ -68,6 +68,29 @@ def metal_params(metal):
     return None
 
 
+def is_metal(name):
+    from materials import SOMMERFELD
+    return name in METALS or name in SOMMERFELD
+
+
+def G_edmm(m1, m2, T):
+    """Electron diffuse mismatch conductance of a metal/metal interface
+    (Gundrum, Cahill & Averback, PRB 72, 245426 (2005)):
+        G_e = Z1 Z2 / (4 (Z1 + Z2)),  Z_i = gamma_i T v_F,i,
+    gamma_i the volumetric Sommerfeld coefficient. For Al/Cu it gives ~7 GW
+    m^-2 K^-1 at 300 K vs ~4 measured by Gundrum et al., i.e. EDMM over-
+    predicts by ~2x; treat as a factor-2 estimate."""
+    from materials import SOMMERFELD, FERMI_V, FERMI_V_NOMINAL
+    from phonons import load
+    NA = 6.02214076e23
+    Z = []
+    for m in (m1, m2):
+        d = load(m)
+        gamma = SOMMERFELD[m] * 1e-3 / (d["V"] / d["nat"] * NA)        # J m^-3 K^-2
+        Z.append(gamma * T * FERMI_V.get(m, FERMI_V_NOMINAL))
+    return Z[0] * Z[1] / (4 * (Z[0] + Z[1]))
+
+
 def kp_metal(metal, T):
     """Lattice thermal conductivity of a metal vs T. Phonon-phonon part ~1/T,
     phonon-electron part T-independent (Matthiessen), both at 300 K from
@@ -191,7 +214,17 @@ def film_k(name, T):
     Pohl minimum conductivity, k(T) = k(300) k_min(T)/k_min(300); crystalline
     films: constant."""
     from model import kappa_min
-    from materials import AMORPHOUS
+    from materials import AMORPHOUS, BULK_K
+    if name not in FILM_K:
+        import warnings
+        if name in AMORPHOUS:
+            warnings.warn(f"{name}: no measured film conductivity; using the Cahill-Watson-Pohl minimum", stacklevel=2)
+            return kappa_min(Side(name), T)
+        if name in BULK_K:
+            warnings.warn(f"{name}: no thin-film conductivity; using the bulk value {BULK_K[name]} W/mK "
+                          "(upper bound for nm films)", stacklevel=2)
+            return float(BULK_K[name])
+        raise KeyError(f"no film conductivity for {name}; add it to materials.FILM_K")
     k300 = FILM_K[name]
     if name in AMORPHOUS:
         s = Side(name)
