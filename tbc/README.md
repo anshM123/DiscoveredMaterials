@@ -76,6 +76,20 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 | TiN(111)/sapphire(0001) * | 700 | 482 | 372 | – | 2088 | 3497 |
 | **mean abs. error** | | 25% | | 35% | 236% | 461% |
 
+### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (held out) — a known weakness
+
+Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical (Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid.
+
+| model | mean abs. error | G(80 K) | G(300 K) |
+|---|---|---|---|
+| measured | – | 52 | 138 |
+| this model, oxide 1 nm | 68% | 99 | 219 |
+| this model, oxide 2 nm | 50% | 93 | 189 |
+| DMM (Debye), oxide 1.5 nm | 133% | 120 | 328 |
+| AMM (Debye), oxide 1.5 nm | 221% | 176 | 436 |
+
+The model over-predicts this metal/glass stack by ~1.5–2× (most at low T), although it is 2–4× closer than DMM/AMM. A Debye solid counts every vibrational mode of a glass as a propagating channel; most are non-propagating diffusons/locons. See Limitations.
+
 ![parity](results/parity.png)
 
 *Parity plot of every validated case: experiments (Li, Cheng, Sandell; all temperatures), measured epitaxial interfaces (section C) and MACE-AGF references (section B), for this model and for the Debye AMM/DMM.*
@@ -253,8 +267,16 @@ Checks:
    right. Cu on H-terminated diamond gives ~12 MW m⁻² K⁻¹, below typical
    metal/H-diamond values. The Chang prediction assumes bulk-terminated
    diamond(111).
-5. **Polymers and glasses** are Debye solids built from measured sound
-   velocities and density.
+5. **Glasses and polymers are Debye solids (a real weakness).**
+   * They are built from measured sound velocities and density.
+   * For Al on native SiO₂ on Si (Li et al., section D), the model
+     over-predicts G by ~1.5–2×, most at low T, though it is 2–4× closer than
+     DMM/AMM.
+   * The cause: a Debye solid counts every vibrational mode of a glass as a
+     propagating channel, but most are non-propagating diffusons and locons.
+   * The fix would be an atomistic glass, e.g. a MACE melt-quench of SiO₂
+     followed by AGF/MD transmission. That is not done here.
+   * Metal/amorphous-dielectric predictions should be treated as upper bounds.
 6. **Epitaxial orientation is assumed aligned**: shortest in-plane vectors
    parallel, within 5% misfit. Rotated epitaxy is not searched; override with
    `Interface(..., Lc=...)` or `--polycrystalline`.

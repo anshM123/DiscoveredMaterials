@@ -147,6 +147,41 @@
     704.0,
     552.6
    ]
+  ],
+  "Al/SiO2(native)/Si": [
+   [
+    79.9,
+    52.2
+   ],
+   [
+    100.0,
+    72.3
+   ],
+   [
+    120.0,
+    86.4
+   ],
+   [
+    150.0,
+    104.4
+   ],
+   [
+    189.8,
+    119.5
+   ],
+   [
+    240.0,
+    130.5
+   ],
+   [
+    299.7,
+    137.5
+   ],
+   [
+    349.9,
+    155.5
+   ]
   ]
- }
+ },
+ "notes_native_oxide": "Al/SiO2/Si: e-beam evaporated Al on Si with native oxide (orange markers, Fig. 1a); oxide thickness not reported."
 }
