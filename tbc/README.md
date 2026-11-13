@@ -56,14 +56,17 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 
 ### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)
 
-Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.
+Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). * Epitaxial TiN on MgO(001), MgO(111) and sapphire: Costescu, Wall & Cahill, PRB 67, 054302 (2003) found the same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) (approximate; TiN electron-phonon term omitted: no g data). Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.
 
 | interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|
 | AlN(0001)/GaN(0001) | 490 | 378 | 247 | 281 | 1376 | 3767 |
 | AlN(0001)/4H-SiC(0001) | 470 | 657 | 533 | 487 | 1849 | 2940 |
 | GaN(0001)/4H-SiC(0001) | 305 | 312 | 189 | 147 | 1291 | 1058 |
-| **mean abs. error** | | 22% | | 33% | 266% | 480% |
+| TiN(001)/MgO(001) * | 700 | 511 | 366 | nan | 2167 | 3932 |
+| TiN(111)/MgO(111) * | 700 | 495 | 337 | nan | 2167 | 3932 |
+| TiN(111)/sapphire(0001) * | 700 | 482 | 372 | nan | 2088 | 3497 |
+| **mean abs. error** | | 25% | | 33% | 236% | 461% |
 
 <!-- RESULTS:END -->
 

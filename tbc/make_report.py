@@ -80,9 +80,15 @@ def main():
     Pp = _lp()
     meas = [("AlN(0001)/GaN(0001)", ("AlN", "0001"), ("GaN", "0001"), 490, "AlN0001_GaN0001"),
             ("AlN(0001)/4H-SiC(0001)", ("AlN", "0001"), ("SiC4H", "0001"), 470, "AlN0001_SiC4H0001"),
-            ("GaN(0001)/4H-SiC(0001)", ("GaN", "0001"), ("SiC4H", "0001"), 305, "GaN0001_SiC4H0001")]
+            ("GaN(0001)/4H-SiC(0001)", ("GaN", "0001"), ("SiC4H", "0001"), 305, "GaN0001_SiC4H0001"),
+            ("TiN(001)/MgO(001) *", ("TiN", "100"), ("MgO", "100"), 700, "TiN100_MgO100"),
+            ("TiN(111)/MgO(111) *", ("TiN", "111"), ("MgO", "111"), 700, "-"),
+            ("TiN(111)/sapphire(0001) *", ("TiN", "111"), ("Al2O3", "0001"), 700, "-")]
     L += ["### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)", "",
           "Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). "
+          "* Epitaxial TiN on MgO(001), MgO(111) and sapphire: Costescu, Wall & Cahill, PRB 67, 054302 (2003) found the "
+          "same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) "
+          "(approximate; TiN electron-phonon term omitted: no g data). "
           "Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.", "",
           "| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |",
           "|---|---|---|---|---|---|---|"]
@@ -91,6 +97,9 @@ def main():
         s1, s2 = Side(*a), Side(*b)
         I = Interface(s1, s2)
         gt = I.G_pp(300.0, Pp["alpha"], Pp["b"]) * MW; ge = I.G_elastic(300.0) * MW
+        if a[0] == "TiN":                       # metallic: electron-phonon term (no g data -> omitted, warned)
+            from predict import G_ep as _gep
+            gt = 1 / (1 / gt + 1e-6 / _gep("TiN", 300.0))
         pa = os.path.join(AGF_DIR, f"{lab}.json")
         ga = float(np.interp(300, json.load(open(pa))["T"], json.load(open(pa))["G"])) * MW if os.path.exists(pa) else float("nan")
         gd, gam = G_DMM_debye(s1, s2, 300.0) * MW, G_AMM_debye(s1, s2, 300.0) * MW
