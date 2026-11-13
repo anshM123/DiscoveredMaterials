@@ -47,7 +47,7 @@ Global parameters (calibrated on Al/Si sample 1 only): alpha = 1.4236, b = 5.203
 | max abs. error (%) | 32.0 | 19.0 | 302.9 | 201.0 | 119.9 | 83.1 | 30.0 |
 | slope above 400 K (MW m^-2 K^-2), measured 0.10 | 0.14 | -0.04 | 0.46 | 0.32 | -0.19 | -0.12 | -0.05 |
 
-## Li et al. 2022 - Al/GaN (PREDICTION (not fitted))
+## Li et al. 2022 - Al/GaN (not fitted (used as a guard in model selection; see EXPERIMENTS))
 
 | T (K) | measured | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |
 |---|---|---|---|---|---|---|---|---|
@@ -70,7 +70,7 @@ Global parameters (calibrated on Al/Si sample 1 only): alpha = 1.4236, b = 5.203
 | max abs. error (%) | 14.2 | 35.9 | 241.0 | 172.5 | 70.9 | 50.8 | 35.4 |
 | slope above 400 K (MW m^-2 K^-2), measured 0.39 | 0.07 | -0.07 | 0.43 | 0.32 | -0.22 | -0.17 | -0.07 |
 
-## Al/sapphire (Cheng 2020) (PREDICTION (not fitted))
+## Al/sapphire (Cheng 2020) (not fitted (used as a guard in model selection; see EXPERIMENTS))
 
 | T (K) | measured | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |
 |---|---|---|---|---|---|---|---|---|
@@ -93,15 +93,15 @@ Global parameters (calibrated on Al/Si sample 1 only): alpha = 1.4236, b = 5.203
 | max abs. error (%) | 16.8 | 22.7 | 55.0 | 206.4 | 11.0 | 63.0 | 21.2 |
 | slope above 400 K (MW m^-2 K^-2), measured -0.04 | 0.25 | -0.02 | 0.25 | 0.60 | 0.01 | -0.08 | -0.02 |
 
-## Sandell et al. 2020 - combined metal/PMMA + PMMA/Si boundary conductance at 300 K (PREDICTION)
+## Sandell et al. 2020 - combined metal/PMMA + PMMA/Si boundary conductance at 300 K (not fitted; used to choose the polymer-contact treatment)
 
 | stack | measured | model | variant: w/o bonding factor | variant: inelastic channel also on amorphous | AMM | DMM | AMM+e-ph | DMM+e-ph |
 |---|---|---|---|---|---|---|---|---|
 | Au/PMMA/Si | 59 | **60** | 70 | 78 | 70 | 159 | 56 | 101 |
-| Au/Ti/PMMA/Si | 115 | **105** | 105 | 141 | 47 | 168 | 46 | 153 |
-| Au/Ni/PMMA/Si | 139 | **104** | 104 | 142 | 34 | 171 | 33 | 157 |
+| Au/Ti/PMMA/Si | 115 | **103** | 103 | 138 | 47 | 168 | 46 | 153 |
+| Au/Ni/PMMA/Si | 139 | **102** | 102 | 140 | 34 | 171 | 33 | 157 |
 
-## Chang et al. 2019 - G(Cu/TiC 10 nm/diamond) / G(Cu/diamond) at 300 K (PREDICTION), measured 1.48
+## Chang et al. 2019 - G(Cu/TiC 10 nm/diamond) / G(Cu/diamond) at 300 K (not fitted; used when choosing THETA_SIDE), measured 1.48
 
 | diamond surface in model | model | AMM | DMM | AMM+e-ph | DMM+e-ph |
 |---|---|---|---|---|---|

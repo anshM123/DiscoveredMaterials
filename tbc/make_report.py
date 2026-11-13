@@ -65,12 +65,13 @@ def main():
     L = ["### A. Experiments (fast tier)", "",
          "Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and "
          "Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series "
-         "layers as this model (`+e-ph`). The last column is the strongest baseline: full-dispersion DMM "
+         "layers as this model (`+e-ph`). *Guard set: never fitted, but used as a no-regression guard when accepting "
+         "or rejecting model changes (EXPERIMENTS.md), so it is a validation set rather than a blind test set. The last column is the strongest baseline: full-dispersion DMM "
          "on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or "
          "inelastic channel). Only Al/Si sample 1 is used for fitting (2 global parameters).", "",
          "| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |", "|---|---|---|---|---|---|---|"]
     for key, role in [("Al/Si sample1", "calibration"), ("Al/Si sample2", "second specimen, not fitted"),
-                      ("Al/GaN", "**held out**"), ("Al/sapphire (Cheng 2020)", "**held out**")]:
+                      ("Al/GaN", "not fitted; guard set*"), ("Al/sapphire (Cheng 2020)", "not fitted; guard set*")]:
         L.append(f"| {key}, 80–700 K ({role}) | " + " | ".join(f"{mape(li[key], k):.1f}%" for k in cols) + " |")
     L.append("| Sandell 2020, 3 metal/PMMA/Si stacks (not fitted; used to choose the contact treatment, see EXPERIMENTS H8–H9) | "
              + " | ".join(f"{mape(sa, k):.1f}%" for k in cols[:-1]) + " | – |")
@@ -124,7 +125,7 @@ def main():
             ("TiN(001)/MgO(001) *", ("TiN", "100"), ("MgO", "100"), 700, "TiN100_MgO100"),
             ("TiN(111)/MgO(111) *", ("TiN", "111"), ("MgO", "111"), 700, "-"),
             ("TiN(111)/sapphire(0001) *", ("TiN", "111"), ("Al2O3", "0001"), 700, "-")]
-    L += ["### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, held out)", "",
+    L += ["### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)", "",
           "Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). "
           "* Epitaxial TiN on MgO(001), MgO(111) and sapphire: Costescu, Wall & Cahill, PRB 67, 054302 (2003) found the "
           "same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) "
@@ -151,6 +152,10 @@ def main():
         meas_rows.append(dict(ref=gm, model=gt, AMM=gam, DMM=gd))
         L.append(f"| {name} | {gm} | {gt:.0f} | {ge:.0f} | {'–' if np.isnan(ga) else f'{ga:.0f}'} | {gd:.0f} | {gam:.0f} |")
     L.append(f"| **mean abs. error** | | {np.nanmean(errs['fast']):.0f}% | | {np.nanmean(errs['agf']):.0f}% | {np.nanmean(errs['dmm']):.0f}% | {np.nanmean(errs['amm']):.0f}% |")
+    _sub = ~np.isnan(np.array(errs['agf'], float))
+    L.append(f"| mean abs. error, the {int(_sub.sum())} interfaces with an AGF reference | | "
+             f"{np.mean(np.array(errs['fast'], float)[_sub]):.0f}% | | {np.mean(np.array(errs['agf'], float)[_sub]):.0f}% | "
+             f"{np.mean(np.array(errs['dmm'], float)[_sub]):.0f}% | {np.mean(np.array(errs['amm'], float)[_sub]):.0f}% |")
     L.append("")
     # D. metal on amorphous oxide (held out): Al / native SiO2 / Si, Li et al. 2022 Fig. 1a
     from predict import G_ep as _gep

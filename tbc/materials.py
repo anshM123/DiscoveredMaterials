@@ -10,6 +10,7 @@ conductivity of metals, Born charges, properties of amorphous polymers) are
 literature values; each carries its source.
 """
 from dataclasses import dataclass, field
+import re
 import numpy as np
 from ase.build import bulk
 from ase import Atoms
@@ -239,7 +240,9 @@ def register_structure(path, miller, name=None):
     atoms = read(path)
     name = name or os.path.splitext(os.path.basename(path))[0]
     m = str(miller)
-    digits = [int(c) for c in m.replace("-", "")] if m.lstrip("-").isdigit() else None
+    # Miller indices: digits with optional minus signs, e.g. 111, 1-10, -1-12, 0001
+    toks = re.findall(r"-?\d", m) if re.fullmatch(r"(-?\d)+", m) else None
+    digits = [int(t) for t in toks] if toks else None
     if digits is None or len(digits) not in (3, 4):
         raise ValueError(f"Miller indices '{miller}' not understood (use e.g. 001, 111, 0001)")
     if len(digits) == 4:

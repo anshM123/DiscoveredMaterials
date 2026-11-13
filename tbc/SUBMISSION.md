@@ -57,13 +57,13 @@ There are 21 physics-invariant tests and a smoke test covering every interface c
 |---|---|---|
 | Li 2022 Al/Si G(T), 80–700 K, specimen 1 (fit set) | 4.6% | 18% (full-dispersion DMM + same e-ph) |
 | Li 2022 Al/Si G(T), specimen 2 (not fitted; 23% below specimen 1 at 300 K) | 24% | 12% (full-dispersion DMM + same e-ph) |
-| Li 2022 Al/GaN G(T) (held out) | 6.9% | 13% (full-dispersion DMM + same e-ph) |
-| Cheng 2020 epitaxial Al/sapphire G(T) (held out) | 6.2% | 4.6% (Debye AMM + same e-ph) |
-| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (not fitted; used to choose the polymer-contact treatment) | 12.1% (Au +2%, Ti −9%, Ni −25%) | 39% (Debye DMM + same e-ph/series) |
-| Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond assumed) | 1.36 | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
-| 5 coherent pairs, G_el vs MACE-AGF (η fit set; leave-one-out) | 15% (LOO 19%) | 66% (full-dispersion DMM) |
+| Li 2022 Al/GaN G(T) (not fitted; guard set in model selection) | 6.9% | 13% (full-dispersion DMM + same e-ph) |
+| Cheng 2020 epitaxial Al/sapphire G(T) (not fitted; guard set) | 6.2% | 4.6% (Debye AMM + same e-ph) |
+| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (not fitted; used to choose the polymer-contact treatment) | 13.0% (Au +2%, Ti −10%, Ni −26%); 34% if PMMA's Debye cutoff counts only C and O | 39% (Debye DMM + same e-ph/series) |
+| Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.36 (1.9–3.2 if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
+| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 28% at 50 K | 66% (full-dispersion DMM) |
 | 3 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 11% (−13, −12, −7%) | 25% (full-dispersion DMM) |
-| 6 measured epitaxial semiconductor and nitride/oxide interfaces (held out) | 25% | 35% (harmonic AGF); 236% (Debye DMM) |
+| 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 25% | 35% (harmonic AGF); 236% (Debye DMM) |
 | Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 85% (Debye DMM + same e-ph) |
 
 ## Known limitations (stated, not hidden)
@@ -81,4 +81,9 @@ There are 21 physics-invariant tests and a smoke test covering every interface c
   both the harmonic (G_el, AGF) and the anharmonic (G_pp) estimate. The inelastic channel that separates them is
   calibrated on Al/Si only and adds 20–110% for nearly matched semiconductor pairs; it is unverified against NEMD.
 * Metal/metal interfaces use the electron diffuse-mismatch model (not validated here; ~2× high for Al/Cu).
+  Metallic ceramics (TiN, TiC) are treated as phonon-only solids, so metal/TiN contacts are a lower bound.
+* Al/GaN, Al/sapphire and the AGF pairs were never fitted, but served as no-regression guards in model
+  selection (and the inelastic channel's Θ choice was made with Chang in view): they are validation sets.
+  The three pre-registered AGF predictions are the strictly blind tests.
+* Below ~100 K the fast tier underestimates harmonic AGF for stiff nitrides by 25–55% (spectral undersampling).
 * MACE-OMAT-0 is under an academic licence. A commercial universal potential is a drop-in replacement.

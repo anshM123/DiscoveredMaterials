@@ -23,7 +23,7 @@ import numpy as np
 from phonons import compute, CACHE
 from materials import CRYSTALS
 from model import Side, Interface, G_AMM_debye, G_DMM_debye
-from predict import load_params, G_ep, bonding_for, is_metal, G_edmm
+from predict import load_params, G_ep, bonding_for, is_metal, G_edmm, network
 from bonding import Kref
 
 
@@ -53,13 +53,13 @@ def stack_main(argv):
     """tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" [--metal Al] [--T ...]
     Layers separated by '|'; a finite film is NAME[/hkl]:thickness_nm. The first
     and last layers are semi-infinite. Interfaces in series, thin-film
-    resistances (glassy films with Cahill-Watson-Pohl T-dependence), electron-
-    phonon resistance of a metallic top layer (detected automatically or
-    --metal). A thin metal film under the top metal (adhesion layer) also takes
-    heat from the top metal's electrons through its own coupling g*d, in
-    parallel; metal/metal interfaces add the electron channel (electron DMM).
-    This is the treatment validated on the Sandell stacks (predict.sandell_stack)."""
-    from predict import film_k, G_edmm
+    resistances (glassy films with Cahill-Watson-Pohl T-dependence). Metals
+    (detected automatically, or added with --metal): each contiguous metal
+    block next to a non-metal hands heat from its electrons to the lattice of
+    every block member in parallel (semi-infinite: Majumdar-Reddy; thin film:
+    g d); metal/metal interfaces add the electron channel (electron DMM).
+    Same resistance network as the single-interface mode and the Sandell
+    validation (predict.network)."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--stack", required=True)
     ap.add_argument("--metal", default=None)
@@ -79,33 +79,18 @@ def stack_main(argv):
         t0, t1, dt = map(float, a.T.split(":")); Ts = np.arange(t0, t1 + 1e-9, dt)
     else:
         Ts = [float(a.T)]
-    metal = None if a.no_eph else (a.metal or (layers[0][0] if is_metal(layers[0][0]) else None))
-    adh = layers[1] if (metal and len(layers) > 2 and layers[1][2] and is_metal(layers[1][0])) else None
+    metals = set() if a.no_eph else ({n for n, _, _ in layers if is_metal(n)} | ({a.metal} if a.metal else set()))
     ifs = []
     for (n1, s1_, _), (n2, s2_, _) in zip(layers[:-1], layers[1:]):
         bond = bonding_for(n1, n2, s1_, s2_)
-        ifs.append((Interface(Side(n1, s1_), Side(n2, s2_), K=bond[0] if bond else None,
-                              Kref=bond[1] if bond else None, epitaxial=not a.polycrystalline),
-                    (n1, n2) if (is_metal(n1) and is_metal(n2)) else None))
+        ifs.append(Interface(Side(n1, s1_), Side(n2, s2_), K=bond[0] if bond else None,
+                             Kref=bond[1] if bond else None, epitaxial=not a.polycrystalline))
     print("stack:", " | ".join(f"{n}{'/' + s if s else ''}{'(%.1f nm)' % (t * 1e9) if t else ''}" for n, s, t in layers),
-          f"  metal: {metal or '-'}" + (f" (+ adhesion film {adh[0]} coupled in parallel)" if adh else ""))
-    print("   T(K)   G_total(MW/m2K)  R_total(m2K/GW)   per-interface G (MW/m2K)")
+          f"  metals (electrons): {', '.join(sorted(metals)) or '-'}")
+    print("   T(K)   G_total(MW/m2K)  R_total(m2K/GW)   per-interface G (MW/m2K; metal/metal incl. electrons)")
     for T in Ts:
-        R = 0.0
-        if metal:
-            gep = G_ep(metal, T) + (G_ep(adh[0], T, d=adh[2]) if adh else 0.0)
-            R += 1 / gep
-        gs = []
-        for I, mm in ifs:
-            g = I.G_pp(T, P["alpha"], P["b"])
-            if mm:
-                g += G_edmm(*mm, T)
-            gs.append(g)
-        R += sum(1 / g for g in gs)
-        for n, _, t in layers[1:-1]:
-            if t:
-                R += t / film_k(n, T)
-        print(f"{T:7.0f} {1e-6 / R:14.1f} {1e9 * R:15.3f}    " + "  ".join(f"{g / 1e6:.0f}" for g in gs))
+        G, gs = network([(n, t) for n, _, t in layers], ifs, T, P, metals=metals)
+        print(f"{T:7.0f} {G / 1e6:14.1f} {1e9 / G:15.3f}    " + "  ".join(f"{g / 1e6:.0f}" for g in gs))
 
 
 def main():
@@ -133,6 +118,21 @@ def main():
     (na, sa), (nb, sb) = parse(a.a), parse(a.b)
     ensure(na); ensure(nb)
     P = load_params()
+    if ":" in a.T:
+        _t = list(map(float, a.T.split(":")))
+    else:
+        _t = [float(a.T)]
+    if min(_t[:2]) <= 0:
+        raise SystemExit("error: temperatures must be > 0 K")
+    from materials import CRYSTALS as _C
+    if na == nb and (sa or next(iter(_C[na]["normals"]), None) if na in _C else sa) == \
+            (sb or next(iter(_C[nb]["normals"]), None) if nb in _C else sb):
+        msg = "identical material and orientation on both sides: no interface (G = infinite, R_K = 0)"
+        if a.json:
+            print(json.dumps(dict(interface=f"{a.a}|{a.b}", note=msg, rows=[]), indent=1))
+        else:
+            print(msg)
+        return
     if a.Kn is not None:
         kr = Kref(na, nb, sa, sb); r = a.Kn / kr["K_n"]
         bond = ((r * kr["K_n"], r * kr["K_t"]), (kr["K_n"], kr["K_t"]))
@@ -154,27 +154,22 @@ def main():
             print(f"[running AGF for {lab}; this takes ~1 CPU-hour]")
             agfmod.run(na, sa, nb, sb, nk=8, nw=160, inplane_min=9.0)
         agf_res = json.load(open(path))
-    metals = [] if a.no_eph else ([a.metal] if a.metal else [n for n in (na, nb) if is_metal(n)])
-    if a.metal and not a.no_eph and is_metal(na) and is_metal(nb):
-        metals = [na, nb]
+    metals = [] if a.no_eph else [n for n in (na, nb) if is_metal(n) or n == a.metal]
+    Idiff = Interface(s1, s2, K=bond[0] if bond else None, Kref=bond[1] if bond else None, epitaxial=False) \
+        if I.Lc is not None else None
     rows = []
     for T in Ts:
         Gpp = I.G_pp(T, P["alpha"], P["b"])
-        Ge = 0.0
-        if len(metals) == 2:
-            # metal/metal: electrons cross directly (electron DMM), in parallel with
-            # the phonon path e-ph(1) -> interface phonons -> e-ph(2)
-            Ge = G_edmm(metals[0], metals[1], T)
-            G = Ge + 1 / (1 / G_ep(metals[0], T) + 1 / Gpp + 1 / G_ep(metals[1], T))
-        elif metals:
-            G = 1 / (1 / Gpp + 1 / G_ep(metals[0], T))
-        else:
-            G = Gpp
+        G, _ = network([(na, None), (nb, None)], [I], T, P, metals=metals)
+        Ge = G_edmm(na, nb, T) if len(metals) == 2 else 0.0
         rows.append(dict(T=T, G=G / 1e6, R_K=1e9 / G, G_pp=Gpp / 1e6, G_electron=Ge / 1e6,
                          G_pp_local_eq=I.G_pp(T, P["alpha"], P["b"], noneq=True) / 1e6,
                          G_el_local_eq=I.G_pp(T, 0.0, 1.0, noneq=True) / 1e6,
                          G_elastic=I.G_elastic(T) / 1e6, P_inelastic=I.P_inel(T, P["alpha"], P["b"]),
                          AMM=G_AMM_debye(s1, s2, T) / 1e6, DMM=G_DMM_debye(s1, s2, T) / 1e6))
+        if Idiff is not None:
+            Gd, _ = network([(na, None), (nb, None)], [Idiff], T, P, metals=metals)
+            rows[-1]["G_if_nonepitaxial"] = Gd / 1e6
         if agf_res is not None:
             g_agf = float(np.interp(T, agf_res["T"], agf_res["G"]))
             rows[-1]["G_AGF_harmonic"] = g_agf / 1e6
@@ -189,37 +184,56 @@ def main():
     print(f"interface {a.a} | {a.b}   bonding: {'ideal' if bond is None else 'K/Kref = %.2f' % (bond[0][0] / bond[1][0])}"
           f"   metal: {'/'.join(metals) or '-'}   coherence length: {'diffuse' if I.Lc is None else '%.1f A' % I.Lc}")
     # expected accuracy of this interface class, from the validation in README
+    Tlo = min(Ts)
     if not (s1.crystal and s2.crystal):
         import model as _model
         amo = [x.name for x in (s1, s2) if not x.crystal]
-        if any(n in _model.GLASS_FLUX and os.path.exists(_model.GLASS_FLUX[n]) for n in amo):
-            acc = ("glass with a MACE glass model (propagons + fitted diffuson weight): Al/native-SiO2/Si G(T) "
-                   "within ~2% (fit set); metal/PMMA/SiO2 stacks ~12% mean (Ni -25%)")
+        if all(n in _model.GLASS_FLUX and os.path.exists(_model.GLASS_FLUX[n]) for n in amo):
+            acc = ("glass with a MACE glass model (propagons + diffuson weight w fitted on Al/native-SiO2/Si, 2% on "
+                   "that fit set); independent test only the metal/PMMA/SiO2 stacks (~13% mean, Ni -25%)")
         elif "PMMA" in amo:
-            acc = "polymer (Debye solid): metal/PMMA/SiO2/Si stacks ~12% mean error (Au +2%, Ti -9%, Ni -25%)"
+            acc = ("polymer (Debye solid, cutoff from all atoms incl. H): metal/PMMA/SiO2/Si stacks ~13% mean "
+                   "(Au +2%, Ti -10%, Ni -26%); sensitive to the PMMA Debye convention (README Limitations)")
         else:
             acc = ("amorphous side without a MACE glass model (Debye glass): treat as an UPPER BOUND "
                    "(Debye SiO2 over-predicted Al/native-SiO2/Si by ~1.5x); build one with glass.py")
     elif len(metals) == 2:
         acc = ("metal/metal: electrons cross directly (electron DMM, column G_e); EDMM over-predicts Al/Cu ~2x "
                "(Gundrum et al. 2005, ~4 GW measured). Not validated here: factor-2 estimate")
-    elif I.Lc is not None and I.p_inf > 0.5:
-        acc = ("coherent crystalline pair: G_el within ~19% of harmonic AGF (leave-one-out, 5 pairs; 3 blind tests "
-               "-13/-12/-7%); measured epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
+    elif I.Lc is not None and I.p_inf > 0.5 and not (metals or any(is_metal(n) for n in (na, nb))):
+        acc = ("coherent crystalline pair: G_el within ~15% of harmonic MACE-AGF at 200-700 K (5 pairs + 3 blind "
+               "tests), but 15-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
+               "epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
+        if Tlo < 150:
+            acc += ". WARNING: T < 150 K requested"
     elif metals or any(is_metal(n) for n in (na, nb)):
-        acc = ("metal on crystal (incommensurate/diffuse): validated for Al on Si, GaN, sapphire (5-7%; a second "
-               "Al/Si specimen 24%, specimen-to-specimen spread ~20%); other metals not validated")
+        acc = ("metal on crystal: validated only for epitaxial Al on Si, GaN, sapphire (5-7%; a second Al/Si "
+               "specimen 24%, specimen-to-specimen spread ~20%); other metals not validated")
+        if I.Lc is not None and I.p_inf > 0.5:
+            acc += ("; treated as COHERENT (misfit < 5%): if the film is not epitaxial use --polycrystalline "
+                    "(column G_nonepi)")
     else:
         acc = "incommensurate or polycrystalline crystalline pair: diffuse limit; validated only indirectly (~25%)"
+    from predict import BOND_KEYS
+    bkey = BOND_KEYS.get((na, nb)) or BOND_KEYS.get((nb, na))
+    if bond is not None and a.Kn is None:
+        print(f"bonding stiffness from data/bonding.json key '{bkey}'" if bkey else
+              "bonding stiffness: physisorbed-contact fallback (Au/PMMA ratio)")
+    if {na, nb} & {"TiN", "TiC"}:
+        acc += ("; NOTE: TiN/TiC are metallic but treated as phonon-only (no electron data): with a metal on the "
+                "other side G is a lower bound")
     print(f"expected accuracy: {acc}")
     print("columns: G = total (phonons incl. inelastic channel, electron-phonon resistance of metal sides, electron "
           "channel for metal/metal); G_pp = phonon interface conductance (compare with anharmonic NEMD); G_el = its "
           "harmonic elastic part (compare with harmonic AGF/NEGF)")
     hdr = "   T(K)   G(MW/m2K)  R_K(m2K/GW)  G_pp   G_el  P_inel   AMM    DMM"
-    print(hdr + ("     G_e" if len(metals) == 2 else "") + ("   G_pp(LE)  G_el(LE)" if a.local_equilibrium else ""))
+    nonepi = Idiff is not None
+    print(hdr + ("     G_e" if len(metals) == 2 else "") + ("  G_nonepi" if nonepi else "")
+          + ("   G_pp(LE)  G_el(LE)" if a.local_equilibrium else ""))
     for r in rows:
         print("{T:7.0f} {G:10.1f} {R_K:11.3f} {G_pp:7.0f} {G_elastic:6.0f} {P_inelastic:6.2f} {AMM:6.0f} {DMM:6.0f}".format(**r)
               + (" {:7.0f}".format(r["G_electron"]) if len(metals) == 2 else "")
+              + (" {:9.1f}".format(r["G_if_nonepitaxial"]) if nonepi else "")
               + (" {:10.0f} {:9.0f}".format(r["G_pp_local_eq"], r["G_el_local_eq"]) if a.local_equilibrium else "")
               + ("   AGF(harmonic) {:.0f}".format(r["G_AGF_harmonic"]) if "G_AGF_harmonic" in r else ""))
 

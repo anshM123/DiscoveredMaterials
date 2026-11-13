@@ -130,7 +130,7 @@ def write_md(res):
     L = ["# Validation against the three published datasets", "",
          f"Global parameters (calibrated on Al/Si sample 1 only): alpha = {P['alpha']}, b = {P['b']}", ""]
     for key, rows in res["li2022"].items():
-        tag = "calibration set" if "sample1" in key else ("not fitted: second Al/Si specimen of the same study" if "sample2" in key else "PREDICTION (not fitted)")
+        tag = "calibration set" if "sample1" in key else ("not fitted: second Al/Si specimen of the same study" if "sample2" in key else "not fitted (used as a guard in model selection; see EXPERIMENTS)")
         src = "" if "Cheng" in key else "Li et al. 2022 - "
         L += [f"## {src}{key} ({tag})", "",
               "| T (K) | measured | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |", "|---|---|---|---|---|---|---|---|---|"]
@@ -143,12 +143,12 @@ def write_md(res):
         L.append("| max abs. error (%) | " + " | ".join(f"{err(rows, k)['max_abs_pct']:.1f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph", "FDDMM_eph"]) + " |")
         L.append("| slope above 400 K (MW m^-2 K^-2), measured " + f"{slope_above(rows, 'measured'):.2f} | " + " | ".join(f"{slope_above(rows, k):.2f}" for k in ["model", "model_elastic_only", "AMM", "DMM", "AMM_eph", "DMM_eph", "FDDMM_eph"]) + " |")
         L.append("")
-    L += ["## Sandell et al. 2020 - combined metal/PMMA + PMMA/Si boundary conductance at 300 K (PREDICTION)", "",
+    L += ["## Sandell et al. 2020 - combined metal/PMMA + PMMA/Si boundary conductance at 300 K (not fitted; used to choose the polymer-contact treatment)", "",
           "| stack | measured | model | variant: w/o bonding factor | variant: inelastic channel also on amorphous | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|---|---|---|"]
     for k, r in res["sandell2020"].items():
         L.append(f"| {k} | {r['measured']:.0f} | **{r['model']:.0f}** | {r['model_no_bonding']:.0f} | {r['model_inelastic_on_amorphous']:.0f} | {r['AMM']:.0f} | {r['DMM']:.0f} | {r['AMM_eph']:.0f} | {r['DMM_eph']:.0f} |")
     L.append("")
-    L += ["## Chang et al. 2019 - G(Cu/TiC 10 nm/diamond) / G(Cu/diamond) at 300 K (PREDICTION), measured 1.48", "",
+    L += ["## Chang et al. 2019 - G(Cu/TiC 10 nm/diamond) / G(Cu/diamond) at 300 K (not fitted; used when choosing THETA_SIDE), measured 1.48", "",
           "| diamond surface in model | model | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|"]
     for k, r in res["chang2019"].items():
         L.append(f"| {k} | **{r['model']:.2f}** | {r['AMM']:.2f} | {r['DMM']:.2f} | {r['AMM_eph']:.2f} | {r['DMM_eph']:.2f} |")

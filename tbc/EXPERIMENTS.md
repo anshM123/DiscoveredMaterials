@@ -184,3 +184,29 @@ findings, and what was done:
 | "Held out" overstated for Sandell and Chang | relabelled; Chang's dependence on the unreported diamond termination stated |
 | Wrong citation (Polanco & Lindsay) | corrected to PRB 99, 075202 (2019) |
 | glass.py defaults did not reproduce the cached glass; flux script not in repo | `glass.py <name>` now runs the whole pipeline; regenerates aSiO2_32_flux.npz bit-for-bit |
+
+**H12 (tested, NOT merged): low-frequency spectral sampling.** Fast-tier G_el
+vs MACE-AGF is 28% off at 50 K (stiff nitrides 25–55% low) against 13–15% at
+200–700 K. Cause: the histogrammed M(ω) is spiky below ~2–6 THz (finite
+q-mesh), and min(M₁, M₂) of two noisy spectra is biased low.
+* (a) exact long-wavelength (Debye) M, D below 3 q-mesh spacings + continuum
+  (frequency-independent) τ_spec there: AGF MAD by T unchanged (31/17/12/15%).
+* (b) Gaussian smoothing of M, M_k (σ = 0.15 THz): 50 K 32 → 25%, but 300 K
+  15 → 17% (fit set of η); σ = 0.3: 26% / 16%.
+* Not merged: no strict improvement without recalibrating η, α, b. Disclosed as
+  README Limitation 16; the CLI warns below 150 K. Code kept behind flags
+  (`LOWW_DEBYE`, `LOWW_CONTINUUM`, `SMOOTH_THZ`, all off).
+
+### Second independent audit and fixes
+
+| finding | action |
+|---|---|
+| Single-interface, stack and Sandell paths used different resistance networks (Al/Cu 7727 vs 1206 in stack mode; bottom-side metals ignored; `--metal` replaced detected metals) | one routine, `predict.network`, used by both CLI modes and the Sandell validation; order-independent; `--metal` adds to detected metals. Consequence: the Au/adhesion-layer interface now enters the Sandell stacks: 12.1 → 13.0% (Ti −10%, Ni −26%) |
+| TiN/TiC treated as insulators; Chang depends on it | disclosed (README Limitation 14, CLI note); Chang sensitivity 1.9–3.2 if TiC electrons carry the heat |
+| PMMA Debye cutoff counts H; Sandell depends on the convention | disclosed with numbers (13% vs 34% with C+O cutoff), Limitation 15 |
+| THETA_SIDE chosen with Chang in view; guard sets called "held out" | disclosed (Limitation 17); labels changed to "not fitted; guard set" in report, validation.md, params note, calibrate_glass.py |
+| Fast tier vs AGF accuracy only holds near 300 K | H12 above; T-dependent accuracy message |
+| Coherent default for metal/non-metal pairs (Cu/C 62.6 vs 111.6 non-epitaxial) | CLI prints both (`G_nonepi`) and the bonding key used |
+| Homo-interfaces gave finite G | CLI reports "no interface" |
+| `--T 0` gave nan; Miller minus signs dropped | rejected with an error; parsed correctly |
+| Section C means over different subsets | extra row: the 4 interfaces with AGF |

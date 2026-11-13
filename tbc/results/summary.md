@@ -1,19 +1,19 @@
 ### A. Experiments (fast tier)
 
-Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series layers as this model (`+e-ph`). The last column is the strongest baseline: full-dispersion DMM on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or inelastic channel). Only Al/Si sample 1 is used for fitting (2 global parameters).
+Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series layers as this model (`+e-ph`). *Guard set: never fitted, but used as a no-regression guard when accepting or rejecting model changes (EXPERIMENTS.md), so it is a validation set rather than a blind test set. The last column is the strongest baseline: full-dispersion DMM on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or inelastic channel). Only Al/Si sample 1 is used for fitting (2 global parameters).
 
 | dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |
 |---|---|---|---|---|---|---|
 | Al/Si sample1, 80–700 K (calibration) | 4.6% | 172.8% | 105.7% | 57.8% | 32.7% | 18.2% |
 | Al/Si sample2, 80–700 K (second specimen, not fitted) | 24.3% | 238.9% | 155.8% | 100.2% | 67.1% | 12.4% |
-| Al/GaN, 80–700 K (**held out**) | 6.9% | 180.9% | 128.3% | 54.0% | 36.8% | 12.9% |
-| Al/sapphire (Cheng 2020), 80–700 K (**held out**) | 6.2% | 32.5% | 141.8% | 4.6% | 54.1% | 14.1% |
-| Sandell 2020, 3 metal/PMMA/Si stacks (not fitted; used to choose the contact treatment, see EXPERIMENTS H8–H9) | 12.1% | 51.2% | 79.4% | 47.0% | 39.2% | – |
+| Al/GaN, 80–700 K (not fitted; guard set*) | 6.9% | 180.9% | 128.3% | 54.0% | 36.8% | 12.9% |
+| Al/sapphire (Cheng 2020), 80–700 K (not fitted; guard set*) | 6.2% | 32.5% | 141.8% | 4.6% | 54.1% | 14.1% |
+| Sandell 2020, 3 metal/PMMA/Si stacks (not fitted; used to choose the contact treatment, see EXPERIMENTS H8–H9) | 13.0% | 51.2% | 79.4% | 47.0% | 39.2% | – |
 | Chang 2019 TiC enhancement ratio, measured 1.48 (not fitted; bulk-terminated diamond assumed) | 1.36 | 2.19 | 1.10 | 2.00 | 1.08 | 1.84 |
 
 The two Al/Si specimens of Li et al. differ by 23% at 300 K (381 vs 310 MW m⁻² K⁻¹): specimen-to-specimen variation of nominally identical interfaces is itself ~20–25%, which bounds the accuracy any structure-only model can claim for real samples.
 
-Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 60, Au/Ti/PMMA/Si 115 / 105, Au/Ni/PMMA/Si 139 / 104
+Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 60, Au/Ti/PMMA/Si 115 / 103, Au/Ni/PMMA/Si 139 / 102
 
 ### B. Coherent crystalline interfaces: fast tier vs MACE-AGF (300 K, harmonic)
 
@@ -36,7 +36,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 135 (-12%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
 | TiN(100)/MgO(100) | **394** | 366 (-7%) | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
 
-### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, held out)
+### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
 Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). * Epitaxial TiN on MgO(001), MgO(111) and sapphire: Costescu, Wall & Cahill, PRB 67, 054302 (2003) found the same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) (approximate; TiN electron-phonon term omitted: no g data). Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.
 
@@ -49,6 +49,7 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 | TiN(111)/MgO(111) * | 700 | 496 | 338 | – | 2167 | 3971 |
 | TiN(111)/sapphire(0001) * | 700 | 482 | 372 | – | 2088 | 3620 |
 | **mean abs. error** | | 25% | | 35% | 236% | 387% |
+| mean abs. error, the 4 interfaces with an AGF reference | | 23% | | 35% | 252% | 360% |
 
 ### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (calibration set of the glass diffuson weight)
 

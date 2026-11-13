@@ -1,7 +1,7 @@
 """Calibrate the glass diffuson coupling weight W_DIFFUSON on ONE dataset:
 Li et al. 2022 Al / native SiO2 / Si G(T) (8 points, 80-350 K), with the
 native-oxide thickness taken as 1.5 nm (not reported; 1.0 and 2.0 nm give the
-sensitivity). Sandell et al. (PMMA on native SiO2/Si) remains held out.
+sensitivity). Sandell et al. (PMMA on native SiO2/Si) is not used in this fit.
 Writes 'w_diffuson' into params.json."""
 import json, os, sys
 import numpy as np
@@ -32,6 +32,6 @@ for t in (1.0e-9, 1.5e-9, 2.0e-9):
 Pj = json.load(open(PARAM_FILE))
 Pj["w_diffuson"] = round(res[1.5e-9], 3)
 Pj["w_diffuson_note"] = ("fit to Li 2022 Al/native-SiO2/Si G(T) assuming 1.5 nm oxide (1.0 nm -> %.2f, 2.0 nm -> %.2f); "
-                         "Sandell stacks held out" % (res[1.0e-9], res[2.0e-9]))
+                         "Sandell stacks not used in this fit" % (res[1.0e-9], res[2.0e-9]))
 json.dump(Pj, open(PARAM_FILE, "w"), indent=1)
 print(json.dumps({k: Pj[k] for k in ("w_diffuson", "w_diffuson_note")}))

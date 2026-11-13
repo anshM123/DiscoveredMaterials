@@ -16,6 +16,10 @@ THETA_SIDE = "stiff"
 INELASTIC_AMORPHOUS = False   # inelastic channel only for crystal/crystal interfaces
 K_RESOLVED_SPECULAR = True    # match specular channels at equal k_par
 SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
+SMOOTH_THZ = 0.0             # Gaussian smoothing (THz) of histogrammed crystal spectra before nonlinear matching
+LOWW_DEBYE = False           # (H12, tested, not adopted) exact long-wavelength (Debye) M, D below LOWW_DEBYE_MESH q-mesh spacings
+LOWW_DEBYE_MESH = 3.0
+LOWW_CONTINUUM = False       # (H12, tested, not adopted) tau_spec held at its value at that frequency below it (continuum limit)
 K_IMPEDANCE = True            # impedance factor per (k_par, w) in the specular channel
 SPEC_EFFICIENCY = 1.0         # specular efficiency between different crystals (set from params.json)
 W_DIFFUSON = 1.0              # interfacial coupling weight of glass diffusons (set from params.json)
@@ -76,6 +80,24 @@ class Side:
             self.n_atoms = float(d["n_atoms"])
             self.m_avg = float(d["m_avg"])
             self.crystal = True
+            # Long-wavelength limit. The q-mesh resolves wavevectors only down to
+            # ~|b_i|/N_i, so below a few mesh spacings the histogrammed M(w), D(w)
+            # are spiky (e.g. AlN: M = 0 at 0.5 THz). There the exact continuum
+            # (Debye) forms hold: D = w^2/(2 pi^2) (1/vL^3 + 2/vT^3),
+            # M = w^2/(8 pi^2) (1/vL^2 + 2/vT^2), with the MACE sound velocities.
+            if SMOOTH_THZ > 0:
+                self.M, self.Mperp, self.D = (_smooth(x, SMOOTH_THZ) for x in (self.M, self.Mperp, self.D))
+            self.w_debye = 0.0
+            if LOWW_DEBYE:
+                B = 2 * np.pi * np.linalg.inv(np.asarray(d["a_cell"], float) * 1e-10).T
+                mesh = CRYSTALS[name].get("mesh", [24, 24, 24])
+                qres = min(np.linalg.norm(B[i]) / mesh[i] for i in range(3))
+                self.w_debye = LOWW_DEBYE_MESH * self.vT * qres
+                low = W < self.w_debye
+                ML = W ** 2 / (8 * np.pi ** 2 * self.vL ** 2); MT = 2 * W ** 2 / (8 * np.pi ** 2 * self.vT ** 2)
+                self.M = np.where(low, ML + MT, self.M)
+                self.Mperp = np.where(low, 0.5 * ML + 0.5 * MT, self.Mperp)
+                self.D = np.where(low, W ** 2 / (2 * np.pi ** 2) * (1 / self.vL ** 3 + 2 / self.vT ** 3), self.D)
         else:
             a = AMORPHOUS[name]
             self.normal = None
@@ -167,6 +189,16 @@ def G_AMM_debye(s1, s2, T):
 COHERENCE_STRAIN = 0.05   # max misfit for a (locally) coherent match: at 3-5% misfit, epitaxial
                           # interfaces relax by misfit dislocations ~a/f ~ 6-10 nm apart and are
                           # coherent in between (patches >> dominant phonon wavelengths)
+
+
+def _smooth(y, sigma_thz, axis=-1):
+    """Gaussian smoothing along the frequency grid (preserves the integral)."""
+    if sigma_thz <= 0:
+        return y
+    sig = sigma_thz * 2 * np.pi * 1e12 / DW
+    n = int(np.ceil(4 * sig))
+    k = np.exp(-0.5 * (np.arange(-n, n + 1) / sig) ** 2); k /= k.sum()
+    return np.apply_along_axis(lambda v: np.convolve(v, k, mode="same"), axis, y)
 
 
 def plane_lattice(cell, normal, nmax=4):
@@ -316,6 +348,8 @@ class Interface:
                 from phonons import channel_spectra
                 M1k, V1k = channel_spectra(s1.name, s1.normal, nk=NK_SPEC, nz=NZ_SPEC, with_velocity=True)
                 M2k, V2k = channel_spectra(s2.name, s2.normal, nk=NK_SPEC, nz=NZ_SPEC, with_velocity=True)
+                if SMOOTH_THZ > 0:
+                    M1k, M2k = _smooth(M1k, SMOOTH_THZ), _smooth(M2k, SMOOTH_THZ)
                 # rescale so that each side integrates to its own full-mesh M (removes
                 # the few-% quadrature difference between the two samplings)
                 c1 = np.divide(s1.M, M1k.mean(axis=0), out=np.ones_like(W), where=M1k.mean(axis=0) > 0)
@@ -329,6 +363,21 @@ class Interface:
                     TZ = np.ones_like(W)
                 else:
                     Mmin = np.minimum(M1k * c1, M2k * c2).mean(axis=0)
+                if LOWW_CONTINUUM:
+                    # Long-wavelength limit: at low w only the few k_par columns near
+                    # Gamma carry channels, and the finite k_par/q_z grid resolves
+                    # them poorly (tau_spec -> 0 spuriously). In the continuum
+                    # (acoustic) limit the transmission is frequency independent,
+                    # so below the long-wavelength frequency w_b of the two sides
+                    # (Side.w_debye) tau is held at its mean over [w_b, 1.5 w_b].
+                    wb = max(s1.w_debye, s2.w_debye)
+                    res = np.nonzero(W >= wb)[0]
+                    if len(res) and wb > 0:
+                        i0 = res[0]
+                        win = (W >= wb) & (W <= 1.5 * wb) & ok
+                        r0 = Mmin[win].sum() / s1.M[win].sum() if s1.M[win].sum() > 0 else 0.0
+                        low = np.arange(len(W)) < i0
+                        Mmin = np.where(low & ok, r0 * s1.M, Mmin)
             except Exception as exc:          # pragma: no cover
                 import warnings
                 warnings.warn(f"k-resolved specular transmission unavailable ({exc}); using k-integrated bound")

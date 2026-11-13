@@ -124,26 +124,73 @@ def baselines(a, b, T, na=None, nb=None):
 def sandell_stack(adhesion, T=300.0, P=None, bond=None, t_ox=2.05e-9, t_ad=None):
     """Combined boundary conductance of Au/[adhesion]/PMMA/SiO2(native)/Si, as
     extracted by Sandell et al.: everything except the PMMA bulk resistance.
-    Electrons in Au deliver heat to the lattice of Au (Majumdar-Reddy) and, in
-    parallel, to the lattice of the thin adhesion layer (volumetric g*d)."""
+    Evaluated with the same resistance network as the CLI (predict.network):
+    Au electrons hand heat to the Au lattice (Majumdar-Reddy) and, in parallel,
+    to the lattice of the thin adhesion layer (g d); Au/adhesion is a metal/metal
+    interface (electron DMM + phonons)."""
     P = P or load_params()
     bond = bond or {}
-    Gep = G_ep("Au", T)
-    top = "Au"
-    R = 0.0
+    layers = [("Au", None, None)]
     if adhesion is not None:
         t_ad = t_ad or {"Ti": 2.4e-9, "Ni": 2.0e-9}[adhesion]
-        Gep += G_ep(adhesion, T, d=t_ad)
-        top = adhesion
-        R += t_ad / FILM_K[adhesion]
-    R += 1 / Gep
-    parts = {}
-    for a, b in [(top, "PMMA"), ("PMMA", "SiO2"), ("SiO2", "Si")]:
-        I = interface(a, b, bonding=bond.get((a, b)))
-        parts[f"{a}/{b}"] = I.G_pp(T, P["alpha"], P["b"])
-        R += 1 / parts[f"{a}/{b}"]
-    R += t_ox / film_k("SiO2", T)
-    parts["G_ep"] = Gep
+        layers.append((adhesion, None, t_ad))
+    layers += [("PMMA", None, 0.0), ("SiO2", None, t_ox), ("Si", "100", None)]
+    ifs, parts = [], {}
+    for (a, na, _), (b, nb, _) in zip(layers[:-1], layers[1:]):
+        ifs.append(interface(a, b, na, nb, bonding=bond.get((a, b))))
+    G, gs = network([(n, t) for n, _, t in layers], ifs, T, P)
+    for (a, _, _), (b, _, _), g in zip(layers[:-1], layers[1:], gs):
+        parts[f"{a}/{b}"] = g
+    parts["G_ep"] = G_ep("Au", T) + (G_ep(adhesion, T, d=t_ad) if adhesion else 0.0)
+    return G, parts
+
+
+def network(layers, interfaces, T, P, metals=None):
+    """Conductance of a layer sequence, shared by every CLI mode.
+    layers: [(name, thickness_m or None), ...], first and last semi-infinite;
+    interfaces: the Interface objects between consecutive layers;
+    metals: set of layer names carrying conduction electrons (default: the
+    elemental metals detected by is_metal; empty set = phonons only).
+    Rules:
+      * metal/metal interface between two semi-infinite metals:
+        G = G_EDMM + [1/G_ep(1) + 1/G_pp + 1/G_ep(2)]^-1 (electrons cross directly,
+        phonon path in parallel);
+      * metal/metal interface inside a stack: G_EDMM + G_pp (the electrons
+        stay in equilibrium across the metal block);
+      * metal block -> non-metal: the block's electrons hand heat to the lattice
+        of every block member in parallel (semi-infinite member: Majumdar-Reddy
+        sqrt(g kp); thin film: g d), then the phonon interface G_pp;
+      * every interior film adds t / k_film.
+    Returns (G_total, per-interface conductances incl. electron terms)."""
+    metals = {n for n, _ in layers if is_metal(n)} if metals is None else set(metals)
+    ism = [n in metals for n, _ in layers]
+    R, parts = 0.0, []
+
+    def block_gep(i, step):
+        g, j = 0.0, i
+        while 0 <= j < len(layers) and ism[j]:
+            n, t = layers[j]
+            g += G_ep(n, T) if t is None else G_ep(n, T, d=t)
+            j += step
+        return g
+
+    for i, I in enumerate(interfaces):
+        gpp = I.G_pp(T, P["alpha"], P["b"])
+        if ism[i] and ism[i + 1]:
+            ge = G_edmm(layers[i][0], layers[i + 1][0], T)
+            if len(layers) == 2:
+                g = ge + 1 / (1 / G_ep(layers[0][0], T) + 1 / gpp + 1 / G_ep(layers[1][0], T))
+            else:
+                g = ge + gpp
+            R += 1 / g; parts.append(g)
+        elif ism[i] or ism[i + 1]:
+            gep = block_gep(i, -1) if ism[i] else block_gep(i + 1, +1)
+            R += 1 / gep + 1 / gpp; parts.append(gpp)
+        else:
+            R += 1 / gpp; parts.append(gpp)
+    for n, t in layers[1:-1]:
+        if t:
+            R += t / film_k(n, T)
     return 1 / R, parts
 
 
