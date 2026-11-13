@@ -226,6 +226,9 @@ def main():
             print(f"[running AGF for {lab}; this takes ~1 CPU-hour]")
             agfmod.run(na, sa, nb, sb, nk=8, nw=160, inplane_min=9.0)
         agf_res = json.load(open(path))
+        if agf_res.get("valid") is False:
+            print(f"WARNING: the AGF reference {lab} failed its structure check (relaxed superlattice is not a clean "
+                  f"interface: {agf_res.get('structure_check', {}).get('cn_hist')}); its value is not reliable")
     metals = [] if a.no_eph else [n for n in (na, nb) if is_metal(n) or n == a.metal]
     Idiff = Interface(s1, s2, K=bond[0] if bond else None, Kref=bond[1] if bond else None, epitaxial=False) \
         if I.Lc is not None else None

@@ -141,7 +141,10 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
   see git history).
   * The four pairs that are not III-V/IV landed within 16% (GaN/ZnO −13%,
     GaAs/AlAs(110) −12%, TiN/MgO(001) −7%, and, in a fourth round with a new
-    orientation, Si(110)/Ge(110) −16%).
+    orientation, Si(110)/Ge(110) −16%). A seventh prediction,
+    GaAs(111)/AlAs(111) (138), has no valid reference: its AGF superlattice
+    construction failed (disordered relaxed structure, AGF 15 MW m⁻² K⁻¹). It is
+    excluded, and `agf.run` now flags such structures (`valid=False`).
   * **Both heterovalent III-V/IV (100) pairs failed:** GaP/Si(100) 163 vs 106
     (+54%) and GaAs/Ge(100) 238 vs 117 (+104%). The second was predicted after
     the first failed, specifically to test this class.
@@ -407,6 +410,10 @@ Checks:
 7. **AGF tier scope.**
    * Lattice-matched pairs only (the R side is strained).
    * Memory limits the in-plane force-constant supercell to about 600 atoms.
+   * The superlattice builder failed for polar zincblende (111) stacking
+     (GaAs/AlAs(111): disordered relaxed structure). Every AGF run now checks the
+     coordination of the relaxed superlattice and marks the result `valid=False`
+     (with a warning in `tbc.py --agf`) when the interface is not clean.
 8. **MACE accuracy varies.** Ge and GaAs are ~8–13% soft; Si TA ~10% soft.
 9. **Literature inputs:** electron–phonon coupling g, Born charges, and
    amorphous sound velocities.

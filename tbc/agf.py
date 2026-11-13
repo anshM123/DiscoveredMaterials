@@ -269,7 +269,7 @@ def conductance(wgrid, Xi_avg, A_ang2, Ts):
     return np.array(out)
 
 
-def structure_check(ph, uL, uR, tol=0.02):
+def structure_check(ph, uL, uR, nameL=None, nameR=None, tol=0.02):
     """Coordination sanity check of the relaxed superlattice: every atom should
     keep the coordination of its bulk crystal (nearest-neighbour shell, cutoff
     1.2 x the shortest bulk bond). Interfaces with reconstructed or broken
@@ -286,9 +286,13 @@ def structure_check(ph, uL, uR, tol=0.02):
         d = neighbor_list("d", bb, 3.5)
         dmin.append(d.min() if len(d) else 2.5)
     rc = 1.2 * max(dmin)
+    # bulk coordination from the bulk crystals themselves (not the oriented units,
+    # which are what a failed construction would have broken)
+    from materials import CRYSTALS
     cn_bulk = []
-    for b in (uL, uR):
-        bb = b.copy(); bb.pbc = True
+    for b, nm in ((uL, nameL), (uR, nameR)):
+        bb = CRYSTALS[nm]["build"]() if nm in CRYSTALS else b.copy()
+        bb.pbc = True
         cn_bulk.append(int(np.bincount(neighbor_list("i", bb, rc), minlength=len(bb)).max()))
     cn = np.bincount(neighbor_list("i", a, rc), minlength=len(a))
     ref = max(cn_bulk)
@@ -318,7 +322,7 @@ def run(nameL, mL, nameR, mR, nsc=0, nk=8, nw=160, periods=None, label=None, inp
         sl = relax_sl(sl)
         ph = force_constants(sl, nsc)
         ph.save(fcfile, settings={"force_constants": True})
-    check = structure_check(ph, uL, uR)
+    check = structure_check(ph, uL, uR, nameL, nameR)
     if not check["ok"]:
         import warnings
         warnings.warn(f"[{label}] relaxed superlattice is NOT a clean interface: {check['n_bad']} of {check['n']} atoms "

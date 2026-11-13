@@ -86,7 +86,8 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
   Metallic ceramics (TiN, TiC) are treated as phonon-only solids, so metal/TiN contacts are a lower bound.
 * Al/GaN, Al/sapphire and the AGF pairs were never fitted, but served as no-regression guards in model
   selection (and the inelastic channel's Θ choice was made with Chang in view): they are validation sets.
-  The six pre-registered AGF predictions are the strictly blind tests; the two heterovalent III-V/IV (100)
+  The six pre-registered AGF predictions with a valid reference are the strictly blind tests (a seventh,
+  GaAs/AlAs(111), has none: its AGF superlattice construction failed and is now detected automatically); the two heterovalent III-V/IV (100)
   ones failed (+54%, +104%): MACE relaxes their electron-deficient interfacial bonds to soft, stretched ones that the
   fast tier cannot see. The CLI warns for this class and recommends the AGF tier.
 * Below ~100 K the fast tier underestimates harmonic AGF for stiff nitrides by 25–55% (spectral undersampling).

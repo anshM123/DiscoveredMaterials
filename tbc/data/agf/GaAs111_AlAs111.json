@@ -357,5 +357,17 @@
   15590018.159507647,
   15612588.773194479,
   15627276.520929862
- ]
+ ],
+ "valid": false,
+ "structure_check": {
+  "ok": false,
+  "n_bad": 20,
+  "n": 192,
+  "cn_hist": {
+   "3": 11,
+   "4": 172,
+   "5": 9
+  },
+  "note": "relaxed superlattice disordered: failed (111) zincblende construction; not a valid reference"
+ }
 }
