@@ -123,7 +123,45 @@ RESULTS_PLACEHOLDER
 
 ## 3. Limitations (honest list)
 
-LIMITATIONS_PLACEHOLDER
+1. **High-temperature slope is about half the measured value.** Above 400 K the
+   model rises (0.19–0.21 MW m⁻² K⁻²), but Li et al. measure 0.39–0.43. Part of
+   the rise is cancelled by the falling electron–phonon conductance of Al
+   (κ_p ∝ 1/T); g of Al is itself uncertain by about 2× (pump-probe vs
+   equilibrium DFT values, Brown et al. PRB 94, 075120 (2016)).
+2. **Low-temperature Al/Si is overpredicted by up to 17% at 80 K.** This comes
+   from the long-wavelength specular channel. Real interfaces have some
+   roughness that the coherence-based specularity ignores.
+3. **The inelastic channel rests on one experiment.** α and b are calibrated
+   only on Al/Si. The Al/GaN prediction tests transfer to a second substrate
+   with the same metal, not to other metals.
+4. **Very weak (van der Waals, H-terminated) contacts fail.** For Cu on
+   H-terminated diamond, MACE+D3 gives K/K_ref = 0.04. The spring factor then
+   collapses G to about 1 MW m⁻² K⁻¹, far below measured metal/H-diamond values
+   (tens of MW m⁻² K⁻¹). Either MACE+D3 underbinds such contacts or other
+   channels carry heat (e.g. cross-interface electron–phonon coupling). The
+   Chang prediction therefore assumes bulk-terminated diamond(111).
+5. **The polymer description is crude.** PMMA is a Debye solid (measured
+   sound velocities, atom-density cutoff). Its contact stiffness comes from
+   PMMA repeat units on the surface: 3 orientations, MACE-OMAT-0 + D3. OMat
+   training data contain few molecular systems.
+6. **Composite interlayers are idealised.** The 10 nm TiC film is a bulk-like
+   resistance (κ = 20 W m⁻¹ K⁻¹) between two ideal-epitaxy interfaces. The
+   measured dependence on TiC crystallinity and thickness (Chang et al.) is
+   not modelled.
+7. **Only (111)/(0001) hexagonal surface matching is implemented** for the
+   coherence length. Other orientations are treated as fully diffuse unless
+   L_c is passed explicitly (`Interface(..., Lc=...)`).
+8. **Literature inputs** that are not computed: the electron–phonon coupling g
+   of each metal, Born charges of polar crystals, and sound velocities and
+   density of amorphous solids. Each has its source in `materials.py`.
+9. **Comparison convention.** Conductances are Landauer conductances with
+   emitted-phonon temperatures (the AGF convention). The Zeng–Chen
+   local-equilibrium correction is available (`noneq=True`) but switched off:
+   it overshot the low-T Al/Si data by 2×. Comparing with NEMD temperature
+   drops at highly transmitting interfaces would need that correction.
+10. **No hidden-set guarantee.** The validation covers 3 datasets and 6
+    interfaces. Industrial interfaces with intermixing, oxides or amorphous
+    interlayers need their structure supplied explicitly.
 
 ---
 
