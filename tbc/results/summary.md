@@ -7,10 +7,10 @@ Mean absolute error against measurement. AMM/DMM are the Debye models of Little 
 | Al/Si sample1, 80–700 K (calibration) | 4.6% | 183.0% | 105.7% | 61.6% | 32.7% |
 | Al/GaN, 80–700 K (**held out**) | 6.9% | 225.2% | 128.3% | 68.3% | 36.8% |
 | Al/sapphire (Cheng 2020), 80–700 K (**held out**) | 6.2% | 76.7% | 141.8% | 27.0% | 54.1% |
-| Sandell 2020, 3 metal/PMMA/Si stacks (**held out**) | 17.7% | 22.3% | 79.4% | 10.2% | 39.2% |
+| Sandell 2020, 3 metal/PMMA/Si stacks (held out from all fits) | 12.1% | 22.3% | 79.4% | 10.2% | 39.2% |
 | Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | 1.36 | 1.97 | 1.10 | 1.80 | 1.08 |
 
-Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 70, Au/Ti/PMMA/Si 115 / 105, Au/Ni/PMMA/Si 139 / 104
+Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 60, Au/Ti/PMMA/Si 115 / 105, Au/Ni/PMMA/Si 139 / 104
 
 ### B. Coherent crystalline interfaces: fast tier vs MACE-AGF (300 K, harmonic)
 

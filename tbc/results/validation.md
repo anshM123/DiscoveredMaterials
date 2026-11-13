@@ -75,7 +75,7 @@ Global parameters (calibrated on Al/Si sample 1 only): alpha = 1.4236, b = 5.203
 
 | stack | measured | model | variant: w/o bonding factor | variant: inelastic channel also on amorphous | AMM | DMM | AMM+e-ph | DMM+e-ph |
 |---|---|---|---|---|---|---|---|---|
-| Au/PMMA/Si | 59 | **70** | 70 | 88 | 86 | 159 | 66 | 101 |
+| Au/PMMA/Si | 59 | **60** | 70 | 78 | 86 | 159 | 66 | 101 |
 | Au/Ti/PMMA/Si | 115 | **105** | 105 | 141 | 134 | 168 | 124 | 153 |
 | Au/Ni/PMMA/Si | 139 | **104** | 104 | 142 | 133 | 171 | 124 | 157 |
 
