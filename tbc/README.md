@@ -102,9 +102,8 @@ The model over-predicts this metal/glass stack by ~1.4–1.7× (most at low T), 
   metal/crystal datasets the error is 5–7%, including two that were never
   fitted (Al/GaN and epitaxial Al/sapphire). Raw AMM/DMM are off by 77–225%,
   and even AMM/DMM with the same electron–phonon treatment are off by 27–68%.
-  The model also reproduces the qualitative contrast between the two
-  experiments: Al/Si keeps rising above 400 K, while harmonic-matched
-  Al/sapphire plateaus.
+  Room-temperature values are reproduced within 4%: Al/Si 398 vs 381 and
+  Al/GaN 441 vs 425 MW m⁻² K⁻¹.
 * **Against atomistic ground truth (coherent interfaces):** the AGF tier
   reproduces independent references, AlN/GaN within 6% of DFT-NEGF and
   AlN/4H-SiC within 4% of measurement. Over five coherent pairs, the fast
@@ -113,7 +112,8 @@ The model over-predicts this metal/glass stack by ~1.4–1.7× (most at low T), 
 * **Where the model is weak:**
   * The metal/polymer stacks (Sandell) are no better than AMM with the same
     e-ph/series treatment.
-  * The >400 K slope of Al/Si and Al/GaN is under-predicted by about 2×.
+  * **The >400 K rise of Al/Si and Al/GaN is under-predicted about 4×**
+    (0.10 and 0.07 vs 0.43 and 0.39 MW m⁻² K⁻²); see Limitations 1.
   * For six measured epitaxial semiconductor and nitride/oxide interfaces
     (section C), the fast tier's mean error is 25%: AlN/SiC +40% at worst,
     TiN/oxide about −30%. DMM and AMM are off by 236% and 461%.
@@ -238,16 +238,27 @@ Checks:
 
 ## 4. Limitations (honest list)
 
-1. **High-temperature slope.**
-   * The Al/Si and Al/GaN rise above 400 K is under-predicted by about 2×.
-   * Six global reformulations were tested; none improved it without
-     degrading held-out data:
+1. **High-temperature slope (a named target, only partly met).**
+   * The model's G rises above 400 K for Al/Si and Al/GaN, but at 0.10 and
+     0.07 MW m⁻² K⁻² against measured 0.43 and 0.39.
+   * Adding the slope to the calibration objective (`TBC_SLOPE_WEIGHT`, still
+     calibrated on Al/Si only) reproduces the slope but loses the
+     room-temperature values and the other held-out data:
+
+     | calibration objective | Li slope Al/Si, Al/GaN (meas. 0.43, 0.39) | G(300 K) Al/Si, Al/GaN (meas. 381, 425) | Al/sapphire err. | measured epitaxial (sec. C) |
+     |---|---|---|---|---|
+     | log error (default) | 0.10, 0.07 | 398, 441 | 6% | 25% |
+     | + 0.3 × slope error² | 0.36, 0.32 | 326, 383 | 13% | 41% |
+
+   * To match the slope, the inelastic channel must switch on sharply above
+     400 K. That suppresses it at 300 K, where the room-temperature data and
+     real semiconductor interfaces need it.
+   * Six other global reformulations were also tested, none better:
      * equilibrium-DFT electron–phonon coupling of Al;
      * coherence-only specularity;
-     * a soft-side "transmission-deficit" inelastic channel, with both Θ
-       choices.
-   * Al/Si rises while harmonic-matched Al/sapphire plateaus, which points to
-     sample-specific factors (sharpness, defects) that are not inputs.
+     * a soft-side "transmission-deficit" channel, with both Θ choices.
+   * Al/Si rises while epitaxial Al/sapphire (Cheng) is flat, so sample- or
+     analysis-specific factors (sharpness, TDTR modelling) likely contribute.
 2. **Molecule–metal chemistry is outside MACE-OMAT-0's domain.**
    * For Ni/PMMA, reactive MD (700 K, confined film) and chemisorbed starting
      geometries were tried. MACE never binds the carbonyl to Ni, while XPS
