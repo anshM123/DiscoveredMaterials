@@ -5,7 +5,25 @@ scorecard (`scorecard.py`) improves overall and **no guarded metric regresses**.
 Guarded: Al/GaN G(T) (held out), Al/sapphire G(T) (held out), the blind
 AGF tests, and the AGF calibration set. Baseline: `results/scorecard_baseline.json`.
 
-Baseline scorecard (commit 6aec94f), lower is better:
+## Index of outcomes
+
+| item | what | outcome |
+|---|---|---|
+| H1–H3 | substrate-dependent inelastic channels for the >400 K slope | rejected (guarded regressions) |
+| H4 | ideal polymer contacts alone | superseded by H8/H9 |
+| H5 | Open Catalyst potential for Ni/PMMA chemistry | not possible here (download blocked) |
+| H6 | MACE glass propagons only | too low (~3×); led to H8 |
+| H7 | crystal / MACE-glass AGF | lower bound only (periodic glass lead) |
+| **H8** | propagons + one diffuson weight w (fit: Li Al/native-SiO₂/Si) | **merged** (47 → 2%; Sandell 20 → 18%) |
+| **H9** | noble metals physisorb (MACE+D3 stiffness), reactive metals bonded | **merged** (Sandell 18 → 12%; chosen after seeing Sandell) |
+| **H10** | Allen g for metals without measured e-ph coupling | **merged** (robustness) |
+| **H11** | coherence judged on the experimental lattice volume | **merged** (no metric change; Si/Ge coherent in the CLI) |
+| H12 | spectral smoothing / long-wavelength Debye; also with full recalibration | rejected (guarded regressions) |
+| H13 | weak bonding as the cause of the GaP/Si blind miss | ruled out (K/K_ref 0.97) |
+| audits 1–3 | independent judge-style reviews | all findings fixed or disclosed (tables below) |
+| blind tests | 7 pre-registered fast-tier predictions vs later MACE-AGF | 5 non-III-V/IV: −7 to −39% (mean 17%); 2 III-V/IV (100): +54%, +104% |
+
+Baseline scorecard (commit 6aec94f, before this sprint), lower is better:
 
 | metric | value |
 |---|---|
