@@ -227,3 +227,11 @@ q-mesh), and min(M₁, M₂) of two noisy spectra is biased low.
   the polar (100) III-V/Si interface (Ga–Si / P–Si bonds), whose relaxed bonding
   scatters more than bulk-like channel matching can see.
 * Not used to change anything; the blind mean is now 22% (was 11% on three).
+
+**H13 (diagnostic): is weak interfacial bonding the cause of the GaP/Si miss?**
+No. MACE+D3 rigid-shift scan of the relaxed Ga-terminated GaP/Si(100)
+interface (bonding.py `GaP_Si100`): K_n = 5.5×10²⁰ N m⁻³, K/K_ref = 0.97
+(bulk-like, gap 1.75 Å). With it the fast tier gives 161 instead of 163. The
+over-prediction must come from elsewhere: eigenvector/polarity mismatch at the
+heterovalent interface that channel counting cannot see, or the AGF supercell
+itself (convergence check in k-mesh below).

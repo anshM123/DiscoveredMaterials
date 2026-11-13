@@ -213,7 +213,7 @@ BOND_KEYS = {("Al", "Si"): "Al_Si", ("Al", "GaN"): "Al_GaN", ("Cu", "TiC"): "Cu_
              ("TiC", "C"): "TiC_C", ("Au", "PMMA"): "Au_PMMA", ("Ti", "PMMA"): "Ti_PMMA",
              ("Ni", "PMMA"): "Ni_PMMA", ("PMMA", "SiO2"): "PMMA_SiO2",
              ("Ag", "PMMA"): "Ag_PMMA", ("Pt", "PMMA"): "Pt_PMMA",
-             ("Cu", "C"): "Cu_C_bare"}   # bulk-terminated diamond (as in the Chang validation)
+             ("Cu", "C"): "Cu_C_bare", ("GaP", "Si"): "GaP_Si100"}   # bulk-terminated diamond (as in the Chang validation)
 
 
 MOLECULAR_CONTACTS_IDEAL = True
