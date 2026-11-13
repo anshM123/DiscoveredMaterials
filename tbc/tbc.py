@@ -277,7 +277,7 @@ def main():
                "(Gundrum et al. 2005, ~4 GW measured). Not validated here: factor-2 estimate")
     elif I.Lc is not None and I.p_inf > 0.5 and not (metals or any(is_metal(n) for n in (na, nb))):
         acc = ("coherent crystalline pair: G_el within ~15% of harmonic MACE-AGF at 200-700 K for 5 fit pairs and "
-               "6 non-III-V/IV blind tests all LOW, -7% to -39% (mean 19%); III-V/IV pairs: see warning if shown), but 25-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
+               "7 non-III-V/IV blind tests -39% to +9% (mean 18%, mostly LOW); III-V/IV pairs: see warning if shown), but 25-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
                "epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
         if Tlo < 150:
             acc += ". WARNING: T < 150 K requested"
