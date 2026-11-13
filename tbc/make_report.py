@@ -20,9 +20,15 @@ AGF_SETS = [("AlN0001_GaN0001", ("AlN", "0001"), ("GaN", "0001")),
             ("Si100_Ge100", ("Si", "100"), ("Ge", "100"))]
 
 
-def agf_table(T=300.0):
+# blind tests: fast-tier predictions committed before these AGF references were
+# computed (data/reference/preregistered_agf_predictions.json); never used in fits
+AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
+             ("GaAs110_AlAs110", ("GaAs", "110"), ("AlAs", "110"))]
+
+
+def agf_table(T=300.0, sets=None):
     rows = []
-    for lab, a, b in AGF_SETS:
+    for lab, a, b in (sets or AGF_SETS):
         path = os.path.join(AGF_DIR, f"{lab}.json")
         if not os.path.exists(path):
             continue
@@ -73,7 +79,18 @@ def main():
         for k in ["fast_elastic", "DMM_full", "DMM", "AMM"]:
             pass
         mk = lambda k: np.mean([abs(r[k] / r["AGF"] - 1) for r in agf]) * 100
-        L.append(f"| **mean abs. deviation from AGF** | | | {mk('fast_elastic'):.0f}% | {mk('DMM_full'):.0f}% | {mk('DMM'):.0f}% | {mk('AMM'):.0f}% |")
+        L.append(f"| **mean abs. deviation from AGF (calibration set of η)** | | | {mk('fast_elastic'):.0f}% | {mk('DMM_full'):.0f}% | {mk('DMM'):.0f}% | {mk('AMM'):.0f}% |")
+    blind = agf_table(sets=AGF_BLIND)
+    if blind:
+        pre = json.load(open(os.path.join(HERE, "data", "reference", "preregistered_agf_predictions.json")))["predictions_MW_m2K"]
+        L += ["", "**Blind tests** (fast-tier value committed before the AGF reference was computed; η frozen):", "",
+              "| interface | **AGF** | pre-registered fast tier | full-dispersion DMM | DMM (Debye) | AMM (Debye) |", "|---|---|---|---|---|---|"]
+        for r in blind:
+            pr = pre.get(r["interface"].replace("(", "(").replace("SiC4H", "4H-SiC"), None)
+            pr = pre.get(r["interface"], r["fast_elastic"]) if pr is None else pr
+            e = lambda v: f"{v:.0f} ({100 * (v / r['AGF'] - 1):+.0f}%)"
+            L.append(f"| {r['interface']} | **{r['AGF']:.0f}** | {e(pr)} | {e(r['DMM_full'])} | {e(r['DMM'])} | {e(r['AMM'])} |")
+        agf = agf + blind
     L.append("")
     # C. measured conductances of real coherent semiconductor interfaces
     from predict import load_params as _lp

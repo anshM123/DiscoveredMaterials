@@ -102,6 +102,18 @@ def main():
                               rows=rows), indent=1)); return
     print(f"interface {a.a} | {a.b}   bonding: {'ideal' if bond is None else 'K/Kref = %.2f' % (bond[0][0] / bond[1][0])}"
           f"   metal: {a.metal or '-'}   coherence length: {'diffuse' if I.Lc is None else '%.1f A' % I.Lc}")
+    # expected accuracy of this interface class, from the validation in README
+    if not (s1.crystal and s2.crystal):
+        acc = ("amorphous/polymer contact: ~20-40% (Sandell stacks 20% mean; interfacial bond stiffness "
+               "of molecule/metal contacts is uncertain with MACE-OMAT-0)")
+    elif I.Lc is not None and I.p_inf > 0.5:
+        acc = ("coherent crystalline pair: G_el within ~19% of harmonic AGF (leave-one-out, 5 pairs + 1 blind test -13%); "
+               "measured epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
+    elif a.metal:
+        acc = "metal on crystal (incommensurate/diffuse): ~5-7% vs measured G(T) (Al/Si, Al/GaN, Al/sapphire)"
+    else:
+        acc = "incommensurate or polycrystalline crystalline pair: diffuse limit; validated only indirectly (~25%)"
+    print(f"expected accuracy: {acc}")
     print("   T(K)   G(MW/m2K)  R_K(m2K/GW)  G_pp   G_el  P_inel   AMM    DMM")
     for r in rows:
         print("{T:7.0f} {G:10.1f} {R_K:11.3f} {G_pp:7.0f} {G_elastic:6.0f} {P_inelastic:6.2f} {AMM:6.0f} {DMM:6.0f}".format(**r)
