@@ -269,6 +269,34 @@ def conductance(wgrid, Xi_avg, A_ang2, Ts):
     return np.array(out)
 
 
+def structure_check(ph, uL, uR, tol=0.02):
+    """Coordination sanity check of the relaxed superlattice: every atom should
+    keep the coordination of its bulk crystal (nearest-neighbour shell, cutoff
+    1.2 x the shortest bulk bond). Interfaces with reconstructed or broken
+    stacking (a failed construction) are flagged: valid = fraction of atoms with
+    changed coordination <= tol (interfacial bonds of heterovalent pairs that
+    are merely stretched still pass)."""
+    from ase import Atoms
+    from ase.neighborlist import neighbor_list
+    u = ph.unitcell
+    a = Atoms(u.symbols, cell=u.cell, scaled_positions=u.scaled_positions, pbc=True)
+    dmin = []
+    for b in (uL, uR):
+        bb = b.copy(); bb.pbc = True
+        d = neighbor_list("d", bb, 3.5)
+        dmin.append(d.min() if len(d) else 2.5)
+    rc = 1.2 * max(dmin)
+    cn_bulk = []
+    for b in (uL, uR):
+        bb = b.copy(); bb.pbc = True
+        cn_bulk.append(int(np.bincount(neighbor_list("i", bb, rc), minlength=len(bb)).max()))
+    cn = np.bincount(neighbor_list("i", a, rc), minlength=len(a))
+    ref = max(cn_bulk)
+    bad = int(np.sum(cn != ref)) if cn_bulk[0] == cn_bulk[1] else int(np.sum((cn < min(cn_bulk)) | (cn > max(cn_bulk))))
+    hist = {int(k): int(v) for k, v in zip(*np.unique(cn, return_counts=True))}
+    return dict(ok=bool(bad <= tol * len(a)), n_bad=bad, n=len(a), cn_hist=hist, cutoff=float(rc))
+
+
 def run(nameL, mL, nameR, mR, nsc=0, nk=8, nw=160, periods=None, label=None, inplane_min=12.0):
     os.makedirs(CACHE, exist_ok=True)
     label = label or f"{nameL}{mL}_{nameR}{mR}"
@@ -290,6 +318,12 @@ def run(nameL, mL, nameR, mR, nsc=0, nk=8, nw=160, periods=None, label=None, inp
         sl = relax_sl(sl)
         ph = force_constants(sl, nsc)
         ph.save(fcfile, settings={"force_constants": True})
+    check = structure_check(ph, uL, uR)
+    if not check["ok"]:
+        import warnings
+        warnings.warn(f"[{label}] relaxed superlattice is NOT a clean interface: {check['n_bad']} of {check['n']} atoms "
+                      f"changed coordination (histogram {check['cn_hist']}). The AGF result is unreliable "
+                      "(construction or reconstruction problem); it is stored with valid=False.")
     agf = AGF(ph, tag, nP, (ppl_L, ppl_R))
     # frequency grid up to max phonon frequency of both bulk materials
     from phonons import load
@@ -307,7 +341,7 @@ def run(nameL, mL, nameR, mR, nsc=0, nk=8, nw=160, periods=None, label=None, inp
     G = conductance(wgrid, Xi, agf.A, Ts)
     res = dict(label=label, L=nameL, R=nameR, normal_L=mL, normal_R=mR, strain_R=strain,
                nsc=nsc, nk=nk, f_THz=list(wgrid * OMEGA_UNIT / 2 / np.pi / 1e12), Xi=list(Xi),
-               A=agf.A, T=list(Ts), G=list(G))
+               A=agf.A, T=list(Ts), G=list(G), valid=bool(check["ok"]), structure_check=check)
     json.dump(res, open(os.path.join(CACHE, f"{label}.json"), "w"), indent=1)
     print(json.dumps({"label": label, "G(300K) MW/m2K": round(float(np.interp(300, Ts, G)) / 1e6, 1)}), flush=True)
     return res

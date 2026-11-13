@@ -28,8 +28,9 @@ AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
              ("TiN100_MgO100", ("TiN", "100"), ("MgO", "100")),
              ("GaP100_Si100", ("GaP", "100"), ("Si", "100")),     # second round (pre-registered 163)
              ("GaAs100_Ge100", ("GaAs", "100"), ("Ge", "100")),   # third round (pre-registered 238)
-             ("Si110_Ge110", ("Si", "110"), ("Ge", "110")),       # fourth round (pre-registered 132)
-             ("GaAs111_AlAs111", ("GaAs", "111"), ("AlAs", "111"))]  # fourth round (pre-registered 138)
+             ("Si110_Ge110", ("Si", "110"), ("Ge", "110"))]       # fourth round (pre-registered 132)
+# GaAs(111)/AlAs(111) was also pre-registered (138) but its AGF superlattice construction
+# failed (disordered relaxed structure): no valid reference, excluded (see the JSON note)
 
 
 def agf_table(T=300.0, sets=None):
