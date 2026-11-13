@@ -11,12 +11,15 @@
  "results_AGF_MW_m2K": {
   "GaN(0001)/ZnO(0001)": 207.3,
   "GaAs(110)/AlAs(110)": 153.7,
-  "TiN(100)/MgO(100)": 394.2
+  "TiN(100)/MgO(100)": 394.2,
+  "GaP(100)/Si(100)": 104.6
  },
  "deviation": {
   "GaN(0001)/ZnO(0001)": "-13%",
   "GaAs(110)/AlAs(110)": "-12%",
-  "TiN(100)/MgO(100)": "-7%"
+  "TiN(100)/MgO(100)": "-7%",
+  "GaP(100)/Si(100)": "+56%"
  },
- "second_round_note": "GaP(100)/Si(100) predicted and committed on 2026-11-13 (~09:35 EST) before its MACE-AGF reference was run; same frozen eta = 0.63, coherent setting Lc = surface lattice parameter (CLI path: 163 as well)."
+ "second_round_note": "GaP(100)/Si(100) predicted and committed on 2026-11-13 (~09:35 EST) before its MACE-AGF reference was run; same frozen eta = 0.63, coherent setting Lc = surface lattice parameter (CLI path: 163 as well).",
+ "second_round_result_note": "GaP(100)/Si(100): AGF (MACE, nk=8, 2x2 in-plane FC supercell, Si strained +1.5%) = 104.6 MW m^-2 K^-1 vs pre-registered 163: the fast tier over-predicts by 56% (3-6 THz band ~2x too transmissive). Reported as a failed blind test."
 }

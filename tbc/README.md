@@ -65,6 +65,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaN(0001)/ZnO(0001) | **207** | 181 (-13%) | 182 (-12%) | 307 (+48%) | 1099 (+430%) | 1363 (+557%) |
 | GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 135 (-12%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
 | TiN(100)/MgO(100) | **394** | 366 (-7%) | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
+| GaP(100)/Si(100) | **105** | 163 (+56%) | 163 (+56%) | 249 (+138%) | 760 (+627%) | 976 (+833%) |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -130,12 +131,16 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     for nearly matched semiconductors (e.g. Si/Ge 137 → 254), so `G` is *not*
     an estimate of harmonic AGF. It has not been validated against anharmonic
     NEMD for non-Al pairs.
-* **Blind tests.** After η was frozen, fast-tier predictions for three new
-  coherent pairs (GaN/ZnO, GaAs/AlAs(110), TiN/MgO(001)) were committed to
-  the repository *before* their AGF references were computed
-  (`data/reference/preregistered_agf_predictions.json`, see git history).
-  All three landed within 13% (−13%, −12%, −7%), while full-dispersion DMM was
-  off by +8% to +48% and Debye DMM/AMM by 286–907%.
+* **Blind tests.** After η was frozen, fast-tier predictions for four new
+  coherent pairs were committed to the repository *before* their AGF
+  references were computed (`data/reference/preregistered_agf_predictions.json`,
+  see git history). Three landed within 13% (GaN/ZnO −13%, GaAs/AlAs(110) −12%,
+  TiN/MgO(001) −7%). **The fourth, GaP(100)/Si(100) (second round), failed:
+  163 predicted vs 105 MW m⁻² K⁻¹ from AGF (+56%)**; the fast tier is ~2× too
+  transmissive at 3–6 THz, plausibly because the polar (100) III-V/Si
+  interface bonding scatters more than bulk channel matching assumes. Mean
+  over the four: 22%, against 53% for full-dispersion DMM and 286–907% for
+  Debye DMM/AMM.
 * **Where the model is weak:**
   * **The >400 K rise:** 0.10 and 0.07 vs measured 0.43 and 0.39 MW m⁻² K⁻²
     for Al/Si sample 1 and Al/GaN (about 4× too weak). It matches Li's second

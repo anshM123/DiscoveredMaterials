@@ -216,3 +216,14 @@ q-mesh), and min(M₁, M₂) of two noisy spectra is biased low.
 | Homo-interfaces gave finite G | CLI reports "no interface" |
 | `--T 0` gave nan; Miller minus signs dropped | rejected with an error; parsed correctly |
 | Section C means over different subsets | extra row: the 4 interfaces with AGF |
+
+### Fourth blind test (second round): GaP(100)/Si(100) — failed
+
+* Fast-tier prediction 163 MW m⁻² K⁻¹ committed (7861f12, 14:32 UTC) before the
+  MACE-AGF run (2×2 in-plane FC supercell, 512 atoms, Si strained +1.5%, nk = 8).
+* AGF: 104.6. The fast tier is +56% (full-dispersion DMM +138%, Debye
+  DMM/AMM +627/+833%).
+* Spectrally, the fast tier is ~2× too transmissive at 3–6 THz. Plausible cause:
+  the polar (100) III-V/Si interface (Ga–Si / P–Si bonds), whose relaxed bonding
+  scatters more than bulk-like channel matching can see.
+* Not used to change anything; the blind mean is now 22% (was 11% on three).
