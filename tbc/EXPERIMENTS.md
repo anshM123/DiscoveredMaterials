@@ -165,3 +165,22 @@ measured g.**
   Co 4980, Ru 3170 MW m⁻² K⁻¹. Only Ag (weakly coupled, like Au) is
   e-ph-limited; Tong's lattice conductivity is used for Ag, Pt, Co.
 * Scorecard unchanged (no such metal in any validation set).
+
+### Independent audit (judge's-eye review by a separate agent) and fixes
+
+An agent with no stake in the results reviewed the docs, code and CLI. Its
+findings, and what was done:
+
+| finding | action |
+|---|---|
+| All warnings silenced globally (`phonons.py`), so the e-ph fallbacks never printed | filter scoped to third-party libraries |
+| Debye AMM used (Z₁cosθ₁+Z₂cosθ₂)² and was not reciprocal (Pt/Si 104 vs Si/Pt 1350) | textbook acoustic-Fresnel energy transmission (Z₁cosθ₂+Z₂cosθ₁)², transmission only below both Debye cutoffs → reciprocal. Baselines changed: AMM+e-ph now **beats** this model on Al/sapphire (4.6 vs 6.2%), and is 47% on Sandell |
+| Li's second Al/Si specimen digitised but not reported | reported: model 24% (specimen 2 is 23% below specimen 1 at 300 K; its slope 0.10 matches the model's 0.14) |
+| Baselines were Debye-only | full-dispersion DMM on the same MACE spectra + same e-ph added (18 / 12 / 13 / 14% on the four G(T) sets) |
+| CLI treated Si/Ge as diffuse (MACE misfit 5.2% > 5%), unlike the validation path | **H11**: misfit judged on planes rescaled to the experimental atomic volume (real Si/Ge misfit 4.2%). Scorecard: no metric moved by more than 0.2 (Sandell 12.1, blind 10.8, agf 15.4). The CLI path is within 2% of the validated coherent path for all eight AGF pairs and is now shown next to it |
+| `G` (with inelastic channel) vs `G_el` ambiguity for atomistic ground truth | documented like-with-like (AGF ↔ G_el, NEMD ↔ G_pp, experiment ↔ G); `--local-equilibrium` exposes the Zeng–Chen convention of NEMD |
+| No electronic channel for metal/metal | electron DMM (Gundrum 2005) in parallel; metal sides detected automatically; `--no-eph` |
+| Stack mode lacked the adhesion-layer coupling and film conductivities | added (CLI reproduces the validated Sandell path: Au 60.4 = 60.4, Au/Ti 103 vs 105); bulk-k / κ_min fallbacks |
+| "Held out" overstated for Sandell and Chang | relabelled; Chang's dependence on the unreported diamond termination stated |
+| Wrong citation (Polanco & Lindsay) | corrected to PRB 99, 075202 (2019) |
+| glass.py defaults did not reproduce the cached glass; flux script not in repo | `glass.py <name>` now runs the whole pipeline; regenerates aSiO2_32_flux.npz bit-for-bit |
