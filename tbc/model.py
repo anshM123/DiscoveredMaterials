@@ -179,6 +179,8 @@ def G_AMM_debye(s1, s2, T):
     scattering), which makes it reciprocal: G(1,2) = G(2,1)."""
     G = 0.0
     for (v1, wc1, g), (v2, wc2, _) in zip(s1.debye_branches(), s2.debye_branches()):
+        if not (v1 > 0 and v2 > 0):
+            continue
         a = _amm_angle_avg(s1.rho * v1, s2.rho * v2, v1, v2)
         M1 = np.where(W <= min(wc1, wc2), g * W ** 2 / (2 * np.pi ** 2 * v1 ** 3) * v1 / 4, 0.0)
         G += np.sum(HBAR * W * dfdT(W, T) * M1) * DW * a

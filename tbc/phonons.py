@@ -101,6 +101,13 @@ def sound_velocities(ph, ndir=200, dq=0.01, seed=0):
     gv = ph.get_qpoints_dict()["group_velocities"]    # (nq, nband, 3) THz*Angstrom
     speeds = np.linalg.norm(gv[:, :3, :], axis=2) * 100.0   # m/s
     speeds.sort(axis=1)
+    # directions where phonopy returns a degenerate/zero acoustic group velocity
+    # (seen in low-symmetry cells) are dropped from the Debye average
+    good = np.all(np.isfinite(speeds[:, :3]) & (speeds[:, :3] > 50.0), axis=1)
+    if good.mean() < 0.9:
+        import warnings
+        warnings.warn(f"sound velocities: {100 * (1 - good.mean()):.0f}% of directions dropped (zero group velocity)")
+    speeds = speeds[good]
     vT = np.mean(speeds[:, :2] ** -3) ** (-1 / 3)
     vL = np.mean(speeds[:, 2] ** -3) ** (-1 / 3)
     return float(vL), float(vT)
