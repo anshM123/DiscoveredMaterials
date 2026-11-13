@@ -411,3 +411,14 @@ itself (convergence check in k-mesh below).
     is 0.10): 24.2 → 25.0%.
   * The full slope is reachable (H15b) but costs the guarded sets; that
     trade-off is stated, not taken.
+* **H15d (not merged): slope-weighted choice of T_L** (α, b frozen, n = 8),
+  with objective rms² + 0.3 (slope error)² on Al/Si.
+
+  | T_L | Al/Si MAPE | Al/Si slope | Al/GaN MAPE | Al/GaN slope | Al/sapphire |
+  |---|---|---|---|---|---|
+  | 740 K | 3.9% | 0.37 | 6.0% | 0.34 | 5.8% |
+  | 773 K (H15c, merged) | 3.6% | 0.31 | 5.7% | 0.28 | 5.8% |
+
+  Al/GaN MAPE rises by 0.3 points against the merged H15c state (a guarded
+  regression beyond the 0.2 tolerance), so it is not merged. It is a one-line
+  change (`local_eq_TL` in params.json) if slope fidelity is preferred.
