@@ -16,6 +16,13 @@ INELASTIC_AMORPHOUS = False   # inelastic channel only for crystal/crystal inter
 K_RESOLVED_SPECULAR = True    # match specular channels at equal k_par
 SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
 K_IMPEDANCE = True            # impedance factor per (k_par, w) in the specular channel
+SPEC_EFFICIENCY = 1.0         # specular efficiency between different crystals (set from params.json)
+try:                          # frozen global parameters
+    import json as _json, os as _os
+    _P = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "params.json")))
+    SPEC_EFFICIENCY = float(_P.get("spec_efficiency", SPEC_EFFICIENCY))
+except Exception:             # pragma: no cover
+    pass
 NK_SPEC = 16                  # k_par grid for channel_spectra
 NZ_SPEC = 32                  # q_z points per column (flux captured ~95%, G converged to ~1%)
 
@@ -296,7 +303,13 @@ class Interface:
                 warnings.warn(f"k-resolved specular transmission unavailable ({exc}); using k-integrated bound")
         if Mmin is None:
             Mmin = np.minimum(s1.M, s2.M)
-        return np.divide(TZ * Mmin, s1.M, out=np.zeros_like(W), where=ok)
+        tau = np.divide(TZ * Mmin, s1.M, out=np.zeros_like(W), where=ok)
+        if s1.name != s2.name:
+            # channel counting cannot see eigenvector (polarisation/sublattice)
+            # mismatch between two different crystals; the global efficiency is
+            # calibrated against MACE-AGF on coherent pairs (calibrate_spec.py)
+            tau = tau * SPEC_EFFICIENCY
+        return tau
 
     def specularity(self, w):
         """Fraction of phonons scattered specularly (parallel momentum

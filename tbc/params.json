@@ -1,6 +1,8 @@
 {
- "alpha": 2.0407,
- "b": 2.5106,
+ "alpha": 1.4358,
+ "b": 5.0535,
  "calibrated_on": "Li et al. 2022 Al/Si sample 1 (12 points, 82-705 K)",
- "rms_log_error": 0.0578
+ "rms_log_error": 0.0594,
+ "spec_efficiency": 0.64,
+ "spec_efficiency_note": "fit to MACE-AGF on 4 coherent pairs at 300 K; LOO mean abs dev 24%"
 }

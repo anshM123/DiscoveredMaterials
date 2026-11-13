@@ -2,7 +2,7 @@
 ONE dataset only: Al(111)/Si(111) sample 1 of Li et al. (2022). Everything
 else (Al/GaN, Cu/TiC/diamond, Au/PMMA stacks) is a prediction.
 Writes params.json."""
-import json, sys
+import json, sys, os
 import numpy as np
 from scipy.optimize import minimize
 from predict import interface, G_ep, PARAM_FILE, bonding_for
@@ -28,8 +28,12 @@ for a0 in [-1, 0, 1, 2, 3]:
                      options=dict(xatol=1e-5, fatol=1e-10, maxiter=4000))
         if best is None or r.fun < best.fun:
             best = r
+old = json.load(open(PARAM_FILE)) if os.path.exists(PARAM_FILE) else {}
 P = dict(alpha=round(float(np.exp(best.x[0])), 4), b=round(float(np.exp(best.x[1])), 4),
          calibrated_on="Li et al. 2022 Al/Si sample 1 (12 points, 82-705 K)",
          rms_log_error=round(float(np.sqrt(best.fun)), 4))
+for k in ("spec_efficiency", "spec_efficiency_note"):
+    if k in old:
+        P[k] = old[k]
 json.dump(P, open(PARAM_FILE, "w"), indent=1)
 print(json.dumps(P))

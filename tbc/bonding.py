@@ -130,6 +130,29 @@ def pmma_unit(seed):
     return a
 
 
+def pmma_unit_chemisorbed(seed):
+    """PMMA repeat unit oriented for carbonyl (Lewis acid-base) bonding: the
+    C=O bond points at the surface (O lowest), random rotation about the
+    surface normal. Atom order from SMILES COC(=O)C(C)C: index 2 = carbonyl C,
+    index 3 = carbonyl O."""
+    a = pmma_unit(seed)
+    v = a.positions[3] - a.positions[2]
+    v /= np.linalg.norm(v)
+    t = np.array([0.0, 0.0, -1.0])
+    ax = np.cross(v, t); s_ = np.linalg.norm(ax); c_ = v @ t
+    if s_ > 1e-8:
+        ax /= s_
+        K = np.array([[0, -ax[2], ax[1]], [ax[2], 0, -ax[0]], [-ax[1], ax[0], 0]])
+        R = np.eye(3) + np.sin(np.arccos(c_)) * K + (1 - c_) * K @ K
+        a.positions = a.positions @ R.T
+    phi = np.random.default_rng(seed + 7).uniform(0, 2 * np.pi)
+    Rz = np.array([[np.cos(phi), -np.sin(phi), 0], [np.sin(phi), np.cos(phi), 0], [0, 0, 1]])
+    a.positions = a.positions @ Rz.T
+    # shift so that the carbonyl O is the reference for placement
+    a.info["anchor"] = 3
+    return a
+
+
 def hydroxylated_silica(size=(2, 2), nlayers=3):
     """Hydroxylated beta-cristobalite(111) slab (~4.5 OH/nm^2, the silanol
     density of amorphous silica surfaces). Bottom also hydroxylated and fixed."""
@@ -179,7 +202,7 @@ def _scan(sys_atoms, upper_mask, A, h=0.04):
     return dict(K_n=out["n"], K_t=0.5 * (out["tx"] + out["ty"]))
 
 
-def _place_and_relax(sub, mols, z_gap=2.4, fmax=0.05, steps=400):
+def _place_and_relax(sub, mols, z_gap=2.4, fmax=0.05, steps=400, anchor_gap=None):
     from ase.constraints import FixAtoms
     from ase.optimize import BFGS
     sys_ = sub.copy()
@@ -192,7 +215,19 @@ def _place_and_relax(sub, mols, z_gap=2.4, fmax=0.05, steps=400):
         fx, fy = ((k % nx) + 0.5) / nx, ((k // nx) + 0.5) / nx
         xy = fx * cell[0] + fy * cell[1]
         m = m.copy()
-        m.positions += np.array([xy[0], xy[1], top + z_gap - m.positions[:, 2].min()])
+        if anchor_gap is not None and "anchor" in m.info:
+            zref = m.positions[m.info["anchor"], 2]
+            zlow = m.positions[:, 2].min()
+            # anchor atom at anchor_gap above the surface; no other atom closer
+            # than 2.0 A (avoids unphysical initial overlaps that decompose
+            # the molecule during relaxation)
+            dz = top + anchor_gap - zref
+            others = np.delete(m.positions[:, 2], m.info["anchor"])
+            if others.min() + dz < top + 2.0:
+                dz = top + 2.0 - others.min()
+            m.positions += np.array([xy[0], xy[1], dz])
+        else:
+            m.positions += np.array([xy[0], xy[1], top + z_gap - m.positions[:, 2].min()])
         sys_ += m
     sys_.cell[2] = [0, 0, top + 30.0]
     sys_.pbc = (True, True, False)
@@ -229,7 +264,7 @@ def _place_and_relax_fast(sub, mols):
     return s, up
 
 
-def K_molecular_layer(substrate, seeds=(0, 1, 2), reactive=False):
+def K_molecular_layer(substrate, seeds=(0, 1, 2), reactive=False, chemisorbed=False):
     """PMMA repeat units at PMMA areal density on a substrate slab.
     reactive=True adds the anneal of _reactive_anneal before the scan."""
     sub = metal_slab(substrate) if substrate != "SiO2" else hydroxylated_silica()
@@ -238,6 +273,13 @@ def K_molecular_layer(substrate, seeds=(0, 1, 2), reactive=False):
     nmol = max(1, int(round(PMMA_UNITS_PER_A2 * A)))
     res = []
     for sd in seeds:
+        if chemisorbed:
+            mols = [pmma_unit_chemisorbed(1000 * sd + k) for k in range(nmol)]
+            s, up = _place_and_relax(sub, mols, anchor_gap=2.4)
+            print(f"    {substrate}/PMMA seed {sd} relaxed: min substrate-O {_min_dist(s, len(sub), 'O'):.2f} A", flush=True)
+            r = _scan(s, up, A); res.append(r)
+            print(f"  {substrate}/PMMA seed {sd}: n_mol={nmol} K_n={r['K_n']:.3e} K_t={r['K_t']:.3e}", flush=True)
+            continue
         mols = [pmma_unit(1000 * sd + k) for k in range(nmol)]
         if reactive:
             s, up = _place_and_relax_fast(sub, mols)
@@ -393,17 +435,25 @@ def job(f):
 @job
 def Au_PMMA(): return K_molecular_layer("Au")
 @job
+def Au_PMMA_chem(): return K_molecular_layer("Au", chemisorbed=True)
+@job
 def Au_PMMA_rx(): return K_molecular_layer("Au", seeds=(0, 1), reactive=True)
 @job
 def Ti_PMMA(): return K_molecular_layer("Ti")
+@job
+def Ti_PMMA_chem(): return K_molecular_layer("Ti", chemisorbed=True)
 @job
 def Ti_PMMA_rx(): return K_molecular_layer("Ti", seeds=(0, 1), reactive=True)
 @job
 def Ni_PMMA(): return K_molecular_layer("Ni")
 @job
+def Ni_PMMA_chem(): return K_molecular_layer("Ni", chemisorbed=True)
+@job
 def Ni_PMMA_rx(): return K_molecular_layer("Ni", seeds=(0, 1), reactive=True)
 @job
 def PMMA_SiO2(): return K_molecular_layer("SiO2")
+@job
+def PMMA_SiO2_chem(): return K_molecular_layer("SiO2", chemisorbed=True)
 @job
 def PMMA_SiO2_rx(): return K_molecular_layer("SiO2", seeds=(0, 1), reactive=True)
 
