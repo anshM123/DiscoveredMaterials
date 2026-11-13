@@ -490,6 +490,29 @@ def Al_Si():
     r = K_coherent(lo, up, 2.5); r["strain_upper"] = strain; return r
 
 
+def cubic100_slab(name, a, structure, n_conv=2, lat=2):
+    """(100) slab of a cubic zincblende/diamond crystal, MACE-relaxed lattice,
+    lateral lat x lat conventional cells, n_conv conventional cells thick."""
+    from ase.build import bulk, surface, make_supercell
+    from phonons import relax
+    b = relax(bulk(name, structure, a=a, cubic=True))
+    s = surface(b, (1, 0, 0), n_conv, vacuum=0.0)
+    s = make_supercell(s, np.diag([lat, lat, 1]))
+    s.positions[:, 2] -= s.positions[:, 2].min()
+    return s
+
+
+@job
+def GaP_Si100():
+    """Polar heterovalent (100) interface of the failed blind AGF test (diagnostic H13)."""
+    lo = cubic100_slab("Si", 5.43, "diamond")
+    up = cubic100_slab("GaP", 5.451, "zincblende")
+    up, strain = match(up, lo.cell)
+    r = K_coherent(lo, up, 2.35); r["strain_upper"] = strain
+    r["GaP_bottom_species"] = up.get_chemical_symbols()[int(np.argmin(up.positions[:, 2]))]
+    return r
+
+
 @job
 def Al_GaN():
     P = np.array([[2, 1, 0], [-1, 1, 0], [0, 0, 1]])  # sqrt3 x sqrt3 R30
