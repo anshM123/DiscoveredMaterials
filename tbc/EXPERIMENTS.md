@@ -20,6 +20,9 @@ AGF tests, and the AGF calibration set. Baseline: `results/scorecard_baseline.js
 | **H11** | coherence judged on the experimental lattice volume | **merged** (no metric change; Si/Ge coherent in the CLI) |
 | H12 | spectral smoothing / long-wavelength Debye; also with full recalibration | rejected (guarded regressions) |
 | H13 | weak bonding as the cause of the GaP/Si blind miss | ruled out (K/K_ref 0.97) |
+| **H14** | valence-class specular efficiency (0.74; 0.44 for III-V/IV), on 14 AGF pairs | **merged** (LOO 28 → ~18%; Chang 8 → 3%; section C 25 → 21%); fresh blind round 6 |
+| H15a/b | measured-convention local-equilibrium fraction with α, b refitted | rejected (Al/GaN, sapphire, section C or Chang regress) |
+| **H15c** | same with a high-T onset, α, b frozen (T_L = 773 K) | **merged** (slopes 0.11 → 0.32 Al/Si, 0.09 → 0.28 Al/GaN; no guarded regression) |
 | audits 1–3 | independent judge-style reviews | all findings fixed or disclosed (tables below) |
 | blind tests | 9 pre-registered fast-tier predictions vs later MACE-AGF | 7 non-III-V/IV: −39 to +9% (mean 18%, six of seven low); 2 III-V/IV (100): +54%, +104% |
 
@@ -314,3 +317,97 @@ itself (convergence check in k-mesh below).
   six-fold): **+9%**, the first non-III-V/IV blind pair on the high side. Final
   blind statistics: 9 pairs 31%; the seven non-III-V/IV pairs 18% (six of seven
   low); all 14 AGF pairs at 300 K 26%.
+
+## Final sprint (6 h): mismatch-dependent specular efficiency and the >400 K rise
+
+### H14 (MERGED): valence-class specular efficiency
+
+* **A continuous mismatch metric was tested first and has no support.** The
+  efficiency each AGF pair needs, η_req = G_AGF / G_el(η = 1), was compared with:
+  * normalised-DOS overlap;
+  * thermally weighted flux overlap;
+  * mass ratio;
+  * k∥-channel matching ratio;
+  * the impedance factor;
+  * G_el / G_rad.
+
+  None correlates, on the five fit pairs or on all fourteen. η_req even changes
+  with orientation for the same materials: Si/Ge 0.58 (100) and 0.75 (110);
+  GaAs/AlAs 0.80 (100), 0.72 (110) and 1.04 (111). Finer channel sampling
+  (nk 24, nz 48) changes nothing, so this is not a sampling artefact.
+* **What does separate the pairs is valence chemistry.**
+  * The four III-V/group-IV pairs need η = 0.31–0.58, consistent with the
+    stretched, electron-deficient interfacial bonds found in the AGF structures.
+  * The other ten need 0.50–1.04.
+* **Two global constants** (`model.spec_efficiency`), fitted on all 14 AGF
+  references with `calibrate_spec.py`:
+
+  | class | η | leave-one-out error |
+  |---|---|---|
+  | other pairs (10) | 0.74 | 14% |
+  | III-V/IV pairs (4) | 0.44 | 29% |
+  | both, overall | — | ~18% (single η: 28%) |
+
+* α and b were recalibrated on Al/Si (1.58, 3.83). `calibrate.py` now keeps every
+  other parameter (it previously dropped unknown keys).
+* **Caveat:** the nine first-round blind pairs are now in the calibration set, so
+  the AGF agreement on them is no longer a blind result.
+* **Fresh blind test of H14 (round 6):** five new pairs pre-registered (501bbb5)
+  before their AGF runs; see below.
+* Scorecard against the previous merged state:
+
+  | metric | before | after |
+  |---|---|---|
+  | Al/GaN | 6.9% | 6.1% |
+  | Al/sapphire | 6.2% | 5.7% |
+  | Chang | 8.0% | 2.9% |
+  | measured epitaxial (section C) | 25.4% | 20.8% |
+  | AGF fit set | 15.4% | 14.5% |
+
+  No regression.
+
+### H15: the >400 K rise (local-equilibrium content of a measured temperature drop)
+
+* **The data have the same shape everywhere.**
+  * All three sets plateau between ~300 and ~450 K: Al/Si 381 → 385 → 402;
+    Al/GaN 425 → 440 → 432; Al/sapphire 354 → 361.
+  * Al/Si and Al/GaN then rise only above ~500 K. Cheng's Al/sapphire data stop
+    at 479 K, so they do not contradict a late rise.
+  * The old single inelastic channel rose smoothly from 100 to 450 K and
+    overshot the plateau.
+* **In the Landauer convention the 700 K Al/Si value is unreachable.**
+  * 534 MW m⁻² K⁻¹ needs a phonon conductance of 1154 in series with
+    G_ep(Al, 700 K) = 994.
+  * The one-step ceiling G_max is only 1094.
+* **What changes:** a TDTR temperature drop is between local-equilibrium
+  temperatures once the substrate phonons are in local equilibrium near the
+  interface. So the model's Landauer G_pp is converted with a fraction f(T) of
+  the Zeng–Chen correction. The AGF comparisons stay Landauer.
+* **H15a, f = T/(T + T_L), α, b, T_L refitted: rejected.**
+  * Al/Si fits much better (rms 0.041 vs 0.058; with slope weight 0.3, slope
+    0.418 vs 0.426).
+  * Guards regress: Al/GaN 6.1 → 11–12%, Al/sapphire → 7.8%, section C
+    21 → 30–33%. The gradual fraction inflates every 300 K value.
+* **H15b, f = 1/(1+(T_L/T)^n), α, b, T_L refitted: rejected.**
+  * With n = 6, Al/Si is 1.9% (slope 0.41/0.43, G(300 K) 381/380) and the Al/GaN
+    slope error falls 0.31 → 0.03.
+  * But Al/GaN MAPE goes 6.1 → 7.1% and Chang 2.9 → 16.8%: the refit removes the
+    Slack activation (b → 20), changing room-temperature inelastic transport
+    for every interface.
+* **H15c (MERGED): the same sharp onset with α, b frozen; only T_L fitted.**
+  * Fit on Al/Si only: T_L = 773 K, n = 8 fixed (Al/Si rms is insensitive to n
+    between 6 and 10).
+  * f(300 K) ≈ 0, so every room-temperature result is unchanged by construction.
+
+  | metric | before | after |
+  |---|---|---|
+  | Al/Si MAPE | 4.7% | 3.6% |
+  | Al/Si slope | 0.11 | 0.32 (measured 0.43) |
+  | Al/GaN MAPE | 6.1% | 5.7% |
+  | Al/GaN slope | 0.09 | 0.28 (measured 0.39) |
+  | Al/sapphire MAPE | 5.68% | 5.79% (within tolerance) |
+
+  * The only regression is Li's second Al/Si specimen (unguarded; its own slope
+    is 0.10): 24.2 → 25.0%.
+  * The full slope is reachable (H15b) but costs the guarded sets; that
+    trade-off is stated, not taken.

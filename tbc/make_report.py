@@ -82,8 +82,9 @@ def main():
          "layers as this model (`+e-ph`). *Guard set: never fitted, but used as a no-regression guard when accepting "
          "or rejecting model changes (EXPERIMENTS.md), so it is a validation set rather than a blind test set. The last column is the strongest baseline: full-dispersion DMM "
          "on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or "
-         "inelastic channel). Only Al/Si sample 1 is fitted (α, b of the inelastic channel); η (fitted to the AGF "
-         "references) also enters through the partly specular Al/Si, Al/GaN and Al/sapphire interfaces.", "",
+         "inelastic channel). Only Al/Si sample 1 is fitted (α, b of the inelastic channel and the onset T_L of the "
+         "measured-temperature convention); η (fitted to the AGF references) also enters through the partly specular "
+         "Al/Si, Al/GaN and Al/sapphire interfaces.", "",
          "| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |", "|---|---|---|---|---|---|---|"]
     for key, role in [("Al/Si sample1", "calibration"), ("Al/Si sample2", "second specimen, not fitted"),
                       ("Al/GaN", "not fitted; guard set*"), ("Al/sapphire (Cheng 2020)", "not fitted; guard set*")]:
@@ -122,16 +123,45 @@ def main():
         mk = lambda k: np.mean([abs(r[k] / r["AGF"] - 1) for r in agf]) * 100
         L.append(f"| **mean abs. deviation from AGF (calibration set of η)** | | | {mk('fast_elastic'):.0f}% | {mk('fast_elastic_cli'):.0f}% | – | {mk('DMM_full'):.0f}% | {mk('DMM'):.0f}% | {mk('AMM'):.0f}% |")
     blind = agf_table(sets=AGF_BLIND)
+    prj = json.load(open(os.path.join(HERE, "data", "reference", "preregistered_agf_predictions.json")))
     if blind:
-        pre = json.load(open(os.path.join(HERE, "data", "reference", "preregistered_agf_predictions.json")))["predictions_MW_m2K"]
-        L += ["", "**Blind tests** (fast-tier value committed before the AGF reference was computed; η frozen):", "",
-              "| interface | **AGF** | pre-registered fast tier G_el | G_el (CLI, now) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |", "|---|---|---|---|---|---|---|"]
+        pre = prj["predictions_MW_m2K"]
+        L += ["", "**First-round blind tests** (fast-tier value committed before the AGF reference was computed, with "
+              "the single η = 0.63 of that time; 'now' is the current two-class η, which was calibrated on these pairs "
+              "too, so the 'now' column is not blind):", "",
+              "| interface | **AGF** | pre-registered fast tier G_el (η = 0.63) | G_el now (η two-class) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |",
+              "|---|---|---|---|---|---|---|"]
         for r in blind:
-            pr = pre.get(r["interface"].replace("(", "(").replace("SiC4H", "4H-SiC"), None)
-            pr = pre.get(r["interface"], r["fast_elastic"]) if pr is None else pr
+            pr = pre.get(r["interface"], r["fast_elastic"])
             e = lambda v: f"{v:.0f} ({100 * (v / r['AGF'] - 1):+.0f}%)"
-            L.append(f"| {r['interface']} | **{r['AGF']:.0f}** | {e(pr)} | {e(r['fast_elastic_cli'])} | {e(r['DMM_full'])} | {e(r['DMM'])} | {e(r['AMM'])} |")
+            L.append(f"| {r['interface']} | **{r['AGF']:.0f}** | {e(pr)} | {e(r['fast_elastic'])} | {e(r['DMM_full'])} | {e(r['DMM'])} | {e(r['AMM'])} |")
+        mp = np.mean([abs(pre.get(r["interface"], r["fast_elastic"]) / r["AGF"] - 1) for r in blind]) * 100
+        mn = np.mean([abs(r["fast_elastic"] / r["AGF"] - 1) for r in blind]) * 100
+        L.append(f"| **mean abs. deviation** | | {mp:.0f}% | {mn:.0f}% (calibration) | "
+                 f"{np.mean([abs(r['DMM_full'] / r['AGF'] - 1) for r in blind]) * 100:.0f}% | | |")
         agf = agf + blind
+    blind2 = agf_table(sets=AGF_BLIND2)
+    r6 = prj.get("round6_two_class_eta", {})
+    L += ["", "**Round-6 blind tests of the two-class η** (H14; predictions committed in "
+          "`preregistered_agf_predictions.json` before these AGF runs; never used in any fit):", "",
+          "| interface | class | **AGF** | pre-registered fast tier G_el | full-dispersion DMM | DMM (Debye) | AMM (Debye) |",
+          "|---|---|---|---|---|---|---|"]
+    from materials import heterovalent as _hv
+    done = {r["interface"]: r for r in blind2}
+    for lab, a, b in AGF_BLIND2:
+        key = f"{a[0]}({a[1]})/{b[0]}({b[1]})"
+        pr = r6.get("predictions_MW_m2K", {}).get(key)
+        cls = "III-V/IV" if "III-V" in _hv(a[0], b[0]) else "other"
+        if key in done:
+            r = done[key]; e = lambda v: f"{v:.0f} ({100 * (v / r['AGF'] - 1):+.0f}%)"
+            L.append(f"| {key} | {cls} | **{r['AGF']:.0f}** | {e(pr)} | {e(r['DMM_full'])} | {e(r['DMM'])} | {e(r['AMM'])} |")
+        else:
+            L.append(f"| {key} | {cls} | pending | {pr} | | | |")
+    if blind2:
+        mb = np.mean([abs(r6["predictions_MW_m2K"][r["interface"]] / r["AGF"] - 1) for r in blind2]) * 100
+        L.append(f"| **mean abs. deviation ({len(blind2)} done)** | | | {mb:.0f}% | "
+                 f"{np.mean([abs(r['DMM_full'] / r['AGF'] - 1) for r in blind2]) * 100:.0f}% | | |")
+        agf = agf + blind2
     L.append("")
     # C. measured conductances of real coherent semiconductor interfaces
     from predict import load_params as _lp

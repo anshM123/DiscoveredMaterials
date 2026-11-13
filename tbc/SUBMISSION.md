@@ -19,6 +19,8 @@ A two-tier, structure-to-conductance framework. Nothing is fitted per specimen.
      lattice-impedance spring factor (polymer contacts: physisorbed on noble metals → computed stiffness;
      chemisorbed on reactive metals and oxides → bonded, classified by oxide formation enthalpy);
    * an anharmonic (inelastic) channel;
+   * the temperature convention of a measured conductance: TDTR temperature drops become local-equilibrium
+     drops at high T (a fraction f(T) = 1/(1+(T_L/T)⁸) of the Zeng–Chen correction; f(300 K) ≈ 0);
    * the metal's electron–phonon resistance (Majumdar–Reddy, with DFT lattice conductivities; measured g,
      or Allen's formula with the MACE phonon DOS for metals without a measurement);
    * for metal/metal interfaces, the electron diffuse-mismatch channel in parallel;
@@ -27,9 +29,11 @@ A two-tier, structure-to-conductance framework. Nothing is fitted per specimen.
    relaxed coherent interface. It reproduces published DFT-NEGF for GaN/AlN (281 vs ~300 MW m⁻² K⁻¹). Being
    harmonic and defect-free, it differs from measured epitaxial wafers by 35% on average (AlN/SiC +4%,
    AlN/GaN −43%, GaN/SiC −52%, TiN/MgO −44%).
-4. **Four global parameters, frozen in `params.json`:**
-   * α and b of the inelastic channel, fitted to one dataset (Al/Si, Li et al. 2022);
-   * the specular efficiency η, fitted to five MACE-AGF references;
+4. **Six global constants, frozen in `params.json` (none per specimen):**
+   * α and b of the inelastic channel, and T_L, the onset of local equilibrium in a measured temperature
+     drop, all fitted to one dataset (Al/Si, Li et al. 2022);
+   * the specular efficiency η = 0.74, and 0.44 for heterovalent III-V/group-IV pairs, fitted to the 14
+     MACE-AGF references (leave-one-out 14% / 29%);
    * the glass diffuson weight w, fitted to Li's Al/native-SiO₂/Si curve.
 
 ## Implementation
@@ -49,29 +53,30 @@ and DMM, and an expected-accuracy statement for the interface class. Runtime on 
 * a G(T) curve takes seconds;
 * an AGF reference takes ~1 h.
 
-There are 23 physics-invariant tests and a smoke test covering every interface class.
+There are 24 physics-invariant tests and a smoke test covering every interface class.
 
 ## Results (from `make_report.py`; details and figures in README)
 
 | test | this framework | strongest baseline |
 |---|---|---|
-| Li 2022 Al/Si G(T), 82–705 K, specimen 1 (fit set) | 4.6% | 18% (full-dispersion DMM + same e-ph) |
-| Li 2022 Al/Si G(T), specimen 2 (not fitted; 19% below specimen 1 at 300 K) | 24% | 12% (full-dispersion DMM + same e-ph) |
-| Li 2022 Al/GaN G(T) (not fitted; guard set in model selection) | 6.9% | 13% (full-dispersion DMM + same e-ph) |
-| Cheng 2020 epitaxial Al/sapphire G(T) (not fitted; guard set) | 6.2% | 4.6% (Debye AMM + same e-ph) |
+| Li 2022 Al/Si G(T), 82–705 K, specimen 1 (fit set) | 3.6%; 300 K 395 vs 381; slope >400 K 0.31 vs 0.43 | 18% (full-dispersion DMM + same e-ph) |
+| Li 2022 Al/Si G(T), specimen 2 (not fitted; 19% below specimen 1 at 300 K) | 25% | 12% (full-dispersion DMM + same e-ph) |
+| Li 2022 Al/GaN G(T) (not fitted; guard set in model selection) | 5.7%; 300 K 436 vs 425; slope 0.28 vs 0.39 | 13% (full-dispersion DMM + same e-ph) |
+| Cheng 2020 epitaxial Al/sapphire G(T) (not fitted; guard set) | 5.8%; 300 K 346 vs 345 | 4.6% (Debye AMM + same e-ph) |
 | Sandell 2020 Au/[Ti,Ni]/PMMA/Si (not fitted; used to choose the polymer-contact treatment) | 13.0% (Au +2%, Ti −10%, Ni −26%); 34% if PMMA's Debye cutoff counts only C and O | 39% (Debye DMM + same e-ph/series) |
-| Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.36 (5.68 for H-terminated diamond; 1.9–3.2 if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
-| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 32% at 50 K. All 14 AGF pairs: 26% at 300 K | 66% (full-dispersion DMM) |
-| 9 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 31%: the seven non-III-V/IV pairs 18% (−13, −12, −7, −16, −28, −39, +9%); **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 46% (full-dispersion DMM) |
-| 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 25% (harmonic elastic part alone 41%) | 34% (full-dispersion DMM); 35% (harmonic AGF, 4 pairs); 236% (Debye DMM) |
+| Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.44 (7.2 for H-terminated diamond; higher if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
+| 14 coherent pairs, G_el vs MACE-AGF at 300 K (η calibration set; two-class η) | 15%; leave-one-out 14% (10 pairs) / 29% (4 III-V/IV pairs) | 66% on the original five (full-dispersion DMM) |
+| 9 first-round blind pairs vs MACE-AGF (committed beforehand with the single η = 0.63 of the time; since then part of the η calibration) | 31%: the seven non-III-V/IV pairs 18%; **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 46% (full-dispersion DMM) |
+| Round-6 fresh blind pairs for the two-class η (committed before the AGF runs) | see README section B | |
+| 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 21% (harmonic elastic part alone 41%) | 34% (full-dispersion DMM); 35% (harmonic AGF, 4 pairs); 236% (Debye DMM) |
 | Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 85% (Debye DMM + same e-ph) |
 
 ## Known limitations (stated, not hidden)
 
-* The >400 K rise of Li's Al/Si (specimen 1) and Al/GaN is reproduced in sign but 4–6× too weak (0.10 vs
-  0.43 MW m⁻² K⁻²). Li's second Al/Si specimen rises only 0.10 (model 0.14) and Cheng's Al/sapphire is flat
-  (model 0.25): the measured slope is specimen-dependent. Calibrating to the slope costs the room-temperature
-  values (trade-off table in the README).
+* The >400 K rise of Li's Al/Si (specimen 1) and Al/GaN is ~70% reproduced (0.31 vs 0.43 and 0.28 vs 0.39
+  MW m⁻² K⁻²) with room-temperature values unchanged. Matching it fully is possible (0.41) but costs Al/GaN and
+  Chang, so it is not taken. Li's second Al/Si specimen rises only 0.10 (model 0.26) and Cheng's Al/sapphire
+  is flat to 479 K (model 0.30): the measured slope is specimen-dependent.
 * Glasses: SiO₂ uses a MACE melt-quenched glass (propagons) plus one diffuson coupling weight, fitted to a
   single curve and tested only on Sandell. Amorphous Al₂O₃ has its own MACE glass (weight transferred from SiO₂, not
   validated). Other glasses need their own melt-quench (`glass.py`), or fall back to an upper bound.
@@ -86,10 +91,10 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
   Metallic ceramics (TiN, TiC) are treated as phonon-only solids, so metal/TiN contacts are a lower bound.
 * Al/GaN, Al/sapphire and the AGF pairs were never fitted, but served as no-regression guards in model
   selection (and the inelastic channel's Θ choice was made with Chang in view): they are validation sets.
-  The nine pre-registered AGF predictions are the strictly blind tests. For nearly matched pairs the fast tier is
-  mostly low (six of the seven non-III-V/IV blind pairs, −7 to −39%; the single global η is too pessimistic and
-  misses the orientation dependence of GaAs/AlAs); the two heterovalent III-V/IV (100)
-  ones failed (+54%, +104%): MACE relaxes their electron-deficient interfacial bonds to soft, stretched ones that the
-  fast tier cannot see. The CLI warns for this class and recommends the AGF tier.
+  Pre-registered AGF predictions are the strictly blind tests. In the first round (single η = 0.63) the
+  non-III-V/IV pairs were mostly low and the two heterovalent III-V/IV (100) pairs failed (+54%, +104%): MACE
+  relaxes their electron-deficient interfacial bonds to soft, stretched ones. That motivated the two-class η
+  (H14), whose calibration therefore includes those pairs; round 6 tests it on five fresh pairs. The CLI still
+  recommends the AGF tier for III-V/IV interfaces.
 * Below ~100 K the fast tier underestimates harmonic AGF for stiff nitrides by 25–55% (spectral undersampling).
 * MACE-OMAT-0 is under an academic licence. A commercial universal potential is a drop-in replacement.

@@ -250,14 +250,14 @@ def main():
         acc = ("metal/metal: electrons cross directly (electron DMM, column G_e); EDMM over-predicts Al/Cu ~2x "
                "(Gundrum et al. 2005, ~4 GW measured). Not validated here: factor-2 estimate")
     elif I.Lc is not None and I.p_inf > 0.5 and not (metals or any(is_metal(n) for n in (na, nb))):
-        acc = ("coherent crystalline pair: G_el within ~15% of harmonic MACE-AGF at 200-700 K for 5 fit pairs and "
-               "7 non-III-V/IV blind tests -39% to +9% (mean 18%, mostly LOW); III-V/IV pairs: see warning if shown), but 25-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
-               "epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
+        acc = ("coherent crystalline pair: G_el vs harmonic MACE-AGF at 300 K: leave-one-out 14% (10 pairs; two-class "
+               "specular efficiency, see README for the fresh blind round), but 25-55% LOW below ~100 K for stiff "
+               "nitrides (k-space undersampling); measured epitaxial interfaces ~21% mean. For atomistic accuracy run --agf")
         if Tlo < 150:
             acc += ". WARNING: T < 150 K requested"
     elif metals or any(is_metal(n) for n in (na, nb)):
-        acc = ("metal on crystal: validated only for epitaxial Al on Si, GaN, sapphire (5-7%; a second Al/Si "
-               "specimen 24%, specimen-to-specimen spread ~20%); other metals not validated")
+        acc = ("metal on crystal: validated only for epitaxial Al on Si, GaN, sapphire (4-6%, >400 K rise ~70% of "
+               "measured; a second Al/Si specimen 25%, specimen-to-specimen spread ~20%); other metals not validated")
         if I.Lc is not None and I.p_inf > 0.5:
             acc += ("; treated as COHERENT (misfit < 5%): if the film is not epitaxial use --polycrystalline "
                     "(column G_nonepi)")
@@ -270,21 +270,22 @@ def main():
               "bonding stiffness: physisorbed-contact fallback (Au/PMMA ratio)")
     het = heterovalent(na, nb)
     if het:
-        acc += ("; WARNING: heterovalent " + het + " interface: for all four such MACE-AGF pairs the fast tier is HIGH "
-                "(AlN/SiC +9%, GaN/SiC +28%, blind GaP/Si(100) +54%, blind GaAs/Ge(100) +104%), because MACE relaxes "
-                "the electron-deficient interfacial bonds to stretched, soft ones the fast tier cannot see; use --agf")
+        acc += ("; NOTE: heterovalent " + het + " interface: its electron-deficient interfacial bonds relax to soft, "
+                "stretched ones; the fast tier uses the III-V/IV specular efficiency (fitted on only four pairs, "
+                "leave-one-out 29%); prefer --agf")
     if {na, nb} & {"TiN", "TiC"}:
         acc += ("; NOTE: TiN/TiC are metallic but treated as phonon-only (no electron data): with a metal on the "
                 "other side G is a lower bound")
     print(f"expected accuracy: {acc}")
     if not metals:
         print("compare: harmonic atomistic reference (AGF/NEGF) -> G_el; anharmonic NEMD -> G_pp(LE) "
-              "(--local-equilibrium); experiment -> G. G includes the inelastic channel and exceeds G_el by "
+              "(--local-equilibrium); experiment -> G (measured-temperature convention). G includes the inelastic "
+              "channel and exceeds G_el by "
               f"{100 * (rows[len(rows) // 2]['G'] / rows[len(rows) // 2]['G_elastic'] - 1):.0f}% at "
               f"{rows[len(rows) // 2]['T']:.0f} K here")
     print("columns: G = total (phonons incl. inelastic channel, electron-phonon resistance of metal sides, electron "
-          "channel for metal/metal); G_pp = phonon interface conductance (compare with anharmonic NEMD); G_el = its "
-          "harmonic elastic part (compare with harmonic AGF/NEGF)")
+          "channel for metal/metal; convention of a measured temperature drop); G_pp = phonon interface conductance "
+          "(same convention); G_el = its harmonic elastic part (Landauer; compare with harmonic AGF/NEGF)")
     hdr = "   T(K)   G(MW/m2K)  R_K(m2K/GW)  G_pp   G_el  P_inel   AMM    DMM"
     nonepi = Idiff is not None
     print(hdr + ("     G_e" if len(metals) == 2 else "") + ("  G_nonepi" if nonepi else "")

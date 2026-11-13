@@ -1,15 +1,15 @@
 ### A. Experiments (fast tier)
 
-Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series layers as this model (`+e-ph`). *Guard set: never fitted, but used as a no-regression guard when accepting or rejecting model changes (EXPERIMENTS.md), so it is a validation set rather than a blind test set. The last column is the strongest baseline: full-dispersion DMM on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or inelastic channel). Only Al/Si sample 1 is fitted (α, b of the inelastic channel); η (fitted to the AGF references) also enters through the partly specular Al/Si, Al/GaN and Al/sapphire interfaces.
+Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series layers as this model (`+e-ph`). *Guard set: never fitted, but used as a no-regression guard when accepting or rejecting model changes (EXPERIMENTS.md), so it is a validation set rather than a blind test set. The last column is the strongest baseline: full-dispersion DMM on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or inelastic channel). Only Al/Si sample 1 is fitted (α, b of the inelastic channel and the onset T_L of the measured-temperature convention); η (fitted to the AGF references) also enters through the partly specular Al/Si, Al/GaN and Al/sapphire interfaces.
 
 | dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |
 |---|---|---|---|---|---|---|
-| Al/Si sample1, 82–705 K (calibration) | 4.6% | 172.8% | 105.7% | 57.8% | 32.7% | 18.2% |
-| Al/Si sample2, 82–605 K (second specimen, not fitted) | 24.3% | 238.9% | 155.8% | 100.2% | 67.1% | 12.4% |
-| Al/GaN, 85–704 K (not fitted; guard set*) | 6.9% | 180.9% | 128.3% | 54.0% | 36.8% | 12.9% |
-| Al/sapphire (Cheng 2020), 80–479 K (not fitted; guard set*) | 6.2% | 32.5% | 141.8% | 4.6% | 54.1% | 14.1% |
+| Al/Si sample1, 82–705 K (calibration) | 3.6% | 172.8% | 105.7% | 57.8% | 32.7% | 18.2% |
+| Al/Si sample2, 82–605 K (second specimen, not fitted) | 25.0% | 238.9% | 155.8% | 100.2% | 67.1% | 12.4% |
+| Al/GaN, 85–704 K (not fitted; guard set*) | 5.7% | 180.9% | 128.3% | 54.0% | 36.8% | 12.9% |
+| Al/sapphire (Cheng 2020), 80–479 K (not fitted; guard set*) | 5.8% | 32.5% | 141.8% | 4.6% | 54.1% | 14.1% |
 | Sandell 2020, 3 metal/PMMA/Si stacks (not fitted; used to choose the contact treatment, see EXPERIMENTS H8–H9) | 13.0% | 51.2% | 79.4% | 47.0% | 39.2% | – |
-| Chang 2019 TiC enhancement ratio, measured 1.48 (not fitted; bulk-terminated diamond assumed) | 1.36 | 2.19 | 1.10 | 2.00 | 1.08 | 1.84 |
+| Chang 2019 TiC enhancement ratio, measured 1.48 (not fitted; bulk-terminated diamond assumed) | 1.44 | 2.19 | 1.10 | 2.00 | 1.08 | 1.84 |
 
 The two Al/Si specimens of Li et al. differ at 300 K: specimen 1 is 23% above specimen 2 (381 vs 310 MW m⁻² K⁻¹): specimen-to-specimen variation of nominally identical interfaces is itself ~20–25%, which bounds the accuracy any structure-only model can claim for real samples.
 
@@ -21,26 +21,37 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 
 | interface | strain in AGF | **AGF** | fast tier G_el | G_el (CLI) | fast tier G (anharmonic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | -2.9% | **281** | 243 (-14%) | 246 (-12%) | 378 | 445 (+59%) | 1376 (+390%) | 1529 (+444%) |
-| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 531 (+9%) | 532 (+9%) | 657 | 755 (+55%) | 1849 (+280%) | 2844 (+484%) |
-| GaAs(100)/AlAs(100) | +0.7% | **170** | 133 (-21%) | 133 (-21%) | 277 | 171 (+1%) | 594 (+250%) | 928 (+446%) |
-| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 184 (+25%) | 188 (+28%) | 311 | 374 (+154%) | 1291 (+776%) | 1084 (+636%) |
-| Si(100)/Ge(100) | -5.2% | **126** | 135 (+8%) | 137 (+9%) | 254 | 204 (+62%) | 547 (+335%) | 403 (+221%) |
-| **mean abs. deviation from AGF (calibration set of η)** | | | 15% | 16% | – | 66% | 406% | 446% |
+| AlN(0001)/GaN(0001) | -2.9% | **281** | 285 (+1%) | 288 (+3%) | 393 | 445 (+59%) | 1376 (+390%) | 1529 (+444%) |
+| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 371 (-24%) | 372 (-23%) | 490 | 755 (+55%) | 1849 (+280%) | 2844 (+484%) |
+| GaAs(100)/AlAs(100) | +0.7% | **170** | 157 (-8%) | 157 (-8%) | 288 | 171 (+1%) | 594 (+250%) | 928 (+446%) |
+| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 128 (-13%) | 134 (-9%) | 241 | 374 (+154%) | 1291 (+776%) | 1084 (+636%) |
+| Si(100)/Ge(100) | -5.2% | **126** | 159 (+27%) | 160 (+28%) | 264 | 204 (+62%) | 547 (+335%) | 403 (+221%) |
+| **mean abs. deviation from AGF (calibration set of η)** | | | 15% | 14% | – | 66% | 406% | 446% |
 
-**Blind tests** (fast-tier value committed before the AGF reference was computed; η frozen):
+**First-round blind tests** (fast-tier value committed before the AGF reference was computed, with the single η = 0.63 of that time; 'now' is the current two-class η, which was calibrated on these pairs too, so the 'now' column is not blind):
 
-| interface | **AGF** | pre-registered fast tier G_el | G_el (CLI, now) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
+| interface | **AGF** | pre-registered fast tier G_el (η = 0.63) | G_el now (η two-class) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|
-| GaN(0001)/ZnO(0001) | **207** | 181 (-13%) | 182 (-12%) | 307 (+48%) | 1099 (+430%) | 1363 (+557%) |
-| GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 135 (-12%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
-| TiN(100)/MgO(100) | **394** | 366 (-7%) | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
-| GaP(100)/Si(100) | **106** | 163 (+54%) | 163 (+54%) | 249 (+135%) | 760 (+618%) | 976 (+821%) |
-| GaAs(100)/Ge(100) | **117** | 238 (+104%) | 238 (+104%) | 243 (+108%) | 649 (+456%) | 1227 (+951%) |
-| Si(110)/Ge(110) | **157** | 132 (-16%) | 135 (-14%) | 199 (+27%) | 547 (+248%) | 403 (+156%) |
-| GaAs(111)/AlAs(111) | **227** | 138 (-39%) | 138 (-39%) | 172 (-24%) | 594 (+162%) | 928 (+309%) |
-| InP(100)/GaAs(100) | **147** | 105 (-29%) | 106 (-28%) | 128 (-13%) | 612 (+316%) | 1148 (+681%) |
-| TiN(110)/MgO(110) | **357** | 388 (+9%) | 389 (+9%) | 479 (+34%) | 2167 (+507%) | 3971 (+1013%) |
+| GaN(0001)/ZnO(0001) | **207** | 181 (-13%) | 212 (+2%) | 307 (+48%) | 1099 (+430%) | 1363 (+557%) |
+| GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 158 (+3%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
+| TiN(100)/MgO(100) | **394** | 366 (-7%) | 430 (+9%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
+| GaP(100)/Si(100) | **106** | 163 (+54%) | 114 (+8%) | 249 (+135%) | 760 (+618%) | 976 (+821%) |
+| GaAs(100)/Ge(100) | **117** | 238 (+104%) | 166 (+42%) | 243 (+108%) | 649 (+456%) | 1227 (+951%) |
+| Si(110)/Ge(110) | **157** | 132 (-16%) | 155 (-1%) | 199 (+27%) | 547 (+248%) | 403 (+156%) |
+| GaAs(111)/AlAs(111) | **227** | 138 (-39%) | 161 (-29%) | 172 (-24%) | 594 (+162%) | 928 (+309%) |
+| InP(100)/GaAs(100) | **147** | 105 (-29%) | 124 (-16%) | 128 (-13%) | 612 (+316%) | 1148 (+681%) |
+| TiN(110)/MgO(110) | **357** | 388 (+9%) | 456 (+28%) | 479 (+34%) | 2167 (+507%) | 3971 (+1013%) |
+| **mean abs. deviation** | | 31% | 15% (calibration) | 46% | | |
+
+**Round-6 blind tests of the two-class η** (H14; predictions committed in `preregistered_agf_predictions.json` before these AGF runs; never used in any fit):
+
+| interface | class | **AGF** | pre-registered fast tier G_el | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
+|---|---|---|---|---|---|---|
+| AlAs(100)/Ge(100) | III-V/IV | pending | 103 | | | |
+| GaP(100)/AlAs(100) | other | pending | 264 | | | |
+| TiC(100)/TiN(100) | other | pending | 374 | | | |
+| InP(110)/GaAs(110) | other | pending | 123 | | | |
+| GaP(110)/Si(110) | III-V/IV | pending | 117 | | | |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -48,16 +59,16 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 
 | interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | 490 | 378 | 246 | 281 | 445 | 1376 | 1529 |
-| AlN(0001)/4H-SiC(0001) | 470 | 657 | 532 | 487 | 755 | 1849 | 2844 |
-| GaN(0001)/4H-SiC(0001) | 305 | 311 | 188 | 147 | 374 | 1291 | 1084 |
-| TiN(001)/MgO(001) * | 700 | 512 | 366 | 394 | 470 | 2167 | 3971 |
-| TiN(111)/MgO(111) * | 700 | 496 | 338 | – | 485 | 2167 | 3971 |
-| TiN(111)/sapphire(0001) * | 700 | 482 | 372 | – | 384 | 2088 | 3620 |
-| **mean abs. error** | | 25% | 41% | 35% | 34% | 236% | 387% |
-| mean abs. error, the 4 interfaces with an AGF reference | | 23% | 37% | 35% | 31% | 252% | 360% |
+| AlN(0001)/GaN(0001) | 490 | 393 | 288 | 281 | 445 | 1376 | 1529 |
+| AlN(0001)/4H-SiC(0001) | 470 | 490 | 372 | 487 | 755 | 1849 | 2844 |
+| GaN(0001)/4H-SiC(0001) | 305 | 241 | 134 | 147 | 374 | 1291 | 1084 |
+| TiN(001)/MgO(001) * | 700 | 548 | 430 | 394 | 470 | 2167 | 3971 |
+| TiN(111)/MgO(111) * | 700 | 527 | 397 | – | 485 | 2167 | 3971 |
+| TiN(111)/sapphire(0001) * | 700 | 470 | 378 | – | 384 | 2088 | 3620 |
+| **mean abs. error** | | 21% | 41% | 35% | 34% | 236% | 387% |
+| mean abs. error, the 4 interfaces with an AGF reference | | 17% | 39% | 35% | 31% | 252% | 360% |
 
-On these real wafers the harmonic elastic part alone (41%) is no better than full-dispersion DMM (34%); the total's advantage (25%) comes from the inelastic channel calibrated on Al/Si.
+On these real wafers the harmonic elastic part alone (41%) is no better than full-dispersion DMM (34%); the total's advantage (21%) comes from the inelastic channel calibrated on Al/Si.
 
 ### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (calibration set of the glass diffuson weight)
 

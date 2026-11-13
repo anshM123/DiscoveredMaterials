@@ -41,6 +41,9 @@ def score(P=None, verbose=False):
     out["agf_mad"] = float(np.mean([abs(r["fast_elastic"] / r["AGF"] - 1) for r in agf]) * 100)
     blind = make_report.agf_table(sets=make_report.AGF_BLIND)
     out["blind_mad"] = float(np.mean([abs(r["fast_elastic"] / r["AGF"] - 1) for r in blind]) * 100)
+    b2 = make_report.agf_table(sets=make_report.AGF_BLIND2)
+    if b2:
+        out["blind2_mad"] = float(np.mean([abs(r["fast_elastic"] / r["AGF"] - 1) for r in b2]) * 100)
     # section C (measured epitaxial), total conductance
     meas = [(("AlN", "0001"), ("GaN", "0001"), 490), (("AlN", "0001"), ("SiC4H", "0001"), 470),
             (("GaN", "0001"), ("SiC4H", "0001"), 305), (("TiN", "100"), ("MgO", "100"), 700),
