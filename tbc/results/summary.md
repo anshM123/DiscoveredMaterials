@@ -49,17 +49,17 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 
 ### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (held out) — a known weakness
 
-Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical (Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid.
+Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical (Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid; the film conductivity follows the Cahill–Watson–Pohl T-dependence anchored at 1.38 W m⁻¹ K⁻¹ (300 K).
 
 | model | mean abs. error | G(80 K) | G(300 K) |
 |---|---|---|---|
 | measured | – | 52 | 138 |
-| this model, oxide 1 nm | 68% | 99 | 219 |
-| this model, oxide 2 nm | 50% | 93 | 189 |
-| DMM (Debye), oxide 1.5 nm | 133% | 120 | 328 |
-| AMM (Debye), oxide 1.5 nm | 221% | 176 | 436 |
+| this model, oxide 1 nm | 60% | 87 | 219 |
+| this model, oxide 2 nm | 36% | 73 | 189 |
+| DMM (Debye), oxide 1.5 nm | 113% | 95 | 328 |
+| AMM (Debye), oxide 1.5 nm | 183% | 128 | 436 |
 
-The model over-predicts this metal/glass stack by ~1.5–2× (most at low T), although it is 2–4× closer than DMM/AMM. A Debye solid counts every vibrational mode of a glass as a propagating channel; most are non-propagating diffusons/locons. See Limitations.
+The model over-predicts this metal/glass stack by ~1.4–1.7× (most at low T), although it is 2–3× closer than DMM/AMM. A Debye solid counts every vibrational mode of a glass as a propagating channel; most are non-propagating diffusons/locons. See Limitations.
 
 ![parity](results/parity.png)
 

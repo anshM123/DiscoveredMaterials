@@ -83,7 +83,7 @@ def sandell_stack(adhesion, T=300.0, P=None, bond=None, t_ox=2.05e-9, t_ad=None)
         I = interface(a, b, bonding=bond.get((a, b)))
         parts[f"{a}/{b}"] = I.G_pp(T, P["alpha"], P["b"])
         R += 1 / parts[f"{a}/{b}"]
-    R += t_ox / FILM_K["SiO2"]
+    R += t_ox / film_k("SiO2", T)
     parts["G_ep"] = Gep
     return 1 / R, parts
 
@@ -123,3 +123,17 @@ def bonding_for(a, b, na=None, nb=None, key=None):
     kr = Kref(a, b, na, nb)
     r = c[key]["K_n"] / kr["K_n"]
     return ((r * kr["K_n"], r * kr["K_t"]), (kr["K_n"], kr["K_t"]))
+
+
+def film_k(name, T):
+    """Thermal conductivity of a thin film. Glassy films: measured 300 K value
+    (materials.FILM_K) times the temperature dependence of the Cahill-Watson-
+    Pohl minimum conductivity, k(T) = k(300) k_min(T)/k_min(300); crystalline
+    films: constant."""
+    from model import kappa_min
+    from materials import AMORPHOUS
+    k300 = FILM_K[name]
+    if name in AMORPHOUS:
+        s = Side(name)
+        return k300 * kappa_min(s, T) / kappa_min(s, 300.0)
+    return k300

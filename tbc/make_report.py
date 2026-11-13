@@ -136,17 +136,20 @@ def main():
     sA, sO, sS = Side("Al", "111"), Side("SiO2"), Side("Si", "100")
     L += ["### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (held out) — a known weakness", "",
           "Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical "
-          "(Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid.", "",
+          "(Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid; the film conductivity "
+          "follows the Cahill–Watson–Pohl T-dependence anchored at 1.38 W m⁻¹ K⁻¹ (300 K).", "",
           "| model | mean abs. error | G(80 K) | G(300 K) |", "|---|---|---|---|",
           f"| measured | – | {dno[0,1]:.0f} | {np.interp(300, dno[:,0], dno[:,1]):.0f} |"]
     for t in (1.0, 2.0):
-        c = np.array([1 / (1 / _gep("Al", T) + 1 / I1.G_pp(T, P["alpha"], P["b"]) + t * 1e-9 / _FK["SiO2"]
+        from predict import film_k as _fk
+        c = np.array([1 / (1 / _gep("Al", T) + 1 / I1.G_pp(T, P["alpha"], P["b"]) + t * 1e-9 / _fk("SiO2", T)
                             + 1 / I2.G_pp(T, P["alpha"], P["b"])) * MW for T in dno[:, 0]])
         L.append(f"| this model, oxide {t:.0f} nm | {100 * np.mean(abs(c / dno[:,1] - 1)):.0f}% | {c[0]:.0f} | {np.interp(300, dno[:,0], c):.0f} |")
     for nm, f in (("DMM (Debye)", G_DMM_debye), ("AMM (Debye)", G_AMM_debye)):
-        c = np.array([1 / (1 / f(sA, sO, T) + 1.5e-9 / _FK["SiO2"] + 1 / f(sO, sS, T)) * MW for T in dno[:, 0]])
+        from predict import film_k as _fk
+        c = np.array([1 / (1 / f(sA, sO, T) + 1.5e-9 / _fk("SiO2", T) + 1 / f(sO, sS, T)) * MW for T in dno[:, 0]])
         L.append(f"| {nm}, oxide 1.5 nm | {100 * np.mean(abs(c / dno[:,1] - 1)):.0f}% | {c[0]:.0f} | {np.interp(300, dno[:,0], c):.0f} |")
-    L += ["", "The model over-predicts this metal/glass stack by ~1.5–2× (most at low T), although it is 2–4× closer "
+    L += ["", "The model over-predicts this metal/glass stack by ~1.4–1.7× (most at low T), although it is 2–3× closer "
           "than DMM/AMM. A Debye solid counts every vibrational mode of a glass as a propagating channel; most are "
           "non-propagating diffusons/locons. See Limitations.", ""]
     L += ["![parity](results/parity.png)", "",

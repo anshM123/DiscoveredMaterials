@@ -56,13 +56,13 @@ There are 19 physics-invariant tests and a smoke test covering every interface c
 | 5 coherent pairs vs MACE-AGF (η fit set; leave-one-out) | 15% (LOO 19%) | 406% |
 | 3 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 11% (−13, −12, −7%) | 389% |
 | 6 measured epitaxial semiconductor and nitride/oxide interfaces (held out) | 25% | 236% |
-| Li 2022 Al/native-SiO₂/Si G(T) (held out; oxide 1–2 nm) | 50–68% (**weak**) | 133% |
+| Li 2022 Al/native-SiO₂/Si G(T) (held out; oxide 1–2 nm) | 36–60% (**weak**) | 113% |
 
 ## Known limitations (stated, not hidden)
 
 * The >400 K rise of Li's Al/Si and Al/GaN is reproduced in sign but at about half the measured slope.
   Epitaxial Al/sapphire (Cheng) is flat, and no single global mechanism fits both groups' data.
-* Glasses are Debye solids: a metal on native SiO₂ is over-predicted ~1.5–2×, so metal/amorphous-dielectric
+* Glasses are Debye solids: a metal on native SiO₂ is over-predicted ~1.4–1.7×, so metal/amorphous-dielectric
   results are upper bounds. An atomistic glass model (MACE melt-quench + AGF) would be the fix.
 * Molecule–metal chemistry, the Ni/PMMA case, is outside MACE-OMAT-0's domain. Polymer contacts are
   therefore the least accurate class (~20–40%).

@@ -105,7 +105,7 @@ def main():
     # expected accuracy of this interface class, from the validation in README
     if not (s1.crystal and s2.crystal):
         acc = ("amorphous side (glass/polymer): treat as an UPPER BOUND; Debye-glass transmission over-predicts "
-               "Al/native-SiO2/Si by ~1.5-2x; metal/PMMA stacks ~20% mean error")
+               "Al/native-SiO2/Si by ~1.4-1.7x; metal/PMMA stacks ~20% mean error")
     elif I.Lc is not None and I.p_inf > 0.5:
         acc = ("coherent crystalline pair: G_el within ~19% of harmonic AGF (leave-one-out, 5 pairs + 1 blind test -13%); "
                "measured epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")

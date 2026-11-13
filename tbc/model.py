@@ -410,3 +410,20 @@ class Interface:
         return 1 / R if R > 0 else np.inf
 
 
+
+
+def kappa_min(side, T, n_int=400):
+    """Cahill-Watson-Pohl minimum thermal conductivity of an amorphous solid
+    (PRB 46, 6131 (1992)) from its sound velocities and atom density:
+        k = (pi/6)^(1/3) kB n^(2/3) sum_i v_i (T/Th_i)^2 int_0^{Th_i/T} x^3 e^x/(e^x-1)^2 dx,
+        Th_i = v_i (hbar/kB) (6 pi^2 n)^(1/3).
+    Used for the conduction of thin glassy films (native/thermal oxide) at any T."""
+    n = side.n_atoms
+    k = 0.0
+    for v in (side.vL, side.vT, side.vT):
+        th = v * HBAR / KB * (6 * np.pi ** 2 * n) ** (1 / 3)
+        xm = th / T
+        x = np.linspace(1e-6, xm, n_int)
+        f = x ** 3 * np.exp(x) / np.expm1(x) ** 2
+        k += v * (T / th) ** 2 * np.trapezoid(f, x)
+    return (np.pi / 6) ** (1 / 3) * KB * n ** (2 / 3) * k
