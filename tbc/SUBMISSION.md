@@ -51,7 +51,7 @@ There are 19 physics-invariant tests and a smoke test covering every interface c
 | Li 2022 Al/Si G(T), 80–700 K (fit set) | 4.6% | 106% |
 | Li 2022 Al/GaN G(T) (held out) | 6.9% | 128% |
 | Cheng 2020 epitaxial Al/sapphire G(T) (held out) | 6.2% | 77% |
-| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (held out) | 19.6% | 22% |
+| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (held out) | 19.6% | 22% (AMM + this e-ph/series treatment: 10% — better than this model) |
 | Chang 2019 TiC enhancement (held out; measured 1.48) | 1.36 | 1.97 / 1.10 |
 | 5 coherent pairs vs MACE-AGF (η fit set; leave-one-out) | 15% (LOO 19%) | 406% |
 | 3 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 11% (−13, −12, −7%) | 389% |
