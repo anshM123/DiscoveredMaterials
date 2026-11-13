@@ -239,6 +239,6 @@ def channel_spectra(name, normal, nk=24, nz=24, force=False, with_velocity=False
     Vk = np.divide(np.cumsum(dv, axis=1)[:, :NW] / 2.0, Nk, out=np.zeros_like(Nk), where=Nk > 0)
     # Landauer: M(w) = (1/(2 pi A)) <N_k(w)>_k  ->  per-k contribution
     Mk = Nk / (2 * np.pi * A * 1e-20)
-    np.savez(out, Mk=Mk, Vk=Vk)
+    np.savez_compressed(out, Mk=Mk.astype(np.float32), Vk=Vk.astype(np.float32))
     return (Mk, Vk) if with_velocity else Mk
 
