@@ -150,8 +150,10 @@ the MACE + D3 stiffness.**
   stacks already limits any stack to ≤132, so the measured Ni (139) > Ti (115)
   ordering cannot be reproduced by any contact treatment; within the 10%
   experimental error of each value it is only marginally significant.
-* Ag/PMMA and Pt/PMMA stiffnesses computed with the same protocol (bonding.py)
-  so the rule is usable for those metals without the Au fallback.
+* Ag/PMMA and Pt/PMMA stiffnesses computed with the same protocol (bonding.py,
+  3 orientations each) so the rule is usable for those metals without the Au
+  fallback: K_n = 4.7×10¹⁹ (Ag) and 7.6×10¹⁹ N m⁻³ (Pt), vs 3.9×10¹⁹ for Au
+  (Pt, the most reactive of the noble metals, binds most strongly).
 
 **H10 (MERGED, robustness): electron–phonon coupling for metals without a
 measured g.**
