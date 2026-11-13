@@ -16,12 +16,16 @@ every caveat in `tbc/README.md`):
   Al/sapphire 6.2% (never fitted). The strongest baseline, full-dispersion DMM
   on the same phonons with the same electron–phonon term, scores 18 / 13 / 14%.
 * Room temperature: Al/Si 398 vs 381, Al/GaN 441 vs 425 MW m⁻² K⁻¹. The
-  >400 K rise is reproduced only partly (≈4× too weak for Al/Si specimen 1;
+  >400 K rise is reproduced only partly (4–6× too weak for Al/Si specimen 1 and Al/GaN;
   the measured slope varies 4× between Li's two Al/Si specimens).
 * Sandell metal/PMMA stacks 13%; Chang TiC ratio 1.36 vs 1.48 (with stated
   assumptions).
-* Atomistic ground truth (MACE-AGF): 15% on 5 coherent pairs. Of five
-  pre-registered blind tests, the three isovalent pairs are within 13%; both
+* Honest exceptions: on Al/sapphire the Debye AMM with the same e-ph term scores
+  4.6% (this model 6.2%); on Li's second Al/Si specimen (310 at 300 K, 19% below
+  specimen 1) this model is 24% off, full-dispersion DMM + e-ph 12%.
+* Atomistic ground truth (MACE-AGF): 15% on the 5 fit-set coherent pairs (η is
+  fitted on them); 27% over all 10 pairs. Of five pre-registered blind tests,
+  the three pairs that are not III-V/IV are within 13%; both
   heterovalent III-V/IV (100) pairs failed (+54%, +104%), and the tool now
   warns for that class.
 

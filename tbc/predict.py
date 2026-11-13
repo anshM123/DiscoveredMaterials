@@ -83,6 +83,11 @@ def G_edmm(m1, m2, T):
     from materials import SOMMERFELD, FERMI_V, FERMI_V_NOMINAL
     from phonons import load
     NA = 6.02214076e23
+    if m1 not in SOMMERFELD or m2 not in SOMMERFELD:
+        import warnings
+        warnings.warn(f"{m1}/{m2}: no electronic data (Sommerfeld coefficient) for "
+                      f"{m1 if m1 not in SOMMERFELD else m2}; electron channel omitted (G is a lower bound)", stacklevel=2)
+        return 0.0
     Z = []
     for m in (m1, m2):
         d = load(m)
@@ -157,9 +162,13 @@ def network(layers, interfaces, T, P, metals=None):
         phonon path in parallel);
       * metal/metal interface inside a stack: G_EDMM + G_pp (the electrons
         stay in equilibrium across the metal block);
-      * metal block -> non-metal: the block's electrons hand heat to the lattice
-        of every block member in parallel (semi-infinite member: Majumdar-Reddy
-        sqrt(g kp); thin film: g d), then the phonon interface G_pp;
+      * metal block -> non-metal: if the block contains a semi-infinite metal
+        (the heated transducer side, or a metal substrate), its electrons hand heat
+        to the lattice of every block member in parallel (semi-infinite member:
+        Majumdar-Reddy sqrt(g kp); thin film: g d), then the phonon interface G_pp.
+        A metal block buried between non-metals has no electron source or sink:
+        heat crosses it through its lattice (no e-ph term; film resistance t/k);
+      * identical adjacent layers (same material and orientation): no interface;
       * every interior film adds t / k_film.
     Returns (G_total, per-interface conductances incl. electron terms)."""
     metals = {n for n, _ in layers if is_metal(n)} if metals is None else set(metals)
@@ -167,17 +176,25 @@ def network(layers, interfaces, T, P, metals=None):
     R, parts = 0.0, []
 
     def block_gep(i, step):
-        g, j = 0.0, i
+        g, j, semi = 0.0, i, False
         while 0 <= j < len(layers) and ism[j]:
             n, t = layers[j]
+            semi = semi or t is None
             g += G_ep(n, T) if t is None else G_ep(n, T, d=t)
             j += step
-        return g
+        return g if semi else np.inf
 
     for i, I in enumerate(interfaces):
+        if I.s1.name == I.s2.name and I.s1.normal == I.s2.normal:
+            parts.append(np.inf)
+            continue
         gpp = I.G_pp(T, P["alpha"], P["b"])
         if ism[i] and ism[i + 1]:
             ge = G_edmm(layers[i][0], layers[i + 1][0], T)
+            if ge == 0.0:            # no electron data for one side: phonon path only
+                g = gpp if len(layers) > 2 else 1 / (1 / G_ep(layers[0][0], T) + 1 / gpp + 1 / G_ep(layers[1][0], T))
+                R += 1 / g; parts.append(g)
+                continue
             if len(layers) == 2:
                 g = ge + 1 / (1 / G_ep(layers[0][0], T) + 1 / gpp + 1 / G_ep(layers[1][0], T))
             else:
@@ -191,7 +208,7 @@ def network(layers, interfaces, T, P, metals=None):
     for n, t in layers[1:-1]:
         if t:
             R += t / film_k(n, T)
-    return 1 / R, parts
+    return (1 / R if R > 0 else np.inf), parts
 
 
 def chang_ratio(T=300.0, P=None, bond=None, t_tic=10e-9):

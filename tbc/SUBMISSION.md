@@ -60,15 +60,15 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
 | Li 2022 Al/GaN G(T) (not fitted; guard set in model selection) | 6.9% | 13% (full-dispersion DMM + same e-ph) |
 | Cheng 2020 epitaxial Al/sapphire G(T) (not fitted; guard set) | 6.2% | 4.6% (Debye AMM + same e-ph) |
 | Sandell 2020 Au/[Ti,Ni]/PMMA/Si (not fitted; used to choose the polymer-contact treatment) | 13.0% (Au +2%, Ti −10%, Ni −26%); 34% if PMMA's Debye cutoff counts only C and O | 39% (Debye DMM + same e-ph/series) |
-| Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.36 (1.9–3.2 if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
-| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 28% at 50 K | 66% (full-dispersion DMM) |
-| 5 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 38%: isovalent 11% (−13, −12, −7%); **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 64% (full-dispersion DMM) |
-| 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 25% | 35% (harmonic AGF); 236% (Debye DMM) |
+| Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.36 (5.68 for H-terminated diamond; 1.9–3.2 if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
+| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 32% at 50 K. All 10 AGF pairs: 27% at 300 K | 66% (full-dispersion DMM) |
+| 5 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 38%: the three non-III-V/IV pairs 11% (−13, −12, −7%); **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 64% (full-dispersion DMM) |
+| 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 25% (harmonic elastic part alone 41%) | 34% (full-dispersion DMM); 35% (harmonic AGF, 4 pairs); 236% (Debye DMM) |
 | Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 85% (Debye DMM + same e-ph) |
 
 ## Known limitations (stated, not hidden)
 
-* The >400 K rise of Li's Al/Si (specimen 1) and Al/GaN is reproduced in sign but about 4× too weak (0.10 vs
+* The >400 K rise of Li's Al/Si (specimen 1) and Al/GaN is reproduced in sign but 4–6× too weak (0.10 vs
   0.43 MW m⁻² K⁻²). Li's second Al/Si specimen rises only 0.10 (model 0.14) and Cheng's Al/sapphire is flat
   (model 0.25): the measured slope is specimen-dependent. Calibrating to the slope costs the room-temperature
   values (trade-off table in the README).

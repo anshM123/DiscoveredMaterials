@@ -70,19 +70,21 @@ def main():
          "layers as this model (`+e-ph`). *Guard set: never fitted, but used as a no-regression guard when accepting "
          "or rejecting model changes (EXPERIMENTS.md), so it is a validation set rather than a blind test set. The last column is the strongest baseline: full-dispersion DMM "
          "on the same MACE phonon spectra plus the same e-ph resistance (no specularity, bonding or "
-         "inelastic channel). Only Al/Si sample 1 is used for fitting (2 global parameters).", "",
+         "inelastic channel). Only Al/Si sample 1 is fitted (α, b of the inelastic channel); η (fitted to the AGF "
+         "references) also enters through the partly specular Al/Si, Al/GaN and Al/sapphire interfaces.", "",
          "| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph | full-disp. DMM+e-ph |", "|---|---|---|---|---|---|---|"]
     for key, role in [("Al/Si sample1", "calibration"), ("Al/Si sample2", "second specimen, not fitted"),
                       ("Al/GaN", "not fitted; guard set*"), ("Al/sapphire (Cheng 2020)", "not fitted; guard set*")]:
-        L.append(f"| {key}, 80–700 K ({role}) | " + " | ".join(f"{mape(li[key], k):.1f}%" for k in cols) + " |")
+        _T = [r["T"] for r in li[key]]
+        L.append(f"| {key}, {min(_T):.0f}–{max(_T):.0f} K ({role}) | " + " | ".join(f"{mape(li[key], k):.1f}%" for k in cols) + " |")
     L.append("| Sandell 2020, 3 metal/PMMA/Si stacks (not fitted; used to choose the contact treatment, see EXPERIMENTS H8–H9) | "
              + " | ".join(f"{mape(sa, k):.1f}%" for k in cols[:-1]) + " | – |")
     L.append(f"| Chang 2019 TiC enhancement ratio, measured 1.48 (not fitted; bulk-terminated diamond assumed) | {ch['model']:.2f} | {ch['AMM']:.2f} | "
              f"{ch['DMM']:.2f} | {ch['AMM_eph']:.2f} | {ch['DMM_eph']:.2f} | {ch['FDDMM_eph']:.2f} |")
     s2 = li["Al/Si sample2"]; s1 = li["Al/Si sample1"]
     i1 = int(np.argmin([abs(r["T"] - 300) for r in s1])); i2 = int(np.argmin([abs(r["T"] - 300) for r in s2]))
-    L += ["", f"The two Al/Si specimens of Li et al. differ by {100 * (s1[i1]['measured'] / s2[i2]['measured'] - 1):.0f}% "
-          f"at 300 K ({s1[i1]['measured']:.0f} vs {s2[i2]['measured']:.0f} MW m⁻² K⁻¹): specimen-to-specimen "
+    L += ["", f"The two Al/Si specimens of Li et al. differ at 300 K: specimen 1 is {100 * (s1[i1]['measured'] / s2[i2]['measured'] - 1):.0f}% "
+          f"above specimen 2 ({s1[i1]['measured']:.0f} vs {s2[i2]['measured']:.0f} MW m⁻² K⁻¹): specimen-to-specimen "
           "variation of nominally identical interfaces is itself ~20–25%, which bounds the accuracy any "
           "structure-only model can claim for real samples."]
     L += ["", "Sandell stacks (MW m⁻² K⁻¹, measured / model): " +
@@ -133,9 +135,9 @@ def main():
           "same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) "
           "(approximate; TiN electron-phonon term omitted: no g data). "
           "Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.", "",
-          "| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |",
-          "|---|---|---|---|---|---|---|"]
-    errs = {k: [] for k in ("fast", "agf", "dmm", "amm")}
+          "| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |",
+          "|---|---|---|---|---|---|---|---|"]
+    errs = {k: [] for k in ("fast", "elastic", "agf", "fddmm", "dmm", "amm")}
     meas_rows = []
     for name, a, b, gm, lab in meas:
         s1, s2 = Side(*a), Side(*b)
@@ -149,16 +151,21 @@ def main():
         pa = os.path.join(AGF_DIR, f"{lab}.json")
         ga = float(np.interp(300, json.load(open(pa))["T"], json.load(open(pa))["G"])) * MW if os.path.exists(pa) else float("nan")
         gd, gam = G_DMM_debye(s1, s2, 300.0) * MW, G_AMM_debye(s1, s2, 300.0) * MW
-        for k, v in (("fast", gt), ("agf", ga), ("dmm", gd), ("amm", gam)):
+        gfd = Interface(s1, s2, epitaxial=False).G_elastic(300.0) * MW
+        for k, v in (("fast", gt), ("elastic", ge), ("agf", ga), ("fddmm", gfd), ("dmm", gd), ("amm", gam)):
             errs[k].append(abs(v / gm - 1) * 100)
         meas_rows.append(dict(ref=gm, model=gt, AMM=gam, DMM=gd))
-        L.append(f"| {name} | {gm} | {gt:.0f} | {ge:.0f} | {'–' if np.isnan(ga) else f'{ga:.0f}'} | {gd:.0f} | {gam:.0f} |")
-    L.append(f"| **mean abs. error** | | {np.nanmean(errs['fast']):.0f}% | | {np.nanmean(errs['agf']):.0f}% | {np.nanmean(errs['dmm']):.0f}% | {np.nanmean(errs['amm']):.0f}% |")
+        L.append(f"| {name} | {gm} | {gt:.0f} | {ge:.0f} | {'–' if np.isnan(ga) else f'{ga:.0f}'} | {gfd:.0f} | {gd:.0f} | {gam:.0f} |")
+    L.append(f"| **mean abs. error** | | {np.nanmean(errs['fast']):.0f}% | {np.nanmean(errs['elastic']):.0f}% | {np.nanmean(errs['agf']):.0f}% | "
+             f"{np.nanmean(errs['fddmm']):.0f}% | {np.nanmean(errs['dmm']):.0f}% | {np.nanmean(errs['amm']):.0f}% |")
     _sub = ~np.isnan(np.array(errs['agf'], float))
     L.append(f"| mean abs. error, the {int(_sub.sum())} interfaces with an AGF reference | | "
-             f"{np.mean(np.array(errs['fast'], float)[_sub]):.0f}% | | {np.mean(np.array(errs['agf'], float)[_sub]):.0f}% | "
+             f"{np.mean(np.array(errs['fast'], float)[_sub]):.0f}% | {np.mean(np.array(errs['elastic'], float)[_sub]):.0f}% | "
+             f"{np.mean(np.array(errs['agf'], float)[_sub]):.0f}% | {np.mean(np.array(errs['fddmm'], float)[_sub]):.0f}% | "
              f"{np.mean(np.array(errs['dmm'], float)[_sub]):.0f}% | {np.mean(np.array(errs['amm'], float)[_sub]):.0f}% |")
-    L.append("")
+    L += ["", f"On these real wafers the harmonic elastic part alone ({np.nanmean(errs['elastic']):.0f}%) is no better than "
+          f"full-dispersion DMM ({np.nanmean(errs['fddmm']):.0f}%); the total's advantage ({np.nanmean(errs['fast']):.0f}%) comes "
+          "from the inelastic channel calibrated on Al/Si.", ""]
     # D. metal on amorphous oxide (held out): Al / native SiO2 / Si, Li et al. 2022 Fig. 1a
     from predict import G_ep as _gep
     from materials import FILM_K as _FK

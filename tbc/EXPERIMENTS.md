@@ -245,6 +245,18 @@ itself (convergence check in k-mesh below).
   (bulk GaAs 2.49, Ge 2.49); GaP/Si: Ga–Si 2.68 ± 0.14 Å with some five-fold
   coordinated atoms. Isovalent GaAs/AlAs: no distortion (2.48–2.49 Å).
 * All four heterovalent AGF pairs are over-predicted (AlN/SiC +9%, GaN/SiC
-  +28%, GaP/Si +54%, GaAs/Ge +104%); the isovalent ones are within −21% to +9%.
+  +28%, GaP/Si +54%, GaAs/Ge +104%); the others are within −21% to +9% (but AlN/SiC +9% is indistinguishable from Si/Ge +8%: the "class" is a hypothesis from two failures).
 * Action: a CLI warning for heterovalent pairs (`tbc.heterovalent`), README
   Limitation 18. No correction fitted (it would be fitted to these blind tests).
+
+### Third independent audit and fixes
+
+| finding | action |
+|---|---|
+| Structure files: a file named like a library material reused the library phonons; conventional cells gave the wrong interface-plane lattice; a second normal crashed; CIFs not usable in `--stack` | custom crystals are keyed by file stem + structure hash; cells reduced to primitive (spglib, orientation kept; Miller indices still refer to the file's cell); missing normals trigger a recompute; `path.cif:hkl[:nm]` accepted in stacks. Check: conventional-cell Si(001) on Ge(100) now gives Lc 4.0 Å and 253 (library pair 254) |
+| A metal film buried between non-metals was forced through 2/(g d) (G → 0 as d → 0) | e-ph only for metal blocks containing a semi-infinite metal; buried films conduct through their lattice (test added) |
+| Identical stack layers gave finite G; `--T a:b:0` crashed; interior layer without thickness silently zero; `--metal TiN` crashed in the electron DMM | no interface; errors; electron channel omitted with a warning for metals without electron data |
+| Section C lacked full-dispersion DMM | added: 34% (elastic part alone 41%; total 25%) — the gain on real wafers comes from the inelastic channel |
+| "Isovalent" mislabels GaN/ZnO and TiN/MgO; III-V/IV class drawn from two points | relabelled "not III-V/IV"; presented as a hypothesis (AlN/SiC +9% ≈ Si/Ge +8%) |
+| Low-T statistics stale; landing README omitted exceptions; Chang H-termination missing in SUBMISSION; 4× vs 5.6× slope; specimen 19%/23%; T ranges; η enters Al/Si; Ni −25/−26 | all corrected; landing README lists the exceptions; AGF all-10-pairs figure (27% at 300 K) added |
+| Headline G vs harmonic references | CLI prints which column to compare with which reference, and by how much G exceeds G_el |

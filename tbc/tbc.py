@@ -77,6 +77,20 @@ def heterovalent(a, b):
     return ""
 
 
+def parse_T(spec):
+    """'a:b:c' (start:stop:step, K) or a single temperature; all > 0."""
+    if ":" in spec:
+        t0, t1, dt = map(float, spec.split(":"))
+        if dt <= 0 or t1 < t0:
+            raise SystemExit("error: --T start:stop:step needs step > 0 and stop >= start")
+        Ts = np.arange(t0, t1 + 1e-9, dt)
+    else:
+        Ts = np.array([float(spec)])
+    if Ts.min() <= 0:
+        raise SystemExit("error: temperatures must be > 0 K")
+    return Ts
+
+
 def parse(spec):
     """'Name/normal' (library material) or 'path/to/file.cif:hkl' (any crystal)."""
     if ":" in spec and os.path.exists(spec.rsplit(":", 1)[0]):
@@ -94,10 +108,21 @@ def parse(spec):
     return name, (normal or None)
 
 
-def ensure(name):
-    if name in CRYSTALS and not os.path.exists(os.path.join(CACHE, f"{name}.npz")):
+def ensure(name, normal=None):
+    """Phonons of a crystal (computed on first use and cached); recomputed if
+    the cache lacks the requested interface normal (structure-file inputs)."""
+    if name not in CRYSTALS:
+        return
+    path = os.path.join(CACHE, f"{name}.npz")
+    if not os.path.exists(path):
         print(f"[computing phonons of {name} with MACE-OMAT-0 ...]")
         compute(name)
+    elif normal is not None:
+        with np.load(path) as z:
+            missing = f"M_{normal}" not in z.files
+        if missing:
+            print(f"[adding normal {normal} for {name}: recomputing phonons ...]")
+            compute(name, force=True)
 
 
 def stack_main(argv):
@@ -119,17 +144,21 @@ def stack_main(argv):
     ap.add_argument("--polycrystalline", action="store_true")
     a = ap.parse_args(argv)
     layers = []
-    for tok in a.stack.split("|"):
-        tok = tok.strip()
-        name, _, thick = tok.partition(":")
+    toks = [t.strip() for t in a.stack.split("|")]
+    for k, tok in enumerate(toks):
+        parts_ = tok.split(":")
+        # NAME[/hkl][:thickness_nm]  or  path/file.cif:hkl[:thickness_nm]
+        if len(parts_) >= 2 and os.path.exists(parts_[0]):
+            name, thick = parts_[0] + ":" + parts_[1], (parts_[2] if len(parts_) > 2 else "")
+        else:
+            name, thick = parts_[0], (parts_[1] if len(parts_) > 1 else "")
         nm, sa = parse(name)
-        ensure(nm)
-        layers.append((nm, sa, float(thick) * 1e-9 if thick else None))
+        ensure(nm, sa)
+        if 0 < k < len(toks) - 1 and thick == "":
+            raise SystemExit(f"error: interior layer '{tok}' needs a thickness (NAME:thickness_nm)")
+        layers.append((nm, sa, float(thick) * 1e-9 if thick != "" else None))
     P = load_params()
-    if ":" in a.T:
-        t0, t1, dt = map(float, a.T.split(":")); Ts = np.arange(t0, t1 + 1e-9, dt)
-    else:
-        Ts = [float(a.T)]
+    Ts = parse_T(a.T)
     metals = set() if a.no_eph else ({n for n, _, _ in layers if is_metal(n)} | ({a.metal} if a.metal else set()))
     ifs = []
     for (n1, s1_, _), (n2, s2_, _) in zip(layers[:-1], layers[1:]):
@@ -167,14 +196,9 @@ def main():
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
     (na, sa), (nb, sb) = parse(a.a), parse(a.b)
-    ensure(na); ensure(nb)
+    ensure(na, sa); ensure(nb, sb)
     P = load_params()
-    if ":" in a.T:
-        _t = list(map(float, a.T.split(":")))
-    else:
-        _t = [float(a.T)]
-    if min(_t[:2]) <= 0:
-        raise SystemExit("error: temperatures must be > 0 K")
+    parse_T(a.T)
     from materials import CRYSTALS as _C
     if na == nb and (sa or next(iter(_C[na]["normals"]), None) if na in _C else sa) == \
             (sb or next(iter(_C[nb]["normals"]), None) if nb in _C else sb):
@@ -192,10 +216,7 @@ def main():
     s1, s2 = Side(na, sa), Side(nb, sb)
     I = Interface(s1, s2, K=bond[0] if bond else None, Kref=bond[1] if bond else None,
                   epitaxial=not a.polycrystalline)
-    if ":" in a.T:
-        t0, t1, dt = map(float, a.T.split(":")); Ts = np.arange(t0, t1 + 1e-9, dt)
-    else:
-        Ts = [float(a.T)]
+    Ts = parse_T(a.T)
     agf_res = None
     if a.agf:
         import agf as agfmod
@@ -241,7 +262,7 @@ def main():
         amo = [x.name for x in (s1, s2) if not x.crystal]
         if all(n in _model.GLASS_FLUX and os.path.exists(_model.GLASS_FLUX[n]) for n in amo):
             acc = ("glass with a MACE glass model (propagons + diffuson weight w fitted on Al/native-SiO2/Si, 2% on "
-                   "that fit set); independent test only the metal/PMMA/SiO2 stacks (~13% mean, Ni -25%)")
+                   "that fit set); independent test only the metal/PMMA/SiO2 stacks (~13% mean, Ni -26%)")
         elif "PMMA" in amo:
             acc = ("polymer (Debye solid, cutoff from all atoms incl. H): metal/PMMA/SiO2/Si stacks ~13% mean "
                    "(Au +2%, Ti -10%, Ni -26%); sensitive to the PMMA Debye convention (README Limitations)")
@@ -253,7 +274,7 @@ def main():
                "(Gundrum et al. 2005, ~4 GW measured). Not validated here: factor-2 estimate")
     elif I.Lc is not None and I.p_inf > 0.5 and not (metals or any(is_metal(n) for n in (na, nb))):
         acc = ("coherent crystalline pair: G_el within ~15% of harmonic MACE-AGF at 200-700 K for 5 fit pairs and "
-               "the 3 isovalent blind tests (heterovalent pairs: see warning if shown), but 15-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
+               "the 3 non-III-V/IV blind tests (III-V/IV pairs: see warning if shown), but 25-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
                "epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
         if Tlo < 150:
             acc += ". WARNING: T < 150 K requested"
@@ -279,6 +300,11 @@ def main():
         acc += ("; NOTE: TiN/TiC are metallic but treated as phonon-only (no electron data): with a metal on the "
                 "other side G is a lower bound")
     print(f"expected accuracy: {acc}")
+    if not metals:
+        print("compare: harmonic atomistic reference (AGF/NEGF) -> G_el; anharmonic NEMD -> G_pp(LE) "
+              "(--local-equilibrium); experiment -> G. G includes the inelastic channel and exceeds G_el by "
+              f"{100 * (rows[len(rows) // 2]['G'] / rows[len(rows) // 2]['G_elastic'] - 1):.0f}% at "
+              f"{rows[len(rows) // 2]['T']:.0f} K here")
     print("columns: G = total (phonons incl. inelastic channel, electron-phonon resistance of metal sides, electron "
           "channel for metal/metal); G_pp = phonon interface conductance (compare with anharmonic NEMD); G_el = its "
           "harmonic elastic part (compare with harmonic AGF/NEGF)")

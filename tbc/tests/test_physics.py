@@ -137,6 +137,11 @@ def test_resistance_network_consistency():
         L, I = mk([("Au", None, None), ("Ti", None, 2.4e-9), ("PMMA", None, 0.0), ("SiO2", None, 2.05e-9), ("Si", "100", None)])
         assert abs(network(L, I, 300.0, P)[0] / gs - 1) < 1e-9
         assert network(L, I, 300.0, P, metals=set())[0] > 0       # phonons-only mode runs
+        # a metal film buried between non-metals carries heat by its lattice: no e-ph term
+        Lb, Ib = mk([("Si", "100", None), ("Au", None, 5e-9), ("Si", "100", None)])
+        assert abs(network(Lb, Ib, 300.0, P)[0] / network(Lb, Ib, 300.0, P, metals=set())[0] - 1) < 1e-12
+        Ls, Is = mk([("Si", "100", None), ("Si", "100", None)])
+        assert network(Ls, Is, 300.0, P)[0] == np.inf             # identical layers: no interface
 
 
 def test_amm_reciprocal():

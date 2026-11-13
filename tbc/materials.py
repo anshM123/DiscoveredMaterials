@@ -235,10 +235,26 @@ def register_structure(path, miller, name=None):
     file's cell (or 'hkil' / '0001' style for hexagonal cells). Supercell and
     q-mesh are chosen from the cell size. No Born charges are set: LO-TO
     splitting of polar crystals is omitted (warned)."""
-    import os
+    import os, hashlib
     from ase.io import read
-    atoms = read(path)
-    name = name or os.path.splitext(os.path.basename(path))[0]
+    from ase import Atoms
+    atoms0 = read(path)
+    stem = os.path.splitext(os.path.basename(path))[0]
+    if name is None:
+        # never shadow a library material or a different structure with the same
+        # file name: the cache key carries a hash of the structure
+        h = hashlib.sha1(np.round(np.concatenate([atoms0.cell.array.ravel(), atoms0.get_scaled_positions().ravel()]), 5)
+                         .tobytes() + "".join(atoms0.get_chemical_symbols()).encode()).hexdigest()[:8]
+        name = f"{stem}_{h}"
+    # reduce to the primitive cell (keeps the Cartesian orientation), so that the
+    # interface-plane lattice and k_par matching use the true plane Bravais lattice
+    try:
+        import spglib
+        cell = (atoms0.cell.array, atoms0.get_scaled_positions(), atoms0.get_atomic_numbers())
+        lat, pos, num = spglib.standardize_cell(cell, to_primitive=True, no_idealize=True, symprec=1e-3)
+        atoms = Atoms(numbers=num, cell=lat, scaled_positions=pos, pbc=True)
+    except Exception:
+        atoms = atoms0
     m = str(miller)
     # Miller indices: digits with optional minus signs, e.g. 111, 1-10, -1-12, 0001
     toks = re.findall(r"-?\d", m) if re.fullmatch(r"(-?\d)+", m) else None
@@ -247,7 +263,7 @@ def register_structure(path, miller, name=None):
         raise ValueError(f"Miller indices '{miller}' not understood (use e.g. 001, 111, 0001)")
     if len(digits) == 4:
         digits = [digits[0], digits[1], digits[3]]
-    rec = np.linalg.inv(atoms.cell.array).T
+    rec = np.linalg.inv(atoms0.cell.array).T          # Miller indices refer to the file's cell
     nvec = np.asarray(digits, float) @ rec
     lengths = atoms.cell.lengths()
     sc = [int(np.ceil(10.0 / L)) for L in lengths]
