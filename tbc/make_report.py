@@ -23,7 +23,8 @@ AGF_SETS = [("AlN0001_GaN0001", ("AlN", "0001"), ("GaN", "0001")),
 # blind tests: fast-tier predictions committed before these AGF references were
 # computed (data/reference/preregistered_agf_predictions.json); never used in fits
 AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
-             ("GaAs110_AlAs110", ("GaAs", "110"), ("AlAs", "110"))]
+             ("GaAs110_AlAs110", ("GaAs", "110"), ("AlAs", "110")),
+             ("TiN100_MgO100", ("TiN", "100"), ("MgO", "100"))]
 
 
 def agf_table(T=300.0, sets=None):

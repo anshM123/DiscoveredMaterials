@@ -98,6 +98,11 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
   * For TiN on three different substrates, the fast tier reproduces the
     measured near-equality (within 6%).
   * See Limitations.
+* **Blind tests.** After η was frozen, fast-tier predictions for new coherent
+  pairs (GaN/ZnO, GaAs/AlAs(110), TiN/MgO(001)) were committed to the
+  repository *before* their AGF references were computed
+  (`data/reference/preregistered_agf_predictions.json`, see git history).
+  The results are in the blind-test table above.
 * **"Atomistic ground truth" is itself method-dependent.** For GaN/AlN at
   300 K, harmonic Green's functions give ~280–300 MW m⁻² K⁻¹, while
   anharmonic MLIP-NEMD gives 600–700 and measurements 320–490.
