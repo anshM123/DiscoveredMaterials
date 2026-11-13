@@ -23,6 +23,7 @@ import numpy as np
 for _cat in (DeprecationWarning, FutureWarning):
     warnings.filterwarnings("ignore", category=_cat)
 warnings.filterwarnings("ignore", module=r"(torch|e3nn|mace|ase|phonopy|spglib|numpy|torch_dftd)(\.|$)")
+warnings.filterwarnings("ignore", message=r"(?s).*phonopy v3")   # auto-primitive notice (intended)
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE = os.path.join(HERE, "data", "phonons")
 MODEL = "medium-omat-0"
