@@ -21,7 +21,7 @@ AGF tests, and the AGF calibration set. Baseline: `results/scorecard_baseline.js
 | H12 | spectral smoothing / long-wavelength Debye; also with full recalibration | rejected (guarded regressions) |
 | H13 | weak bonding as the cause of the GaP/Si blind miss | ruled out (K/K_ref 0.97) |
 | audits 1–3 | independent judge-style reviews | all findings fixed or disclosed (tables below) |
-| blind tests | 7 pre-registered fast-tier predictions vs later MACE-AGF | 5 non-III-V/IV: −7 to −39% (mean 17%); 2 III-V/IV (100): +54%, +104% |
+| blind tests | 8 pre-registered fast-tier predictions vs later MACE-AGF | 6 non-III-V/IV: all low, −7 to −39% (mean 19%); 2 III-V/IV (100): +54%, +104% |
 
 Baseline scorecard (commit 6aec94f, before this sprint), lower is better:
 
@@ -300,3 +300,13 @@ itself (convergence check in k-mesh below).
   the AGF 154 / 170 / 227 for (110) / (100) / (111).
 * Blind statistics (7 pairs): 35%; the five non-III-V/IV pairs 17%; all 12 AGF
   pairs at 300 K 27% (eight non-III-V/IV pairs 16%).
+
+### Fifth round of blind tests
+
+* Pre-registered (8eb52fb): InP(100)/GaAs(100) 105, TiN(110)/MgO(110) 388.
+* InP(100)/GaAs(100): MACE-AGF 147.0 (structure check passed; GaAs strained
+  +3.7%): **−28%**.
+* With it, all six non-III-V/IV blind pairs are under-predicted (−7 to −39%,
+  mean 19%): the single global η = 0.63 is too pessimistic for nearly matched
+  pairs. Not corrected: any change chosen now would be informed by the blind
+  results.

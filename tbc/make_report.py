@@ -29,7 +29,9 @@ AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
              ("GaP100_Si100", ("GaP", "100"), ("Si", "100")),     # second round (pre-registered 163)
              ("GaAs100_Ge100", ("GaAs", "100"), ("Ge", "100")),   # third round (pre-registered 238)
              ("Si110_Ge110", ("Si", "110"), ("Ge", "110")),       # fourth round (pre-registered 132)
-             ("GaAs111_AlAs111", ("GaAs", "111"), ("AlAs", "111"))]  # fourth round (pre-registered 138)
+             ("GaAs111_AlAs111", ("GaAs", "111"), ("AlAs", "111")),  # fourth round (pre-registered 138)
+             ("InP100_GaAs100", ("InP", "100"), ("GaAs", "100")),  # fifth round (pre-registered 105)
+             ("TiN110_MgO110", ("TiN", "110"), ("MgO", "110"))]    # fifth round (pre-registered 388)
 
 
 def agf_table(T=300.0, sets=None):

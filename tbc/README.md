@@ -69,6 +69,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaAs(100)/Ge(100) | **117** | 238 (+104%) | 238 (+104%) | 243 (+108%) | 649 (+456%) | 1227 (+951%) |
 | Si(110)/Ge(110) | **157** | 132 (-16%) | 135 (-14%) | 199 (+27%) | 547 (+248%) | 403 (+156%) |
 | GaAs(111)/AlAs(111) | **227** | 138 (-39%) | 138 (-39%) | 172 (-24%) | 594 (+162%) | 928 (+309%) |
+| InP(100)/GaAs(100) | **147** | 105 (-29%) | 106 (-28%) | 128 (-13%) | 612 (+316%) | 1148 (+681%) |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -136,13 +137,17 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     for nearly matched semiconductors (e.g. Si/Ge 137 → 254), so `G` is *not*
     an estimate of harmonic AGF. Against the one anharmonic reference available
     (MLIP-NEMD AlN/GaN, 600–700) it gives 501 in NEMD's convention (Limitation 11).
-* **Blind tests.** After η was frozen, fast-tier predictions for seven new
+* **Blind tests.** After η was frozen, fast-tier predictions for eight new
   coherent pairs were committed to the repository *before* their AGF
   references were computed (`data/reference/preregistered_agf_predictions.json`,
   see git history).
-  * Of the five pairs that are not III-V/IV, four landed within 16% (GaN/ZnO
-    −13%, GaAs/AlAs(110) −12%, TiN/MgO(001) −7%, Si(110)/Ge(110) −16%).
-    **GaAs(111)/AlAs(111) missed by −39%** (138 vs 227). The fast tier gives
+  * Of the six pairs that are not III-V/IV, four landed within 16% (GaN/ZnO
+    −13%, GaAs/AlAs(110) −12%, TiN/MgO(001) −7%, Si(110)/Ge(110) −16%);
+    InP(100)/GaAs(100) is −28% (105 vs 147) and **GaAs(111)/AlAs(111) −39%**
+    (138 vs 227). **All six are low:** for nearly matched pairs the single
+    global specular efficiency η (0.63, fitted on five pairs) is too
+    pessimistic. A mismatch-dependent η would be the natural fix, but choosing
+    it now would use the blind results, so it is left as stated. The fast tier gives
     ~135 for GaAs/AlAs in every orientation, while the AGF gives 154 (110),
     170 (100) and 227 (111): the orientation dependence of nearly matched
     pairs is not captured.
@@ -159,11 +164,11 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     and the fast tier, which assumes bulk-like bonding, cannot see them.
   * The fit-set III-V/IV pairs show the same sign (AlN/SiC +9%, GaN/SiC
     +28%). The CLI now warns for this class and recommends `--agf`.
-  * Mean over the seven: 35% (the five non-III-V/IV pairs 17%); over all
-    twelve AGF pairs at 300 K, 27% (the eight non-III-V/IV pairs 16%). The III-V/IV
+  * Mean over the eight: 34% (the six non-III-V/IV pairs 19%); over all
+    thirteen AGF pairs at 300 K, 27% (the nine non-III-V/IV pairs 18%). The III-V/IV
     "class" is a hypothesis drawn from two failures: the fit-set AlN/SiC (+9%)
     is indistinguishable from Si/Ge (+8%). On the blind pairs full-dispersion
-    DMM is at 53% and Debye DMM/AMM at 156–951%.
+    DMM is at 48% and Debye DMM/AMM at 156–951%.
 * **Where the model is weak:**
   * **The >400 K rise:** 0.10 and 0.07 vs measured 0.43 and 0.39 MW m⁻² K⁻²
     for Al/Si sample 1 and Al/GaN (4–6× too weak). It matches Li's second
