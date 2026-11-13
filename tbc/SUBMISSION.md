@@ -21,10 +21,12 @@ A two-tier, structure-to-conductance framework. Nothing is fitted per specimen.
    * an anharmonic (inelastic) channel;
    * the metal's electron–phonon resistance (Majumdar–Reddy, with DFT lattice conductivities; measured g,
      or Allen's formula with the MACE phonon DOS for metals without a measurement);
-   * series layers.
+   * for metal/metal interfaces, the electron diffuse-mismatch channel in parallel;
+   * series layers (thin films, adhesion layers coupled to the top metal's electrons).
 3. **Accurate tier (~1 CPU-hour)** — an atomistic Green's function with MACE force constants of the actual
-   relaxed coherent interface. It reproduces published DFT-NEGF for GaN/AlN (281 vs ~300 MW m⁻² K⁻¹) and the
-   measured AlN/4H-SiC (487 vs ~470).
+   relaxed coherent interface. It reproduces published DFT-NEGF for GaN/AlN (281 vs ~300 MW m⁻² K⁻¹). Being
+   harmonic and defect-free, it differs from measured epitaxial wafers by 35% on average (AlN/SiC +4%,
+   AlN/GaN −43%, GaN/SiC −52%).
 4. **Four global parameters, frozen in `params.json`:**
    * α and b of the inelastic channel, fitted to one dataset (Al/Si, Li et al. 2022);
    * the specular efficiency η, fitted to five MACE-AGF references;
