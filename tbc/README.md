@@ -257,8 +257,20 @@ Checks:
      * equilibrium-DFT electron–phonon coupling of Al;
      * coherence-only specularity;
      * a soft-side "transmission-deficit" channel, with both Θ choices.
-   * Al/Si rises while epitaxial Al/sapphire (Cheng) is flat, so sample- or
-     analysis-specific factors (sharpness, TDTR modelling) likely contribute.
+   * **The two epitaxial-Al datasets are not mutually consistent under any
+     single interfacial-phonon mechanism.**
+     * Inverting the data with the same Al electron–phonon resistance, the
+       required phonon conductance rises ×2.1 (Al/Si, 300→700 K) and ×2.05
+       (Al/GaN), but only ×1.13 for Al/sapphire (300→480 K).
+     * Every computed measure of how much an inelastic channel could add is
+       *largest* for sapphire:
+       * headroom G_max − G_el: 592 / 625 / 967 MW m⁻² K⁻¹ (Si / GaN / sapphire);
+       * substrate flux convertible by three-phonon down-conversion into Al:
+         339 / 203 / 847.
+     * Any mechanism that steepens Al/Si therefore steepens Al/sapphire more.
+       The difference must come from sample- or analysis-specific factors
+       (e.g. the TDTR thermal model of the Al film at high T).
+     * Full log: `EXPERIMENTS.md`.
 2. **Molecule–metal chemistry is outside MACE-OMAT-0's domain.**
    * For Ni/PMMA, reactive MD (700 K, confined film) and chemisorbed starting
      geometries were tried. MACE never binds the carbonyl to Ni, while XPS
