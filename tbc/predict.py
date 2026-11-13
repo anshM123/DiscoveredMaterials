@@ -20,6 +20,12 @@ def G_ep(metal, T, d=None):
     """Electron-phonon conductance (W m^-2 K^-1).
     Semi-infinite metal: Majumdar-Reddy sqrt(g kp(T)).
     Thin layer of thickness d (m) << e-ph length: volumetric coupling g*d."""
+    if metal not in METALS:
+        import warnings
+        warnings.warn(f"No electron-phonon data for metal '{metal}' in materials.METALS: "
+                      "the electron-phonon resistance is omitted (G is then an upper bound). "
+                      "Add g and kp for this metal to include it.", stacklevel=2)
+        return np.inf
     p = METALS[metal]
     if d is not None:
         return p["g"] * d
@@ -35,12 +41,12 @@ def kp_metal(metal, T):
     return 1.0 / (T / 300.0 / p["kp_pp"] + 1.0 / k_pe)
 
 
-def interface(a, b, na=None, nb=None, sharp=True, bonding=None):
+def interface(a, b, na=None, nb=None, sharp=True, bonding=None, epitaxial=True):
     s1, s2 = Side(a, na), Side(b, nb)
     K = Kref = None
     if bonding is not None:
         K, Kref = bonding
-    return Interface(s1, s2, K=K, Kref=Kref, sharp=sharp)
+    return Interface(s1, s2, K=K, Kref=Kref, sharp=sharp, epitaxial=epitaxial)
 
 
 def G_metal_nonmetal(metal, other, T, P, nm=None, no=None, sharp=True, bonding=None):
@@ -88,7 +94,9 @@ def chang_ratio(T=300.0, P=None, bond=None, t_tic=10e-9):
     P = P or load_params()
     bond = bond or {}
     Gep = G_ep("Cu", T)
-    g = lambda a, b: interface(a, b, "111", "111", bonding=bond.get((a, b))).G_pp(T, P["alpha"], P["b"])
+    # magnetron-sputtered, polycrystalline Cu and TiC films (Chang et al.):
+    # non-epitaxial -> diffuse scattering
+    g = lambda a, b: interface(a, b, "111", "111", bonding=bond.get((a, b)), epitaxial=False).G_pp(T, P["alpha"], P["b"])
     G0 = 1 / (1 / Gep + 1 / g("Cu", "C"))
     G1 = 1 / (1 / Gep + 1 / g("Cu", "TiC") + t_tic / FILM_K["TiC"] + 1 / g("TiC", "C"))
     return G1 / G0, dict(G_Cu_C=G0, G_Cu_TiC_C=G1, Cu_C=g("Cu", "C"), Cu_TiC=g("Cu", "TiC"), TiC_C=g("TiC", "C"), G_ep=Gep)

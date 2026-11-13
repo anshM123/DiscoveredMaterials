@@ -24,6 +24,7 @@ EV = 1.602176634e-19
 PMMA_UNITS_PER_A2 = (1180 / (100.12e-3 / 6.02214076e23)) ** (2 / 3) * 1e-20
 
 _calc = None
+_calc32 = None
 
 
 def calc():
@@ -32,6 +33,53 @@ def calc():
         from mace.calculators import mace_mp
         _calc = mace_mp(model="medium-omat-0", dispersion=True, default_dtype="float64", device="cpu")
     return _calc
+
+
+def calc32():
+    """float32 MACE + D3: 2.4x faster, used for MD and pre-relaxation only;
+    energies for stiffness scans always use float64 (calc())."""
+    global _calc32
+    if _calc32 is None:
+        from mace.calculators import mace_mp
+        _calc32 = mace_mp(model="medium-omat-0", dispersion=True, default_dtype="float32", device="cpu")
+    return _calc32
+
+
+REACTIVE = dict(T=600.0, ps=1.5, dt_fs=1.0)
+
+
+def _reactive_anneal(sys_, nsub, log=None):
+    """Reactive protocol for molecule/surface contacts: Langevin MD at
+    REACTIVE['T'] for REACTIVE['ps'] (H given deuterium mass so that a 1 fs
+    step is stable; masses do not affect static stiffness), then quench:
+    float32 relaxation and float64 polish. Lets chemisorption, bond
+    breaking and oxidation (e.g. Ni-O, Ti-O/Ti-C formation) happen if they are
+    activated at this temperature on a ps time scale. The bottom 60% of the
+    substrate is held fixed throughout."""
+    from ase.constraints import FixAtoms
+    from ase.optimize import BFGS, FIRE
+    from ase.md.langevin import Langevin
+    from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+    from ase import units
+    z = sys_.positions[:, 2]
+    zs = z[:nsub]
+    fixed = [i for i in range(nsub) if zs[i] < zs.min() + 0.6 * (zs.max() - zs.min())]
+    sys_.set_constraint(FixAtoms(indices=fixed))
+    m = sys_.get_masses()
+    m[np.array(sys_.get_chemical_symbols()) == "H"] = 2.014
+    sys_.set_masses(m)
+    sys_.calc = calc32()
+    MaxwellBoltzmannDistribution(sys_, temperature_K=REACTIVE["T"], rng=np.random.default_rng(0))
+    nsteps = int(REACTIVE["ps"] * 1000 / REACTIVE["dt_fs"])
+    dyn = Langevin(sys_, REACTIVE["dt_fs"] * units.fs, temperature_K=REACTIVE["T"], friction=0.02,
+                   rng=np.random.default_rng(1))
+    dyn.run(nsteps)
+    sys_.set_velocities(np.zeros((len(sys_), 3)))
+    FIRE(sys_, logfile=None).run(fmax=0.05, steps=600)
+    sys_.calc = calc()
+    BFGS(sys_, logfile=None).run(fmax=0.05, steps=150)
+    sys_.set_constraint()
+    return sys_
 
 
 def relaxed_a(name):
@@ -152,8 +200,32 @@ def _place_and_relax(sub, mols, z_gap=2.4, fmax=0.05, steps=400):
     return sys_, upper
 
 
-def K_molecular_layer(substrate, seeds=(0, 1, 2)):
-    """PMMA repeat units at PMMA areal density on a substrate slab."""
+def _min_dist(s, nsub, sym):
+    from ase.geometry import get_distances
+    sy = np.array(s.get_chemical_symbols())
+    idx = [i for i in range(nsub, len(s)) if sy[i] == sym]
+    sub_idx = [i for i in range(nsub) if sy[i] not in ("O", "H")]
+    if not idx or not sub_idx:
+        return float("nan")
+    D = get_distances(s.positions[sub_idx], s.positions[idx], cell=s.cell, pbc=s.pbc)[1]
+    return float(D.min())
+
+
+def _place_and_relax_fast(sub, mols):
+    """Same placement as _place_and_relax, pre-relaxed with float32."""
+    global _calc
+    keep = _calc
+    _calc = calc32()
+    try:
+        s, up = _place_and_relax(sub, mols, steps=200)
+    finally:
+        _calc = keep
+    return s, up
+
+
+def K_molecular_layer(substrate, seeds=(0, 1, 2), reactive=False):
+    """PMMA repeat units at PMMA areal density on a substrate slab.
+    reactive=True adds the anneal of _reactive_anneal before the scan."""
     sub = metal_slab(substrate) if substrate != "SiO2" else hydroxylated_silica()
     sub.pbc = (True, True, False)
     A = np.linalg.norm(np.cross(sub.cell[0], sub.cell[1]))
@@ -161,7 +233,14 @@ def K_molecular_layer(substrate, seeds=(0, 1, 2)):
     res = []
     for sd in seeds:
         mols = [pmma_unit(1000 * sd + k) for k in range(nmol)]
-        s, up = _place_and_relax(sub, mols)
+        if reactive:
+            s, up = _place_and_relax_fast(sub, mols)
+            s = _reactive_anneal(s, len(sub))
+            from collections import Counter
+            print(f"    {substrate}/PMMA seed {sd} after anneal: min metal/Si-O dist "
+                  f"{_min_dist(s, len(sub), 'O'):.2f} A, min substrate-C dist {_min_dist(s, len(sub), 'C'):.2f} A", flush=True)
+        else:
+            s, up = _place_and_relax(sub, mols)
         r = _scan(s, up, A)
         res.append(r)
         print(f"  {substrate}/PMMA seed {sd}: n_mol={nmol} K_n={r['K_n']:.3e} K_t={r['K_t']:.3e}", flush=True)
@@ -308,11 +387,19 @@ def job(f):
 @job
 def Au_PMMA(): return K_molecular_layer("Au")
 @job
+def Au_PMMA_rx(): return K_molecular_layer("Au", reactive=True)
+@job
 def Ti_PMMA(): return K_molecular_layer("Ti")
+@job
+def Ti_PMMA_rx(): return K_molecular_layer("Ti", reactive=True)
 @job
 def Ni_PMMA(): return K_molecular_layer("Ni")
 @job
+def Ni_PMMA_rx(): return K_molecular_layer("Ni", reactive=True)
+@job
 def PMMA_SiO2(): return K_molecular_layer("SiO2")
+@job
+def PMMA_SiO2_rx(): return K_molecular_layer("SiO2", reactive=True)
 
 
 @job

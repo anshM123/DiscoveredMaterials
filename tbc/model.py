@@ -13,6 +13,10 @@ KB = 1.380649e-23
 AMU = 1.66053906660e-27
 THETA_SIDE = "stiff"
 INELASTIC_AMORPHOUS = False   # inelastic channel only for crystal/crystal interfaces
+K_RESOLVED_SPECULAR = True    # match specular channels at equal k_par
+SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
+NK_SPEC = 16                  # k_par grid for channel_spectra
+NZ_SPEC = 32                  # q_z points per column (flux captured ~95%, G converged to ~1%)
 
 
 def dfdT(w, T):
@@ -214,7 +218,7 @@ def coincidence_length(s1, s2, **kw):
 def spring_factor(w, K, Z1, Z2):
     """Energy transmission of a plane wave through an interfacial spring K
     (N m^-3) relative to a welded contact."""
-    zr = Z1 * Z2 / (Z1 + Z2)
+    zr = np.divide(Z1 * Z2, Z1 + Z2, out=np.zeros_like(np.asarray(Z1 + Z2, float)), where=np.asarray(Z1 + Z2) > 0)
     return 1.0 / (1.0 + (w * zr / K) ** 2)
 
 
@@ -231,8 +235,14 @@ class Interface:
         interface). Intermixed/diffuse interfaces suppress it (Li et al. 2022).
     """
 
-    def __init__(self, s1, s2, K=None, Kref=None, sharp=True, Lc="auto"):
+    def __init__(self, s1, s2, K=None, Kref=None, sharp=True, Lc="auto", epitaxial=True):
+        """epitaxial: True for a coherent/epitaxial interface (specularity from
+        the lattice coincidence); False for polycrystalline or sputtered films,
+        which scatter diffusely (p = 0). A property of the specified interface
+        structure, not a fitted parameter."""
         self.s1, self.s2 = s1, s2
+        if not epitaxial:
+            Lc = None
         self.K, self.Kref, self.sharp = K, Kref, sharp
         M1, M2 = s1.M, s2.M
         self.tau_dmm = np.divide(M2, M1 + M2, out=np.zeros_like(W), where=(M1 + M2) > 0)
@@ -248,16 +258,36 @@ class Interface:
         self.S = self.bond_factor(W)
 
     def specular_transmission(self):
-        """Momentum-conserving (specular) limit: impedance factor times the
-        fraction of channels available on the other side. Equals 1 for two
-        identical crystals; obeys reciprocity M1 t12 = M2 t21."""
+        """Momentum-conserving (specular) limit. Channels can only be matched at
+        the same in-plane wavevector k_par (aligned orientation, k_par compared
+        in the fractional coordinates of each side's interface-plane reciprocal
+        cell), so the transmissible flux is sum_k min(M1_k, M2_k), times the
+        impedance factor 4 Z1 Z2/(Z1+Z2)^2 (Z_i = rho_i 4 M_i/D_i). Equals 1 for
+        two identical crystals; obeys reciprocity M1 t12 = M2 t21. Falls back to
+        the k-integrated min(M1, M2) when k-resolved spectra are unavailable."""
         s1, s2 = self.s1, self.s2
         ok = (s1.M > 0) & (s2.M > 0) & (s1.D > 0) & (s2.D > 0)
         v1 = np.divide(4 * s1.M, s1.D, out=np.zeros_like(W), where=ok)
         v2 = np.divide(4 * s2.M, s2.D, out=np.zeros_like(W), where=ok)
         Z1, Z2 = s1.rho * v1, s2.rho * v2
         TZ = np.divide(4 * Z1 * Z2, (Z1 + Z2) ** 2, out=np.zeros_like(W), where=ok)
-        return np.divide(TZ * np.minimum(s1.M, s2.M), s1.M, out=np.zeros_like(W), where=ok)
+        Mmin = None
+        if K_RESOLVED_SPECULAR and s1.crystal and s2.crystal:
+            try:
+                from phonons import channel_spectra
+                M1k = channel_spectra(s1.name, s1.normal, nk=NK_SPEC, nz=NZ_SPEC)
+                M2k = channel_spectra(s2.name, s2.normal, nk=NK_SPEC, nz=NZ_SPEC)
+                # rescale so that each side integrates to its own full-mesh M (removes
+                # the ~0.5% quadrature difference between the two samplings)
+                c1 = np.divide(s1.M, M1k.mean(axis=0), out=np.ones_like(W), where=M1k.mean(axis=0) > 0)
+                c2 = np.divide(s2.M, M2k.mean(axis=0), out=np.ones_like(W), where=M2k.mean(axis=0) > 0)
+                Mmin = np.minimum(M1k * c1, M2k * c2).mean(axis=0)
+            except Exception as exc:          # pragma: no cover
+                import warnings
+                warnings.warn(f"k-resolved specular transmission unavailable ({exc}); using k-integrated bound")
+        if Mmin is None:
+            Mmin = np.minimum(s1.M, s2.M)
+        return np.divide(TZ * Mmin, s1.M, out=np.zeros_like(W), where=ok)
 
     def specularity(self, w):
         """Fraction of phonons scattered specularly (parallel momentum
@@ -281,8 +311,16 @@ class Interface:
         s1, s2 = self.s1, self.s2
         pn = np.interp(w, W, np.divide(s1.Mperp + s2.Mperp, s1.M + s2.M,
                                        out=np.full_like(W, 1 / 3), where=(s1.M + s2.M) > 0))
-        ZL = (s1.rho * s1.vL, s2.rho * s2.vL)
-        ZT = (s1.rho * s1.vT, s2.rho * s2.vT)
+        if SPECTRAL_IMPEDANCE:
+            # lattice impedance Z(w) = rho v_g(w), v_g = 4 M/D: vanishes at band
+            # edges, where a soft interfacial spring no longer blocks transport
+            def vg(s):
+                return np.interp(w, W, np.divide(4 * s.M, s.D, out=np.zeros_like(W), where=s.D > 0))
+            Z1, Z2 = s1.rho * vg(s1), s2.rho * vg(s2)
+            ZL = ZT = (Z1, Z2)
+        else:
+            ZL = (s1.rho * s1.vL, s2.rho * s2.vL)
+            ZT = (s1.rho * s1.vT, s2.rho * s2.vT)
         f = (pn * spring_factor(w, self.K[0], *ZL) / spring_factor(w, self.Kref[0], *ZL)
              + (1 - pn) * spring_factor(w, self.K[1], *ZT) / spring_factor(w, self.Kref[1], *ZT))
         return np.minimum(f, 1.0)

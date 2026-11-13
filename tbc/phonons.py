@@ -72,10 +72,12 @@ def build_phonopy(name):
     ph.produce_force_constants()
     ph.symmetrize_force_constants()
     if "nac" in spec:
+        # isotropic Born charges: cation +Z, anions balance the charge
         Z, eps = spec["nac"]["Z"], spec["nac"]["eps"]
-        syms = a.get_chemical_symbols()
-        cation = syms[0]
-        born = np.array([np.eye(3) * (Z if s == cation else -Z) for s in syms])
+        syms = list(ph.primitive.symbols)
+        cation = spec["nac"].get("cation", syms[0])
+        ncat = sum(s == cation for s in syms); nan = len(syms) - ncat
+        born = np.array([np.eye(3) * (Z if s == cation else -Z * ncat / nan) for s in syms])
         # factor = e^2/(4 pi eps0) in eV*Angstrom (Hartree*Bohr), for eV/Angstrom force units
         ph.nac_params = {"born": born, "dielectric": np.eye(3) * eps, "factor": 14.399645}
     return ph, a
@@ -164,3 +166,70 @@ if __name__ == "__main__":
                               msd300=round(float(np.interp(300, r["T"], r["msd"])), 5),
                               dos_norm=round(float(np.sum(r["D"]) * DW * r["V"] / (3 * r["nat"])), 4),
                               **{k: f"{v:.3e}" for k, v in Ms.items()})), flush=True)
+
+
+# --------------------------------------------------------------------------
+# k_par-resolved channel flux for specular (momentum-conserving) transmission
+CH_CACHE = os.path.join(CACHE, "channels")
+
+
+def channel_spectra(name, normal, nk=24, nz=24, force=False):
+    """M_k(w): the spectral flux of phonons crossing a plane of normal n,
+    resolved by in-plane wavevector k_par on an nk x nk grid of the reduced
+    2D reciprocal cell of the interface-plane Bravais lattice. Evaluated on
+    columns q = k_par + q_z n, q_z in [0, 2 pi/d), d = V_prim / A_plane, with
+    the cached MACE force constants (any orientation). sum_k M_k(w) / nk^2 =
+    M_n(w) (checked). Returns array (nk*nk, NW) in m^-2 per (rad/s)."""
+    from phonopy import load as phload
+    from materials import CRYSTALS
+    from model import plane_lattice
+    os.makedirs(CH_CACHE, exist_ok=True)
+    out = os.path.join(CH_CACHE, f"{name}_{normal}_{nk}_{nz}.npy")
+    if os.path.exists(out) and not force:
+        return np.load(out)
+    ph = phload(os.path.join(CACHE, f"{name}_phonopy.yaml"), produce_fc=False, log_level=0)
+    spec = CRYSTALS[name]
+    if "nac" in spec:
+        pass   # NAC already stored in the yaml if it was set
+    d = load(name)
+    n = np.asarray(spec["normals"][normal], float); n /= np.linalg.norm(n)
+    b2 = plane_lattice(d["a_cell"], n)                       # 2x2 in plane frame
+    cellp = np.asarray(ph.primitive.cell)
+    V = abs(np.linalg.det(cellp))
+    A = abs(np.linalg.det(b2))
+    dperp = V / A
+    # plane frame -> Cartesian
+    # recover e1,e2 used by plane_lattice
+    cell = np.asarray(d["a_cell"])
+    r = np.arange(-4, 5)
+    I3 = np.array(np.meshgrid(r, r, r)).reshape(3, -1).T
+    Vv = I3 @ cell; L = np.linalg.norm(Vv, axis=1)
+    ok = (L > 1e-6) & (np.abs(Vv @ n) < 1e-4 * np.maximum(L, 1))
+    v1 = Vv[ok][np.argmin(L[ok])]
+    e1 = v1 / np.linalg.norm(v1); e2 = np.cross(n, e1)
+    rec2 = 2 * np.pi * np.linalg.inv(b2).T                   # rows: 2D reciprocal vectors (plane frame)
+    f = (np.arange(nk) + 0.5) / nk
+    K2 = np.array([[a, b] for a in f for b in f]) @ rec2     # plane-frame k_par
+    Kc = K2[:, :1] * e1 + K2[:, 1:2] * e2                    # Cartesian, 1/Angstrom (with 2 pi)
+    qz = (np.arange(nz) + 0.5) / nz * 2 * np.pi / dperp
+    Q = (Kc[:, None, :] + qz[None, :, None] * n).reshape(-1, 3)
+    qred = Q @ cellp.T / (2 * np.pi)                          # reduced coords of primitive reciprocal
+    ph.run_qpoints(qred)
+    fr = ph.get_qpoints_dict()["frequencies"].reshape(nk * nk, nz, -1)
+    w = 2 * np.pi * np.clip(fr, 0, None) * 1e12                    # (nk2, nz, nb)
+    # exact channel counting by level crossings: along each periodic q_z
+    # column, the number of right-moving channels at frequency w equals half
+    # the number of times the (piecewise-linear) band crosses w.
+    w2 = np.concatenate([w, w[:, :1]], axis=1)
+    lo = np.minimum(w2[:, :-1], w2[:, 1:]); hi = np.maximum(w2[:, :-1], w2[:, 1:])
+    ilo = np.clip(np.round(lo / DW).astype(int), 0, NW)
+    ihi = np.clip(np.round(hi / DW).astype(int), 0, NW)
+    diff = np.zeros((nk * nk, NW + 1))
+    kk = np.broadcast_to(np.arange(nk * nk)[:, None, None], ilo.shape)
+    np.add.at(diff, (kk.ravel(), ilo.ravel()), 1.0)
+    np.add.at(diff, (kk.ravel(), ihi.ravel()), -1.0)
+    Nk = np.cumsum(diff, axis=1)[:, :NW] / 2.0                     # right-moving channels
+    # Landauer: M(w) = (1/(2 pi A)) <N_k(w)>_k  ->  per-k contribution
+    Mk = Nk / (2 * np.pi * A * 1e-20)
+    np.save(out, Mk)
+    return Mk

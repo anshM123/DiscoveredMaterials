@@ -1,6 +1,6 @@
 {
- "alpha": 4.1214,
- "b": 1.1218,
+ "alpha": 2.0407,
+ "b": 2.5106,
  "calibrated_on": "Li et al. 2022 Al/Si sample 1 (12 points, 82-705 K)",
- "rms_log_error": 0.0658
+ "rms_log_error": 0.0578
 }

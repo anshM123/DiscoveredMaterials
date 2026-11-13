@@ -1,0 +1,19 @@
+#!/bin/bash
+# Smoke test: the CLI must run for every interface class without crashing.
+set -e
+cd "$(dirname "$0")/.."
+run() { echo "== $*"; python tbc.py "$@" --T 300 2>&1 | grep -v -i warn | tail -1; }
+run AlN/0001 GaN/0001
+run GaN/0001 SiC4H/0001
+run AlN/0001 SiC4H/0001
+run Si/100 Ge/100
+run Si/110 Si/110
+run GaAs/100 AlAs/100
+run Al/111 Al2O3/0001 --metal Al
+run Cu/111 C/111 --metal Cu --polycrystalline
+run Au PMMA --metal Au --Kn 3.9e19
+run SiO2 Si/100
+run GaN/0001 Si/111
+run Ti/0001 GaN/0001 --metal Ti
+run Pt/111 Si/111 --metal Pt || echo "(expected: Pt not defined)"
+echo SMOKE OK

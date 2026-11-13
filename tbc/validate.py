@@ -19,6 +19,7 @@ OUT = os.path.join(HERE, "results")
 os.makedirs(OUT, exist_ok=True)
 ref_li = json.load(open(os.path.join(HERE, "data/reference/li2022_fig1.json")))["data"]
 ref_ch = json.load(open(os.path.join(HERE, "data/reference/chang2019.json")))
+ref_cheng = json.load(open(os.path.join(HERE, "data/reference/cheng2020_al_sapphire.json")))["data"]
 ref_sa = json.load(open(os.path.join(HERE, "data/reference/sandell2020.json")))["systems"]
 P = load_params()
 MW = 1e-6
@@ -30,12 +31,14 @@ def series(*G):
 
 def li_block():
     out = {}
-    for key, sub, nsub in [("Al/Si sample1", "Si", "111"), ("Al/GaN", "GaN", "0001")]:
+    sets = [("Al/Si sample1", "Si", "111", ref_li["Al/Si sample1"]), ("Al/GaN", "GaN", "0001", ref_li["Al/GaN"]),
+            ("Al/sapphire (Cheng 2020)", "Al2O3", "0001", ref_cheng["Al(111)/sapphire(0001) Sub200"])]
+    for key, sub, nsub, data in sets:
         bond = bonding_for("Al", sub, "111", nsub)
         I = interface("Al", sub, "111", nsub, bonding=bond)
         s1, s2 = Side("Al", "111"), Side(sub, nsub)
         rows = []
-        for T, Gm in ref_li[key]:
+        for T, Gm in data:
             gep = G_ep("Al", T)
             amm, dmm = G_AMM_debye(s1, s2, T), G_DMM_debye(s1, s2, T)
             rows.append(dict(T=T, measured=Gm,
@@ -120,8 +123,9 @@ def write_md(res):
     L = ["# Validation against the three published datasets", "",
          f"Global parameters (calibrated on Al/Si sample 1 only): alpha = {P['alpha']}, b = {P['b']}", ""]
     for key, rows in res["li2022"].items():
-        tag = "calibration set" if "Si" in key else "PREDICTION (not fitted)"
-        L += [f"## Li et al. 2022 - {key} ({tag})", "",
+        tag = "calibration set" if "Al/Si" in key else "PREDICTION (not fitted)"
+        src = "" if "Cheng" in key else "Li et al. 2022 - "
+        L += [f"## {src}{key} ({tag})", "",
               "| T (K) | measured | model | elastic only | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|---|---|"]
         for r in rows:
             L.append("| {T:.0f} | {measured:.0f} | **{model:.0f}** | {model_elastic_only:.0f} | {AMM:.0f} | {DMM:.0f} | {AMM_eph:.0f} | {DMM_eph:.0f} |".format(**r))
@@ -149,12 +153,12 @@ def plots(res):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    fig, axs = plt.subplots(1, 2, figsize=(10, 4.2))
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4.2))
     for ax, (key, rows) in zip(axs, res["li2022"].items()):
         T = [r["T"] for r in rows]
         ax.plot(T, [r["measured"] for r in rows], "o", color="k", label="measured (Li 2022)")
         Tf = np.linspace(80, 720, 65)
-        sub, nsub = ("Si", "111") if "Si" in key else ("GaN", "0001")
+        sub, nsub = ("Si", "111") if "Al/Si" in key else (("GaN", "0001") if "GaN" in key else ("Al2O3", "0001"))
         I = interface("Al", sub, "111", nsub, bonding=bonding_for("Al", sub, "111", nsub))
         s1, s2 = Side("Al", "111"), Side(sub, nsub)
         ax.plot(Tf, [series(G_ep("Al", t), I.G_pp(t, P["alpha"], P["b"])) * MW for t in Tf], "-", color="C3", lw=2, label="this model")
@@ -164,7 +168,7 @@ def plots(res):
         ax.plot(Tf, [series(G_ep("Al", t), G_DMM_debye(s1, s2, t)) * MW for t in Tf], ":", color="C0", alpha=0.5, label="DMM + e-ph")
         ax.set_xscale("log"); ax.set_yscale("log")
         ax.set_xlabel("T (K)"); ax.set_ylabel("G (MW m$^{-2}$ K$^{-1}$)")
-        ax.set_title(f"{key}" + (" (calibration)" if "Si" in key else " (prediction)"))
+        ax.set_title(f"{key}" + (" (calibration)" if "Al/Si" in key else " (prediction)"))
         ax.set_ylim(80, 2500)
         ax.legend(fontsize=7)
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "li2022.png"), dpi=150)

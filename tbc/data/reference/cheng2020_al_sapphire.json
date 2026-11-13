@@ -1,0 +1,57 @@
+{
+ "source": "Cheng et al., 'Thermal conductance across harmonic-matched epitaxial Al-sapphire heterointerfaces', Commun. Phys. 3, 115 (2020); arXiv:1906.05484v2 Fig. 2(c), sample Sub200 (MBE Al(111) on sapphire(0001)), TDTR round robin. Read from the raster figure by marker detection; estimated error ~2%. Authors: elastic transport dominates; G plateaus above ~300 K; AGF agrees.",
+ "units": "T in K, G in MW m^-2 K^-1",
+ "data": {
+  "Al(111)/sapphire(0001) Sub200": [
+   [
+    80.2,
+    120.5
+   ],
+   [
+    100.3,
+    178.4
+   ],
+   [
+    130.1,
+    220.6
+   ],
+   [
+    169.8,
+    270.7
+   ],
+   [
+    209.9,
+    308.0
+   ],
+   [
+    249.5,
+    333.6
+   ],
+   [
+    293.7,
+    345.3
+   ],
+   [
+    339.5,
+    354.2
+   ],
+   [
+    379.1,
+    359.8
+   ],
+   [
+    418.7,
+    360.3
+   ],
+   [
+    449.1,
+    360.9
+   ],
+   [
+    478.9,
+    358.1
+   ]
+  ]
+ },
+ "notes": "Authors' e-ph model used g_Al = 5.38e17 W/m3K (Jain & McGaughey PRB 93, 081206 (2016)) and kp = 6 W/mK."
+}

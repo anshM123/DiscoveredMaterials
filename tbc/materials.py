@@ -27,6 +27,22 @@ def wurtzite(sym_a, sym_b, a, c, u):
 CUBIC_111 = {"111": [1, 1, 1], "100": [0, 0, 1], "110": [1, 1, 0]}
 HEX_0001 = {"0001": [0, 0, 1]}
 
+def corundum(sym_m="Al", a=4.759, c=12.991, zm=0.3522, xo=0.3064):
+    """alpha-Al2O3 (R-3c), hexagonal setting (30 atoms), c along z."""
+    from ase.spacegroup import crystal
+    return crystal([sym_m, "O"], basis=[(0, 0, zm), (xo, 0, 0.25)], spacegroup=167,
+                   cellpar=[a, a, c, 90, 90, 120], primitive_cell=False)
+
+
+def sic_4h(a=3.081, c=10.085):
+    """4H-SiC (P6_3mc), stacking ABCB, c along z; C above Si by 3c/16."""
+    from ase import Atoms
+    cell = [[a, 0, 0], [-a / 2, a * np.sqrt(3) / 2, 0], [0, 0, c]]
+    st = [(0, 0, 0.0), (1 / 3, 2 / 3, 0.25), (2 / 3, 1 / 3, 0.5), (1 / 3, 2 / 3, 0.75)]
+    sp = [(x, y, z) for x, y, z in st] + [(x, y, z + 3 / 16) for x, y, z in st]
+    return Atoms(["Si"] * 4 + ["C"] * 4, cell=cell, scaled_positions=sp, pbc=True)
+
+
 CRYSTALS = {
     "Al":  dict(build=lambda: bulk("Al", "fcc", a=4.04), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
     "Cu":  dict(build=lambda: bulk("Cu", "fcc", a=3.61), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
@@ -41,6 +57,20 @@ CRYSTALS = {
                 # Born effective charge / eps_inf for LO-TO splitting (isotropic approx.)
                 # Z*=2.65, eps_inf=5.35: Bernardini & Fiorentini PRB 56, R10024 (1997); Davydov PRB 58, 12899 (1998)
                 nac=dict(Z=2.65, eps=5.35)),
+    # Born charges / eps_inf (isotropic approximation):
+    #   SiC Z*=2.7, eps=6.5 (Karch et al., PRB 50, 17054 (1994)); GaAs Z*=2.07, eps=10.9
+    #   and AlAs Z*=2.17, eps=8.2 (Giannozzi et al., PRB 43, 7231 (1991))
+    "SiC4H": dict(build=lambda: sic_4h(), sc=[4, 4, 2], mesh=[24, 24, 8], normals=HEX_0001,
+                  nac=dict(Z=2.7, eps=6.5, cation="Si")),
+    "SiC3C": dict(build=lambda: bulk("SiC", "zincblende", a=4.36), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                  nac=dict(Z=2.7, eps=6.5, cation="Si")),
+    "GaAs": dict(build=lambda: bulk("GaAs", "zincblende", a=5.653), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                 nac=dict(Z=2.07, eps=10.9, cation="Ga")),
+    "AlAs": dict(build=lambda: bulk("AlAs", "zincblende", a=5.661), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                 nac=dict(Z=2.17, eps=8.2, cation="Al")),
+    # sapphire; Born charge Z(Al)=2.9, eps_inf=3.1: Heid, Strauch & Bohnen, PRB 61, 12059 (2000)
+    "Al2O3": dict(build=lambda: corundum(), sc=[2, 2, 1], mesh=[14, 14, 5], normals=HEX_0001,
+                  nac=dict(Z=2.9, eps=3.1, cation="Al")),
     "AlN": dict(build=lambda: wurtzite("Al", "N", 3.11, 4.98, 0.382), sc=[4, 4, 3], mesh=[28, 28, 18], normals=HEX_0001,
                 nac=dict(Z=2.65, eps=4.4)),
 }
@@ -104,3 +134,31 @@ SIO2 = Amorphous("SiO2", rho=2200.0, vL=5953.0, vT=3743.0,
                  n_atoms=_sio2_units * 3, m_avg=60.08 / 3,
                  omega_max_THz=0.0, notes="Debye cutoff from atom density")
 AMORPHOUS = {"PMMA": PMMA, "SiO2": SIO2}
+
+
+def register_structure(path, miller, name=None):
+    """Add a crystal from a structure file (CIF, POSCAR, extxyz, ... via ASE)
+    to CRYSTALS, with interface normal given by Miller indices (hkl) of the
+    file's cell (or 'hkil' / '0001' style for hexagonal cells). Supercell and
+    q-mesh are chosen from the cell size. No Born charges are set: LO-TO
+    splitting of polar crystals is omitted (warned)."""
+    import os
+    from ase.io import read
+    atoms = read(path)
+    name = name or os.path.splitext(os.path.basename(path))[0]
+    m = str(miller)
+    digits = [int(c) for c in m.replace("-", "")] if m.lstrip("-").isdigit() else None
+    if digits is None or len(digits) not in (3, 4):
+        raise ValueError(f"Miller indices '{miller}' not understood (use e.g. 001, 111, 0001)")
+    if len(digits) == 4:
+        digits = [digits[0], digits[1], digits[3]]
+    rec = np.linalg.inv(atoms.cell.array).T
+    nvec = np.asarray(digits, float) @ rec
+    lengths = atoms.cell.lengths()
+    sc = [int(np.ceil(10.0 / L)) for L in lengths]
+    mesh = [int(np.clip(np.ceil(120.0 / L), 4, 40)) for L in lengths]
+    CRYSTALS[name] = dict(build=lambda a=atoms: a.copy(), sc=sc, mesh=mesh, normals={m: list(nvec)})
+    if len(set(atoms.get_chemical_symbols())) > 1:
+        import warnings
+        warnings.warn(f"{name}: no Born charges given; LO-TO splitting omitted (add 'nac' in materials.CRYSTALS if polar)")
+    return name, m
