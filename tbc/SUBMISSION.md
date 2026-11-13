@@ -61,8 +61,8 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
 | Cheng 2020 epitaxial Al/sapphire G(T) (not fitted; guard set) | 6.2% | 4.6% (Debye AMM + same e-ph) |
 | Sandell 2020 Au/[Ti,Ni]/PMMA/Si (not fitted; used to choose the polymer-contact treatment) | 13.0% (Au +2%, Ti −10%, Ni −26%); 34% if PMMA's Debye cutoff counts only C and O | 39% (Debye DMM + same e-ph/series) |
 | Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.36 (5.68 for H-terminated diamond; 1.9–3.2 if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
-| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 32% at 50 K. All 11 AGF pairs: 26% at 300 K | 66% (full-dispersion DMM) |
-| 6 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 34%: the four non-III-V/IV pairs 12% (−13, −12, −7, −16%); **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 58% (full-dispersion DMM) |
+| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 32% at 50 K. All 12 AGF pairs: 27% at 300 K | 66% (full-dispersion DMM) |
+| 7 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 35%: the five non-III-V/IV pairs 17% (−13, −12, −7, −16, −39%); **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 53% (full-dispersion DMM) |
 | 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 25% (harmonic elastic part alone 41%) | 34% (full-dispersion DMM); 35% (harmonic AGF, 4 pairs); 236% (Debye DMM) |
 | Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 85% (Debye DMM + same e-ph) |
 
@@ -86,8 +86,8 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
   Metallic ceramics (TiN, TiC) are treated as phonon-only solids, so metal/TiN contacts are a lower bound.
 * Al/GaN, Al/sapphire and the AGF pairs were never fitted, but served as no-regression guards in model
   selection (and the inelastic channel's Θ choice was made with Chang in view): they are validation sets.
-  The six pre-registered AGF predictions with a valid reference are the strictly blind tests (a seventh,
-  GaAs/AlAs(111), has none: its AGF superlattice construction failed and is now detected automatically); the two heterovalent III-V/IV (100)
+  The seven pre-registered AGF predictions are the strictly blind tests. GaAs/AlAs(111) missed by −39% (the fast
+  tier does not capture the orientation dependence of nearly matched pairs); the two heterovalent III-V/IV (100)
   ones failed (+54%, +104%): MACE relaxes their electron-deficient interfacial bonds to soft, stretched ones that the
   fast tier cannot see. The CLI warns for this class and recommends the AGF tier.
 * Below ~100 K the fast tier underestimates harmonic AGF for stiff nitrides by 25–55% (spectral undersampling).

@@ -267,10 +267,18 @@ itself (convergence check in k-mesh below).
 * Si(110)/Ge(110): MACE-AGF 157.0, fast tier −16% (CLI path −14%; full-dispersion
   DMM +27%). Slightly outside the earlier "within 13%" range, so that statement
   is now "within 16%".
-* GaAs(111)/AlAs(111): the AGF run returned 15.3, ~10× below any physical value
+* GaAs(111)/AlAs(111), first AGF run: it returned 15.3, ~10× below any physical value
   for this nearly identical pair. Its relaxed superlattice is disordered (14
   three-fold and 6 five-fold atoms, smeared planes, Al inside the GaAs block):
   the polar zincblende (111) stacking was built wrongly by `agf.superlattice`.
   No valid reference; the prediction (138) stays on record and the pair is
   excluded from the statistics. `agf.run` now runs a coordination check on the
   relaxed superlattice and stores `valid=False` (with a warning) for such cases.
+* GaAs(111)/AlAs(111), after fixing `agf.oriented_unit` (smallest stack that
+  reproduces the bulk: three bilayers for zincblende (111); all other cached
+  orientations unchanged, all pass the new coordination check): MACE-AGF 226.8
+  (structure check passed, below the GaAs radiation limit 490), vs pre-registered
+  138: **−39%**. The fast tier gives ~135 in all three GaAs/AlAs orientations,
+  the AGF 154 / 170 / 227 for (110) / (100) / (111).
+* Blind statistics (7 pairs): 35%; the five non-III-V/IV pairs 17%; all 12 AGF
+  pairs at 300 K 27% (eight non-III-V/IV pairs 16%).

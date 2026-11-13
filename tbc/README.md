@@ -68,6 +68,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaP(100)/Si(100) | **106** | 163 (+54%) | 163 (+54%) | 249 (+135%) | 760 (+618%) | 976 (+821%) |
 | GaAs(100)/Ge(100) | **117** | 238 (+104%) | 238 (+104%) | 243 (+108%) | 649 (+456%) | 1227 (+951%) |
 | Si(110)/Ge(110) | **157** | 132 (-16%) | 135 (-14%) | 199 (+27%) | 547 (+248%) | 403 (+156%) |
+| GaAs(111)/AlAs(111) | **227** | 138 (-39%) | 138 (-39%) | 172 (-24%) | 594 (+162%) | 928 (+309%) |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -133,18 +134,22 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     `G_pp` (with `--local-equilibrium` for NEMD's temperature convention);
     experiment ↔ `G`. The inelastic channel (fitted on Al/Si) adds 20–110%
     for nearly matched semiconductors (e.g. Si/Ge 137 → 254), so `G` is *not*
-    an estimate of harmonic AGF. It has not been validated against anharmonic
-    NEMD for non-Al pairs.
-* **Blind tests.** After η was frozen, fast-tier predictions for six new
+    an estimate of harmonic AGF. Against the one anharmonic reference available
+    (MLIP-NEMD AlN/GaN, 600–700) it gives 501 in NEMD's convention (Limitation 11).
+* **Blind tests.** After η was frozen, fast-tier predictions for seven new
   coherent pairs were committed to the repository *before* their AGF
   references were computed (`data/reference/preregistered_agf_predictions.json`,
   see git history).
-  * The four pairs that are not III-V/IV landed within 16% (GaN/ZnO −13%,
-    GaAs/AlAs(110) −12%, TiN/MgO(001) −7%, and, in a fourth round with a new
-    orientation, Si(110)/Ge(110) −16%). A seventh prediction,
-    GaAs(111)/AlAs(111) (138), has no valid reference: its AGF superlattice
-    construction failed (disordered relaxed structure, AGF 15 MW m⁻² K⁻¹). It is
-    excluded, and `agf.run` now flags such structures (`valid=False`).
+  * Of the five pairs that are not III-V/IV, four landed within 16% (GaN/ZnO
+    −13%, GaAs/AlAs(110) −12%, TiN/MgO(001) −7%, Si(110)/Ge(110) −16%).
+    **GaAs(111)/AlAs(111) missed by −39%** (138 vs 227). The fast tier gives
+    ~135 for GaAs/AlAs in every orientation, while the AGF gives 154 (110),
+    170 (100) and 227 (111): the orientation dependence of nearly matched
+    pairs is not captured.
+  * The first AGF run for GaAs/AlAs(111) returned 15 MW m⁻² K⁻¹ from a wrongly
+    built (AAA-stacked) superlattice. A new coordination check in `agf.run`
+    caught it; the builder was fixed (three bilayers per (111) period), and
+    the rerun passed the check.
   * **Both heterovalent III-V/IV (100) pairs failed:** GaP/Si(100) 163 vs 106
     (+54%) and GaAs/Ge(100) 238 vs 117 (+104%). The second was predicted after
     the first failed, specifically to test this class.
@@ -154,11 +159,11 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     and the fast tier, which assumes bulk-like bonding, cannot see them.
   * The fit-set III-V/IV pairs show the same sign (AlN/SiC +9%, GaN/SiC
     +28%). The CLI now warns for this class and recommends `--agf`.
-  * Mean over the six: 34% (the four non-III-V/IV pairs 12%); over all eleven
-    AGF pairs at 300 K, 26% (the seven non-III-V/IV pairs 13%). The III-V/IV
+  * Mean over the seven: 35% (the five non-III-V/IV pairs 17%); over all
+    twelve AGF pairs at 300 K, 27% (the eight non-III-V/IV pairs 16%). The III-V/IV
     "class" is a hypothesis drawn from two failures: the fit-set AlN/SiC (+9%)
     is indistinguishable from Si/Ge (+8%). On the blind pairs full-dispersion
-    DMM is at 58% and Debye DMM/AMM at 156–951%.
+    DMM is at 53% and Debye DMM/AMM at 156–951%.
 * **Where the model is weak:**
   * **The >400 K rise:** 0.10 and 0.07 vs measured 0.43 and 0.39 MW m⁻² K⁻²
     for Al/Si sample 1 and Al/GaN (4–6× too weak). It matches Li's second
@@ -410,10 +415,11 @@ Checks:
 7. **AGF tier scope.**
    * Lattice-matched pairs only (the R side is strained).
    * Memory limits the in-plane force-constant supercell to about 600 atoms.
-   * The superlattice builder failed for polar zincblende (111) stacking
-     (GaAs/AlAs(111): disordered relaxed structure). Every AGF run now checks the
-     coordination of the relaxed superlattice and marks the result `valid=False`
-     (with a warning in `tbc.py --agf`) when the interface is not clean.
+   * The superlattice builder originally failed for zincblende (111) stacking
+     (one bilayer per period → AAA stacking). It now takes the smallest stack
+     that reproduces the bulk, and every AGF run checks the coordination of the
+     relaxed superlattice, marking the result `valid=False` (with a warning in
+     `tbc.py --agf`) when the interface is not clean.
 8. **MACE accuracy varies.** Ge and GaAs are ~8–13% soft; Si TA ~10% soft.
 9. **Literature inputs:** electron–phonon coupling g, Born charges, and
    amorphous sound velocities.
