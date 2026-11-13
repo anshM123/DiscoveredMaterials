@@ -27,6 +27,27 @@ from predict import load_params, G_ep, bonding_for, is_metal, G_edmm, network
 from bonding import Kref
 
 
+ALIASES = {"diamond": "C", "sapphire": "Al2O3", "alumina": "Al2O3", "corundum": "Al2O3", "SiC": "SiC4H",
+           "4H-SiC": "SiC4H", "SiC-4H": "SiC4H", "3C-SiC": "SiC3C", "SiC-3C": "SiC3C", "beta-SiC": "SiC3C",
+           "c-BN": "cBN", "BN": "cBN", "a-SiO2": "SiO2", "aSiO2": "SiO2", "silica": "SiO2", "glass": "SiO2",
+           "a-Al2O3": "aAl2O3", "amorphous-Al2O3": "aAl2O3", "ALD-Al2O3": "aAl2O3", "Si3N4-beta": "Si3N4"}
+
+
+def resolve_name(name):
+    """Library name for a material, accepting common aliases and any letter case."""
+    from materials import AMORPHOUS
+    known = list(CRYSTALS) + list(AMORPHOUS)
+    if name in known:
+        return name
+    for k, v in ALIASES.items():
+        if name.lower() == k.lower():
+            return v
+    for k in known:
+        if name.lower() == k.lower():
+            return k
+    return name
+
+
 def parse(spec):
     """'Name/normal' (library material) or 'path/to/file.cif:hkl' (any crystal)."""
     if ":" in spec and os.path.exists(spec.rsplit(":", 1)[0]):
@@ -35,6 +56,7 @@ def parse(spec):
         return register_structure(path, hkl)
     name, _, normal = spec.partition("/")
     from materials import AMORPHOUS
+    name = resolve_name(name)
     if name not in CRYSTALS and name not in AMORPHOUS:
         raise SystemExit(f"error: unknown material '{name}'. Library: {sorted(CRYSTALS) + sorted(AMORPHOUS)}.\n"
                          f"Pass a structure file instead, e.g. path/to/{name}.cif:111, or add it to materials.py.")
