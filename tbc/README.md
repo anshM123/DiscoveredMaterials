@@ -435,27 +435,37 @@ Checks:
 pip install -r requirements.txt
 python tbc.py AlN/0001 GaN/0001 --T 100:800:50          # fast tier, any library material
 python tbc.py AlN/0001 GaN/0001 --T 300 --agf          # + AGF tier (~1 CPU-hour first time, cached)
-python tbc.py Al/111 Si/111 --metal Al                   # metal side: adds electron-phonon resistance
-python tbc.py Cu/111 C/111 --metal Cu --polycrystalline  # sputtered films: diffuse
-python tbc.py my_crystal.cif:001 Si/100                  # any crystal from a structure file
-python tbc.py Au PMMA --metal Au --Kn 3.9e19             # supply an interfacial stiffness
-python tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" --metal Al   # multilayer: films as NAME:thickness_nm
+python tbc.py Al/111 Si/111                              # metals are detected: adds electron-phonon resistance
+python tbc.py Al/111 Si/111 --no-eph                     # phonons only (to compare with atomistic MD / AGF)
+python tbc.py Si/100 Ge/100 --local-equilibrium          # also the NEMD (local-equilibrium) convention
+python tbc.py Cu/111 diamond/111 --polycrystalline       # sputtered films: diffuse (aliases: diamond, sapphire, SiC, a-SiO2, ...)
+python tbc.py Al/111 Cu/111                              # metal/metal: electron DMM channel added
+python tbc.py my_crystal.cif:001 Si/100                  # any crystal from a structure file (Miller e.g. 1-10)
+python tbc.py Au PMMA --Kn 3.9e19                        # supply an interfacial stiffness
+python tbc.py --stack "Au | Ti:2.4 | PMMA:0 | SiO2:2.05 | Si/100"   # multilayer: films as NAME:thickness_nm
+python glass.py aAl2O3                                   # build a MACE glass model (melt-quench -> propagon flux)
 bash tests/smoke.sh                                      # every interface class runs
 python make_report.py                                    # regenerate all numbers in this README
+python scorecard.py                                      # all validation metrics in one dict
 ```
 
-Outputs: G, R_K, the phonon conductance, the elastic-only conductance, the
-inelastic probability, Debye AMM and DMM, and (with `--agf`) the AGF value.
+Outputs: G (total), R_K, the phonon conductance G_pp (compare with anharmonic
+NEMD), its harmonic elastic part G_el (compare with harmonic AGF/NEGF), the
+inelastic probability, Debye AMM and DMM, for epitaxially matched pairs also the
+non-epitaxial (diffuse) alternative, for metal/metal pairs the electron channel,
+an expected-accuracy statement for the interface class, and (with `--agf`) the
+AGF value. `--json` gives machine-readable output.
 
 | file | content |
 |---|---|
 | `phonons.py` | MACE-OMAT-0 + phonopy → M_n(ω), D(ω), k∥-resolved channel spectra |
 | `model.py` | baselines; specular/diffuse elastic, coherence matching, bonding, inelastic channel |
 | `bonding.py` | MACE+D3 interface construction and rigid-shift stiffness (incl. reactive/chemisorbed protocols tested) |
-| `agf.py` | MACE atomistic Green's function (accurate tier) |
-| `predict.py` | electron–phonon resistance, stacks for the reference systems |
-| `calibrate.py`, `calibrate_spec.py` | the only fits: α, b (Al/Si) and η (AGF) |
-| `validate.py`, `make_report.py` | all comparisons, tables, figures (`results/`) |
+| `agf.py`, `agf_glass.py` | MACE atomistic Green's function (accurate tier; crystal/glass lower bound) |
+| `glass.py` | MACE melt-quenched oxide glasses and their propagating flux |
+| `predict.py` | electron–phonon and electron DMM terms, the shared resistance network, reference stacks |
+| `calibrate.py`, `calibrate_spec.py`, `calibrate_glass.py` | the only fits: α, b (Al/Si), η (AGF), w (Al/native-SiO₂/Si) |
+| `validate.py`, `make_report.py`, `scorecard.py` | all comparisons, tables, figures (`results/`), merge-rule scorecard |
 | `tbc.py` | command-line predictor |
 | `data/reference/` | experimental and literature data with provenance |
 
