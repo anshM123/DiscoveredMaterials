@@ -23,9 +23,10 @@ A two-tier, structure-to-conductance framework. Nothing is fitted per specimen.
 3. **Accurate tier (~1 CPU-hour)** — an atomistic Green's function with MACE force constants of the actual
    relaxed coherent interface. It reproduces published DFT-NEGF for GaN/AlN (281 vs ~300 MW m⁻² K⁻¹) and the
    measured AlN/4H-SiC (487 vs ~470).
-4. **Three global parameters, frozen in `params.json`:**
+4. **Four global parameters, frozen in `params.json`:**
    * α and b of the inelastic channel, fitted to one dataset (Al/Si, Li et al. 2022);
-   * the specular efficiency η, fitted to five MACE-AGF references.
+   * the specular efficiency η, fitted to five MACE-AGF references;
+   * the glass diffuson weight w, fitted to Li's Al/native-SiO₂/Si curve.
 
 ## Implementation
 
@@ -51,20 +52,20 @@ There are 19 physics-invariant tests and a smoke test covering every interface c
 | Li 2022 Al/Si G(T), 80–700 K (fit set) | 4.6% | 106% |
 | Li 2022 Al/GaN G(T) (held out) | 6.9% | 128% |
 | Cheng 2020 epitaxial Al/sapphire G(T) (held out) | 6.2% | 77% |
-| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (held out) | 19.6% | 22% (AMM + this e-ph/series treatment: 10% — better than this model) |
+| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (held out) | 17.7% | 22% (AMM + this e-ph/series treatment: 10% — better than this model) |
 | Chang 2019 TiC enhancement (held out; measured 1.48) | 1.36 | 1.97 / 1.10 |
 | 5 coherent pairs vs MACE-AGF (η fit set; leave-one-out) | 15% (LOO 19%) | 406% |
 | 3 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 11% (−13, −12, −7%) | 389% |
 | 6 measured epitaxial semiconductor and nitride/oxide interfaces (held out) | 25% | 236% |
-| Li 2022 Al/native-SiO₂/Si G(T) (held out; oxide 1–2 nm) | 36–60% (**weak**) | 113% |
+| Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 113% |
 
 ## Known limitations (stated, not hidden)
 
 * The >400 K rise of Li's Al/Si and Al/GaN is reproduced in sign but about 4× too weak (0.10 vs 0.43 MW m⁻² K⁻²).
   Calibrating to the slope reproduces it but costs the room-temperature values (trade-off table in the
   README). Epitaxial Al/sapphire (Cheng) is flat, and no single global mechanism fits both groups' data.
-* Glasses are Debye solids: a metal on native SiO₂ is over-predicted ~1.4–1.7×, so metal/amorphous-dielectric
-  results are upper bounds. An atomistic glass model (MACE melt-quench + AGF) would be the fix.
+* Glasses: SiO₂ uses a MACE melt-quenched glass (propagons) plus one diffuson coupling weight, fitted to a
+  single curve and tested only on Sandell. Other glasses need their own melt-quench, or fall back to an upper bound.
 * Molecule–metal chemistry, the Ni/PMMA case, is outside MACE-OMAT-0's domain. Polymer contacts are
   therefore the least accurate class (~20–40%).
 * Harmonic atomistic references (AGF/NEGF) and anharmonic NEMD differ by ~2× for GaN/AlN. The tool reports

@@ -80,3 +80,18 @@ def test_agf_blocks_hermitian():
         H00L, H01L, H00R, H01R, Hd, VL, VR, sizes = A.lead_and_device(k)
         for H in (H00L, H00R, Hd):
             assert np.abs(H - H.conj().T).max() < 1e-12
+
+
+def test_glass_diffuson_weight_limits():
+    import model
+    w0 = model.W_DIFFUSON
+    try:
+        model.W_DIFFUSON = 1.0
+        deb = Side("SiO2")
+        Ma = deb.M.copy()
+        model.W_DIFFUSON = 0.27
+        g = Side("SiO2")
+        assert np.all(g.M <= Ma + 1e-6 * Ma.max())        # diffusons can only remove channels
+        assert g.M.sum() < Ma.sum()
+    finally:
+        model.W_DIFFUSON = w0

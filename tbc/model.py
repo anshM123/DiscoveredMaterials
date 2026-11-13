@@ -4,6 +4,7 @@ transferable model described in README.md.
 All conductances are returned in W m^-2 K^-1 unless stated otherwise.
 Angular frequency grid W (rad/s) is shared with phonons.py.
 """
+import os
 import numpy as np
 from phonons import W, DW, load, T_GRID
 from materials import CRYSTALS, AMORPHOUS, METALS
@@ -17,10 +18,13 @@ K_RESOLVED_SPECULAR = True    # match specular channels at equal k_par
 SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
 K_IMPEDANCE = True            # impedance factor per (k_par, w) in the specular channel
 SPEC_EFFICIENCY = 1.0         # specular efficiency between different crystals (set from params.json)
+W_DIFFUSON = 1.0              # interfacial coupling weight of glass diffusons (set from params.json)
+GLASS_FLUX = {"SiO2": os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "glass", "aSiO2_32_flux.npz")}
 try:                          # frozen global parameters
     import json as _json, os as _os
     _P = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "params.json")))
     SPEC_EFFICIENCY = float(_P.get("spec_efficiency", SPEC_EFFICIENCY))
+    W_DIFFUSON = float(_P.get("w_diffuson", W_DIFFUSON))
 except Exception:             # pragma: no cover
     pass
 NK_SPEC = 16                  # k_par grid for channel_spectra
@@ -79,6 +83,18 @@ class Side:
             self.plane = None
             # isotropic solid: flux-weighted fraction of displacement along n is 1/2
             self.Mperp = 0.5 * ML + 0.5 * MT
+            # Glasses with an atomistic (MACE melt-quench) model: only a fraction of
+            # the Debye channels are propagons; the rest are diffusons, which couple
+            # across an interface with the global weight W_DIFFUSON:
+            #   M_eff = M_prop + W_DIFFUSON * (M_Debye - M_prop),
+            # M_prop = propagating flux of the periodic MACE glass (glass.py).
+            gf = GLASS_FLUX.get(name)
+            if gf is not None and os.path.exists(gf):
+                Mp = np.load(gf)["M"]
+                frac = np.where(self.M > 0, np.clip(np.divide(Mp, self.M, out=np.zeros_like(Mp), where=self.M > 0), 0, 1), 0)
+                f = frac + W_DIFFUSON * (1 - frac)
+                self.M = self.M * f
+                self.Mperp = self.Mperp * f
         nz = np.nonzero(self.M > 1e-6 * self.M.max())[0]
         self.w_max = W[nz[-1]] + DW / 2
 

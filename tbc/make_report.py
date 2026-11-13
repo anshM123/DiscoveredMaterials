@@ -5,6 +5,7 @@ README.md between the RESULTS markers."""
 import json, os, re
 import numpy as np
 import validate
+import model
 from model import Side, Interface, G_AMM_debye, G_DMM_debye
 from predict import load_params
 
@@ -134,9 +135,9 @@ def main():
     dno = np.array(json.load(open(os.path.join(HERE, "data/reference/li2022_fig1.json")))["data"]["Al/SiO2(native)/Si"])
     I1 = Interface(Side("Al", "111"), Side("SiO2")); I2 = Interface(Side("SiO2"), Side("Si", "100"))
     sA, sO, sS = Side("Al", "111"), Side("SiO2"), Side("Si", "100")
-    L += ["### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (held out) — a known weakness", "",
+    L += ["### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (calibration set of the glass diffuson weight)", "",
           "Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical "
-          "(Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid; the film conductivity "
+          "(Sandell et al. measured 2.05 nm on their wafer). The film conductivity "
           "follows the Cahill–Watson–Pohl T-dependence anchored at 1.38 W m⁻¹ K⁻¹ (300 K).", "",
           "| model | mean abs. error | G(80 K) | G(300 K) |", "|---|---|---|---|",
           f"| measured | – | {dno[0,1]:.0f} | {np.interp(300, dno[:,0], dno[:,1]):.0f} |"]
@@ -149,9 +150,10 @@ def main():
         from predict import film_k as _fk
         c = np.array([1 / (1 / f(sA, sO, T) + 1.5e-9 / _fk("SiO2", T) + 1 / f(sO, sS, T)) * MW for T in dno[:, 0]])
         L.append(f"| {nm}, oxide 1.5 nm | {100 * np.mean(abs(c / dno[:,1] - 1)):.0f}% | {c[0]:.0f} | {np.interp(300, dno[:,0], c):.0f} |")
-    L += ["", "The model over-predicts this metal/glass stack by ~1.4–1.7× (most at low T), although it is 2–3× closer "
-          "than DMM/AMM. A Debye solid counts every vibrational mode of a glass as a propagating channel; most are "
-          "non-propagating diffusons/locons. See Limitations.", ""]
+    L += ["", "The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ plus a fraction w of its "
+          "diffuson channels; w = %.2f is fitted to this curve (oxide 1.5 nm; 1.0–2.0 nm gives w = 0.24–0.32). One "
+          "parameter reproduces the whole 80–350 K temperature dependence. The Sandell stacks (PMMA on native "
+          "SiO₂/Si) are the held-out test of this glass treatment." % model.W_DIFFUSON, ""]
     L += ["![parity](results/parity.png)", "",
           "*Parity plot of every validated case: experiments (Li, Cheng, Sandell; all temperatures), measured epitaxial "
           "interfaces (section C) and MACE-AGF references (section B), for this model and for the Debye AMM/DMM.*", ""]

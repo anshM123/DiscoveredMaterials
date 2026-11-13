@@ -7,10 +7,10 @@ Mean absolute error against measurement. AMM/DMM are the Debye models of Little 
 | Al/Si sample1, 80–700 K (calibration) | 4.6% | 183.0% | 105.7% | 61.6% | 32.7% |
 | Al/GaN, 80–700 K (**held out**) | 6.9% | 225.2% | 128.3% | 68.3% | 36.8% |
 | Al/sapphire (Cheng 2020), 80–700 K (**held out**) | 6.2% | 76.7% | 141.8% | 27.0% | 54.1% |
-| Sandell 2020, 3 metal/PMMA/Si stacks (**held out**) | 19.6% | 22.3% | 79.4% | 10.2% | 39.2% |
+| Sandell 2020, 3 metal/PMMA/Si stacks (**held out**) | 17.7% | 22.3% | 79.4% | 10.2% | 39.2% |
 | Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | 1.36 | 1.97 | 1.10 | 1.80 | 1.08 |
 
-Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 57, Au/Ti/PMMA/Si 115 / 96, Au/Ni/PMMA/Si 139 / 84
+Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 70, Au/Ti/PMMA/Si 115 / 105, Au/Ni/PMMA/Si 139 / 104
 
 ### B. Coherent crystalline interfaces: fast tier vs MACE-AGF (300 K, harmonic)
 
@@ -47,19 +47,19 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 | TiN(111)/sapphire(0001) * | 700 | 482 | 372 | – | 2088 | 3497 |
 | **mean abs. error** | | 25% | | 35% | 236% | 461% |
 
-### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (held out) — a known weakness
+### D. Metal on amorphous native oxide: Al / SiO₂(native) / Si, 80–350 K (calibration set of the glass diffuson weight)
 
-Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical (Sandell et al. measured 2.05 nm on their wafer). Glassy SiO₂ is described as a Debye solid; the film conductivity follows the Cahill–Watson–Pohl T-dependence anchored at 1.38 W m⁻¹ K⁻¹ (300 K).
+Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not reported; 1.0–2.0 nm is typical (Sandell et al. measured 2.05 nm on their wafer). The film conductivity follows the Cahill–Watson–Pohl T-dependence anchored at 1.38 W m⁻¹ K⁻¹ (300 K).
 
 | model | mean abs. error | G(80 K) | G(300 K) |
 |---|---|---|---|
 | measured | – | 52 | 138 |
-| this model, oxide 1 nm | 60% | 87 | 219 |
-| this model, oxide 2 nm | 36% | 73 | 189 |
+| this model, oxide 1 nm | 6% | 56 | 147 |
+| this model, oxide 2 nm | 6% | 50 | 133 |
 | DMM (Debye), oxide 1.5 nm | 113% | 95 | 328 |
 | AMM (Debye), oxide 1.5 nm | 183% | 128 | 436 |
 
-The model over-predicts this metal/glass stack by ~1.4–1.7× (most at low T), although it is 2–3× closer than DMM/AMM. A Debye solid counts every vibrational mode of a glass as a propagating channel; most are non-propagating diffusons/locons. See Limitations.
+The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ plus a fraction w of its diffuson channels; w = 0.27 is fitted to this curve (oxide 1.5 nm; 1.0–2.0 nm gives w = 0.24–0.32). One parameter reproduces the whole 80–350 K temperature dependence. The Sandell stacks (PMMA on native SiO₂/Si) are the held-out test of this glass treatment.
 
 ![parity](results/parity.png)
 

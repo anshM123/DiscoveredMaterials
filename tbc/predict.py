@@ -108,6 +108,9 @@ BOND_KEYS = {("Al", "Si"): "Al_Si", ("Al", "GaN"): "Al_GaN", ("Cu", "TiC"): "Cu_
              ("Ni", "PMMA"): "Ni_PMMA", ("PMMA", "SiO2"): "PMMA_SiO2"}
 
 
+MOLECULAR_CONTACTS_IDEAL = True
+
+
 def bonding_for(a, b, na=None, nb=None, key=None):
     """(K, Kref) for an interface from the MACE bonding cache.
     The bond-strength ratio r = K_n / K_ref,n (normal rigid-shift stiffness)
@@ -116,6 +119,11 @@ def bonding_for(a, b, na=None, nb=None, key=None):
     interfaces and does not represent dynamic coupling of short phonons.
     Returns None (ideal bond) if the interface has not been computed."""
     from bonding import load_cache, Kref
+    if MOLECULAR_CONTACTS_IDEAL and ("PMMA" in (a, b)):
+        # molecule/surface contacts: MACE-OMAT-0 (inorganic training data) does not
+        # describe them (it fails to bind the PMMA carbonyl to Ni, which XPS shows);
+        # its stiffness is therefore not used -> ideally bonded contact
+        return None
     key = key or BOND_KEYS.get((a, b))
     c = load_cache()
     if key is None or key not in c:

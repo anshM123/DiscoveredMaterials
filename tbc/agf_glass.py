@@ -123,7 +123,13 @@ def run(name, nk=4, nw=200, glass_file=None):
     if os.path.exists(fcfile):
         ph = phload(fcfile, log_level=0)
     else:
-        sl = relax(sl)
+        from ase.io import write as _w, read as _r
+        slfile = os.path.join(A.CACHE, f"{label}_relaxed.extxyz")
+        if os.path.exists(slfile):
+            sl = _r(slfile)
+        else:
+            sl = relax(sl)
+            _w(slfile, sl)
         print("    relaxed", flush=True)
         ph = force_constants32(sl)
         ph.save(fcfile, settings={"force_constants": True})
