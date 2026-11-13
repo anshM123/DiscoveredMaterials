@@ -56,6 +56,9 @@ def main():
     ap.add_argument("--Kn", type=float, default=None, help="interfacial normal stiffness, N/m^3")
     ap.add_argument("--polycrystalline", action="store_true",
                     help="non-epitaxial (sputtered/polycrystalline) interface: fully diffuse scattering")
+    ap.add_argument("--agf", action="store_true",
+                    help="accurate tier for coherent crystalline pairs: atomistic Green's function with MACE "
+                         "force constants (~1 CPU-hour; harmonic, perfect interface). Cached in data/agf.")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
     (na, sa), (nb, sb) = parse(a.a), parse(a.b)
@@ -73,6 +76,15 @@ def main():
         t0, t1, dt = map(float, a.T.split(":")); Ts = np.arange(t0, t1 + 1e-9, dt)
     else:
         Ts = [float(a.T)]
+    agf_res = None
+    if a.agf:
+        import agf as agfmod
+        lab = f"{na}{sa}_{nb}{sb}"
+        path = os.path.join(agfmod.CACHE, f"{lab}.json")
+        if not os.path.exists(path):
+            print(f"[running AGF for {lab}; this takes ~1 CPU-hour]")
+            agfmod.run(na, sa, nb, sb, nk=8, nw=160, inplane_min=9.0)
+        agf_res = json.load(open(path))
     rows = []
     for T in Ts:
         Gpp = I.G_pp(T, P["alpha"], P["b"])
@@ -80,6 +92,11 @@ def main():
         rows.append(dict(T=T, G=G / 1e6, R_K=1e9 / G, G_pp=Gpp / 1e6,
                          G_elastic=I.G_elastic(T) / 1e6, P_inelastic=I.P_inel(T, P["alpha"], P["b"]),
                          AMM=G_AMM_debye(s1, s2, T) / 1e6, DMM=G_DMM_debye(s1, s2, T) / 1e6))
+        if agf_res is not None:
+            g_agf = float(np.interp(T, agf_res["T"], agf_res["G"]))
+            rows[-1]["G_AGF_harmonic"] = g_agf / 1e6
+            if a.metal:
+                rows[-1]["G_AGF_with_eph"] = 1 / (1 / g_agf + 1 / G_ep(a.metal, T)) / 1e6
     if a.json:
         print(json.dumps(dict(interface=f"{a.a}|{a.b}", bonding=bond, units="G in MW m^-2 K^-1, R_K in m^2 K GW^-1",
                               rows=rows), indent=1)); return
@@ -87,7 +104,8 @@ def main():
           f"   metal: {a.metal or '-'}   coherence length: {'diffuse' if I.Lc is None else '%.1f A' % I.Lc}")
     print("   T(K)   G(MW/m2K)  R_K(m2K/GW)  G_pp   G_el  P_inel   AMM    DMM")
     for r in rows:
-        print("{T:7.0f} {G:10.1f} {R_K:11.3f} {G_pp:7.0f} {G_elastic:6.0f} {P_inelastic:6.2f} {AMM:6.0f} {DMM:6.0f}".format(**r))
+        print("{T:7.0f} {G:10.1f} {R_K:11.3f} {G_pp:7.0f} {G_elastic:6.0f} {P_inelastic:6.2f} {AMM:6.0f} {DMM:6.0f}".format(**r)
+              + ("   AGF(harmonic) {:.0f}".format(r["G_AGF_harmonic"]) if "G_AGF_harmonic" in r else ""))
 
 
 if __name__ == "__main__":

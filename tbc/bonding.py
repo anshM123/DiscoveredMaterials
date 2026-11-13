@@ -45,7 +45,7 @@ def calc32():
     return _calc32
 
 
-REACTIVE = dict(T=600.0, ps=1.5, dt_fs=1.0)
+REACTIVE = dict(T=700.0, ps=0.5, dt_fs=1.0)
 
 
 def _reactive_anneal(sys_, nsub, log=None):
@@ -64,7 +64,13 @@ def _reactive_anneal(sys_, nsub, log=None):
     z = sys_.positions[:, 2]
     zs = z[:nsub]
     fixed = [i for i in range(nsub) if zs[i] < zs.min() + 0.6 * (zs.max() - zs.min())]
-    sys_.set_constraint(FixAtoms(indices=fixed))
+    # The PMMA repeat units stand for a polymer film: the rest of the film keeps
+    # them from desorbing. A one-sided harmonic wall 1.5 A above the initial top
+    # of the molecular layer (Hookean plane restraint, k = 5 eV/A^2) represents it.
+    from ase.constraints import Hookean
+    zwall = sys_.positions[nsub:, 2].max() + 1.5
+    walls = [Hookean(a1=i, a2=(0.0, 0.0, 1.0, -zwall), k=5.0) for i in range(nsub, len(sys_))]   # keeps z <= zwall
+    sys_.set_constraint([FixAtoms(indices=fixed)] + walls)
     m = sys_.get_masses()
     m[np.array(sys_.get_chemical_symbols()) == "H"] = 2.014
     sys_.set_masses(m)
@@ -387,19 +393,19 @@ def job(f):
 @job
 def Au_PMMA(): return K_molecular_layer("Au")
 @job
-def Au_PMMA_rx(): return K_molecular_layer("Au", reactive=True)
+def Au_PMMA_rx(): return K_molecular_layer("Au", seeds=(0, 1), reactive=True)
 @job
 def Ti_PMMA(): return K_molecular_layer("Ti")
 @job
-def Ti_PMMA_rx(): return K_molecular_layer("Ti", reactive=True)
+def Ti_PMMA_rx(): return K_molecular_layer("Ti", seeds=(0, 1), reactive=True)
 @job
 def Ni_PMMA(): return K_molecular_layer("Ni")
 @job
-def Ni_PMMA_rx(): return K_molecular_layer("Ni", reactive=True)
+def Ni_PMMA_rx(): return K_molecular_layer("Ni", seeds=(0, 1), reactive=True)
 @job
 def PMMA_SiO2(): return K_molecular_layer("SiO2")
 @job
-def PMMA_SiO2_rx(): return K_molecular_layer("SiO2", reactive=True)
+def PMMA_SiO2_rx(): return K_molecular_layer("SiO2", seeds=(0, 1), reactive=True)
 
 
 @job

@@ -173,7 +173,7 @@ if __name__ == "__main__":
 CH_CACHE = os.path.join(CACHE, "channels")
 
 
-def channel_spectra(name, normal, nk=24, nz=24, force=False):
+def channel_spectra(name, normal, nk=24, nz=24, force=False, with_velocity=False):
     """M_k(w): the spectral flux of phonons crossing a plane of normal n,
     resolved by in-plane wavevector k_par on an nk x nk grid of the reduced
     2D reciprocal cell of the interface-plane Bravais lattice. Evaluated on
@@ -184,9 +184,10 @@ def channel_spectra(name, normal, nk=24, nz=24, force=False):
     from materials import CRYSTALS
     from model import plane_lattice
     os.makedirs(CH_CACHE, exist_ok=True)
-    out = os.path.join(CH_CACHE, f"{name}_{normal}_{nk}_{nz}.npy")
+    out = os.path.join(CH_CACHE, f"{name}_{normal}_{nk}_{nz}.npz")
     if os.path.exists(out) and not force:
-        return np.load(out)
+        z = np.load(out)
+        return (z["Mk"], z["Vk"]) if with_velocity else z["Mk"]
     ph = phload(os.path.join(CACHE, f"{name}_phonopy.yaml"), produce_fc=False, log_level=0)
     spec = CRYSTALS[name]
     if "nac" in spec:
@@ -229,7 +230,15 @@ def channel_spectra(name, normal, nk=24, nz=24, force=False):
     np.add.at(diff, (kk.ravel(), ilo.ravel()), 1.0)
     np.add.at(diff, (kk.ravel(), ihi.ravel()), -1.0)
     Nk = np.cumsum(diff, axis=1)[:, :NW] / 2.0                     # right-moving channels
+    # mean |v_z| of the crossing modes at (k, w): segment slope dw/dq_z
+    dq = 2 * np.pi / dperp / nz * 1e10                             # 1/m
+    vseg = (hi - lo) / dq                                          # m/s
+    dv = np.zeros((nk * nk, NW + 1))
+    np.add.at(dv, (kk.ravel(), ilo.ravel()), vseg.ravel())
+    np.add.at(dv, (kk.ravel(), ihi.ravel()), -vseg.ravel())
+    Vk = np.divide(np.cumsum(dv, axis=1)[:, :NW] / 2.0, Nk, out=np.zeros_like(Nk), where=Nk > 0)
     # Landauer: M(w) = (1/(2 pi A)) <N_k(w)>_k  ->  per-k contribution
     Mk = Nk / (2 * np.pi * A * 1e-20)
-    np.save(out, Mk)
-    return Mk
+    np.savez(out, Mk=Mk, Vk=Vk)
+    return (Mk, Vk) if with_velocity else Mk
+

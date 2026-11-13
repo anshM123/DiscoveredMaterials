@@ -15,6 +15,7 @@ THETA_SIDE = "stiff"
 INELASTIC_AMORPHOUS = False   # inelastic channel only for crystal/crystal interfaces
 K_RESOLVED_SPECULAR = True    # match specular channels at equal k_par
 SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
+K_IMPEDANCE = True            # impedance factor per (k_par, w) in the specular channel
 NK_SPEC = 16                  # k_par grid for channel_spectra
 NZ_SPEC = 32                  # q_z points per column (flux captured ~95%, G converged to ~1%)
 
@@ -275,13 +276,21 @@ class Interface:
         if K_RESOLVED_SPECULAR and s1.crystal and s2.crystal:
             try:
                 from phonons import channel_spectra
-                M1k = channel_spectra(s1.name, s1.normal, nk=NK_SPEC, nz=NZ_SPEC)
-                M2k = channel_spectra(s2.name, s2.normal, nk=NK_SPEC, nz=NZ_SPEC)
+                M1k, V1k = channel_spectra(s1.name, s1.normal, nk=NK_SPEC, nz=NZ_SPEC, with_velocity=True)
+                M2k, V2k = channel_spectra(s2.name, s2.normal, nk=NK_SPEC, nz=NZ_SPEC, with_velocity=True)
                 # rescale so that each side integrates to its own full-mesh M (removes
-                # the ~0.5% quadrature difference between the two samplings)
+                # the few-% quadrature difference between the two samplings)
                 c1 = np.divide(s1.M, M1k.mean(axis=0), out=np.ones_like(W), where=M1k.mean(axis=0) > 0)
                 c2 = np.divide(s2.M, M2k.mean(axis=0), out=np.ones_like(W), where=M2k.mean(axis=0) > 0)
-                Mmin = np.minimum(M1k * c1, M2k * c2).mean(axis=0)
+                if K_IMPEDANCE:
+                    # impedance factor per (k_par, w) from the group velocity of
+                    # the crossing modes on each side (1D mode-matching estimate)
+                    z1, z2 = s1.rho * V1k, s2.rho * V2k
+                    tz = np.divide(4 * z1 * z2, (z1 + z2) ** 2, out=np.zeros_like(z1), where=(z1 + z2) > 0)
+                    Mmin = (tz * np.minimum(M1k * c1, M2k * c2)).mean(axis=0)
+                    TZ = np.ones_like(W)
+                else:
+                    Mmin = np.minimum(M1k * c1, M2k * c2).mean(axis=0)
             except Exception as exc:          # pragma: no cover
                 import warnings
                 warnings.warn(f"k-resolved specular transmission unavailable ({exc}); using k-integrated bound")

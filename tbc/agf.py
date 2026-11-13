@@ -44,7 +44,7 @@ def oriented_unit(name, miller):
     if miller == "0001":
         u = b.copy()
     else:
-        hkl = tuple(int(c) for c in miller)
+        hkl = tuple(int(c) for c in miller.replace("-", ""))
         if name in ("Si", "C", "Ge"):
             a = np.linalg.norm(b.cell[0]) * np.sqrt(2)
             conv = bulk(name, "diamond", a=a, cubic=True)
@@ -142,7 +142,8 @@ class AGF:
         pos = sc.positions; latt = sc.cell; inv = np.linalg.inv(latt)
         self.z = ph.primitive.positions[:, 2]
         self.cz = ph.primitive.cell[2, 2]
-        self.pl = [(0 if s_ == "L" else 1, k // periods_per_PL) for s_, k in tag]
+        ppl = periods_per_PL if isinstance(periods_per_PL, (tuple, list)) else (periods_per_PL, periods_per_PL)
+        self.pl = [(0 if s_ == "L" else 1, k // ppl[0 if s_ == "L" else 1]) for s_, k in tag]
         self.nPL = nPL_side
         self.idx = {}
         for a_, key in enumerate(self.pl):
@@ -154,17 +155,26 @@ class AGF:
                 loc[int(a_)] = (key, r)
         # group all non-negligible force-constant pairs by (PL_i, PL_j, z-image)
         groups = {}
+        # all periodic images within one supercell in each direction; a force
+        # constant is shared equally among equidistant minimal images
+        # (multiplicity, as in phonopy) so that D(k) is exactly Hermitian even
+        # for even supercells, where pairs lie exactly half a cell apart
+        shifts = np.array([[a_, b_, c_] for a_ in (-1, 0, 1) for b_ in (-1, 0, 1) for c_ in (-1, 0, 1)], float)
         for i in range(npr):
-            d = pos - pos[p2s[i]]
-            fr = d @ inv; fr -= np.round(fr); d = fr @ latt
+            d0 = pos - pos[p2s[i]]
+            fr = d0 @ inv; fr -= np.round(fr)
             norms = np.abs(fc_rows[i]).max(axis=(1, 2))
             for sj in np.nonzero(norms > fc_tol)[0]:
+                cand = (fr[sj] + shifts) @ latt
+                dist = np.linalg.norm(cand, axis=1)
+                sel = cand[dist < dist.min() + 1e-4]
                 j = int(prim_of_sc[sj])
                 ki, ri = loc[i]; kj, rj = loc[j]
-                img = int(np.round((self.z[i] + d[sj, 2] - self.z[j]) / self.cz))
-                g = groups.setdefault((ki, kj, img), ([], [], [], []))
-                g[0].append(ri); g[1].append(rj); g[2].append(d[sj, :2])
-                g[3].append(fc_rows[i, sj] / np.sqrt(self.masses[i] * self.masses[j]))
+                f = fc_rows[i, sj] / np.sqrt(self.masses[i] * self.masses[j]) / len(sel)
+                for d in sel:
+                    img = int(np.round((self.z[i] + d[2] - self.z[j]) / self.cz))
+                    g = groups.setdefault((ki, kj, img), ([], [], [], []))
+                    g[0].append(ri); g[1].append(rj); g[2].append(d[:2]); g[3].append(f)
         self.groups = {k: (np.array(v[0]), np.array(v[1]), np.array(v[2]), np.array(v[3])) for k, v in groups.items()}
         self.A = abs(np.linalg.det(ph.primitive.cell[:2, :2]))     # Angstrom^2
         self.rec2d = 2 * np.pi * np.linalg.inv(ph.primitive.cell[:2, :2]).T
@@ -266,10 +276,9 @@ def run(nameL, mL, nameR, mR, nsc=0, nk=8, nw=160, periods=None, label=None, inp
     uL, uR = oriented_unit(nameL, mL), oriented_unit(nameR, mR)
     ppl_L = max(1, int(np.ceil(PL_MIN / uL.cell[2, 2])))
     ppl_R = max(1, int(np.ceil(PL_MIN / uR.cell[2, 2])))
-    ppl = max(ppl_L, ppl_R)
     nP = 4
-    sl, tag, strain = superlattice(uL, nP * ppl, uR, nP * ppl)
-    print(f"[{label}] SL atoms {len(sl)}, periods/PL {ppl}, in-plane strain of R {strain:+.3f}", flush=True)
+    sl, tag, strain = superlattice(uL, nP * ppl_L, uR, nP * ppl_R)
+    print(f"[{label}] SL atoms {len(sl)}, periods/PL L {ppl_L} R {ppl_R}, in-plane strain of R {strain:+.3f}", flush=True)
     if not nsc:
         nsc = int(np.ceil(inplane_min / min(np.linalg.norm(uL.cell[0]), np.linalg.norm(uL.cell[1]))))
     print(f"    in-plane FC supercell {nsc}x{nsc}: {len(sl) * nsc * nsc} atoms", flush=True)
@@ -282,7 +291,7 @@ def run(nameL, mL, nameR, mR, nsc=0, nk=8, nw=160, periods=None, label=None, inp
         sl = relax_sl(sl)
         ph = force_constants(sl, nsc)
         ph.save(fcfile, settings={"force_constants": True})
-    agf = AGF(ph, tag, nP, ppl)
+    agf = AGF(ph, tag, nP, (ppl_L, ppl_R))
     # frequency grid up to max phonon frequency of both bulk materials
     from phonons import load
     fmax = max(load(nameL)["f_max"], load(nameR)["f_max"]) * 1.03
