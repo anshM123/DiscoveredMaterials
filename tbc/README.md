@@ -47,24 +47,24 @@ Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 60, Au/Ti/P
 
 ### B. Coherent crystalline interfaces: fast tier vs MACE-AGF (300 K, harmonic)
 
-The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent interfaces. Independent checks: AlN/GaN 281 vs ~300 MW m⁻² K⁻¹ from DFT-NEGF (Polanco & Lindsay, PRB 99, 075202, 2019); AlN/4H-SiC 487 vs ~470 measured (TDTR).
+The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent interfaces. Independent check: AlN/GaN 281 vs ~300 MW m⁻² K⁻¹ from DFT-NEGF (Polanco & Lindsay, PRB 99, 075202, 2019). Harmonic AGF describes a perfect interface without anharmonic channels; against measured wafers it is −43% (AlN/GaN), +4% (AlN/SiC) and −52% (GaN/SiC) (section C). **Which fast-tier output to compare with which reference:** harmonic AGF/NEGF ↔ `G_el`; anharmonic NEMD or experiment ↔ `G` (adds the inelastic channel calibrated on Al/Si). The table gives both; `G` is expected to exceed harmonic AGF. `G_el (CLI)` is the CLI's automatic coincidence-matching path, `G_el` the coherent setting used to calibrate η.
 
-| interface | strain in AGF | **AGF** | fast tier (elastic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
-|---|---|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | -2.9% | **281** | 243 (-14%) | 445 (+59%) | 1376 (+390%) | 1529 (+444%) |
-| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 531 (+9%) | 755 (+55%) | 1849 (+280%) | 2844 (+484%) |
-| GaAs(100)/AlAs(100) | +0.7% | **170** | 133 (-21%) | 171 (+1%) | 594 (+250%) | 928 (+446%) |
-| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 184 (+25%) | 374 (+154%) | 1291 (+776%) | 1084 (+636%) |
-| Si(100)/Ge(100) | -5.2% | **126** | 135 (+8%) | 204 (+62%) | 547 (+335%) | 403 (+221%) |
-| **mean abs. deviation from AGF (calibration set of η)** | | | 15% | 66% | 406% | 446% |
+| interface | strain in AGF | **AGF** | fast tier G_el | G_el (CLI) | fast tier G (anharmonic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
+|---|---|---|---|---|---|---|---|---|
+| AlN(0001)/GaN(0001) | -2.9% | **281** | 243 (-14%) | 246 (-12%) | 378 | 445 (+59%) | 1376 (+390%) | 1529 (+444%) |
+| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 531 (+9%) | 532 (+9%) | 657 | 755 (+55%) | 1849 (+280%) | 2844 (+484%) |
+| GaAs(100)/AlAs(100) | +0.7% | **170** | 133 (-21%) | 133 (-21%) | 277 | 171 (+1%) | 594 (+250%) | 928 (+446%) |
+| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 184 (+25%) | 188 (+28%) | 311 | 374 (+154%) | 1291 (+776%) | 1084 (+636%) |
+| Si(100)/Ge(100) | -5.2% | **126** | 135 (+8%) | 137 (+9%) | 254 | 204 (+62%) | 547 (+335%) | 403 (+221%) |
+| **mean abs. deviation from AGF (calibration set of η)** | | | 15% | 16% | – | 66% | 406% | 446% |
 
 **Blind tests** (fast-tier value committed before the AGF reference was computed; η frozen):
 
-| interface | **AGF** | pre-registered fast tier | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
-|---|---|---|---|---|---|
-| GaN(0001)/ZnO(0001) | **207** | 181 (-13%) | 307 (+48%) | 1099 (+430%) | 1363 (+557%) |
-| GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
-| TiN(100)/MgO(100) | **394** | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
+| interface | **AGF** | pre-registered fast tier G_el | G_el (CLI, now) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
+|---|---|---|---|---|---|---|
+| GaN(0001)/ZnO(0001) | **207** | 181 (-13%) | 182 (-12%) | 307 (+48%) | 1099 (+430%) | 1363 (+557%) |
+| GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 135 (-12%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
+| TiN(100)/MgO(100) | **394** | 366 (-7%) | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, held out)
 
@@ -72,11 +72,11 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 
 | interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | 490 | 378 | 247 | 281 | 1376 | 1529 |
-| AlN(0001)/4H-SiC(0001) | 470 | 657 | 533 | 487 | 1849 | 2844 |
-| GaN(0001)/4H-SiC(0001) | 305 | 312 | 189 | 147 | 1291 | 1084 |
-| TiN(001)/MgO(001) * | 700 | 511 | 366 | 394 | 2167 | 3971 |
-| TiN(111)/MgO(111) * | 700 | 495 | 337 | – | 2167 | 3971 |
+| AlN(0001)/GaN(0001) | 490 | 378 | 246 | 281 | 1376 | 1529 |
+| AlN(0001)/4H-SiC(0001) | 470 | 657 | 532 | 487 | 1849 | 2844 |
+| GaN(0001)/4H-SiC(0001) | 305 | 311 | 188 | 147 | 1291 | 1084 |
+| TiN(001)/MgO(001) * | 700 | 512 | 366 | 394 | 2167 | 3971 |
+| TiN(111)/MgO(111) * | 700 | 496 | 338 | – | 2167 | 3971 |
 | TiN(111)/sapphire(0001) * | 700 | 482 | 372 | – | 2088 | 3620 |
 | **mean abs. error** | | 25% | | 35% | 236% | 387% |
 
@@ -87,12 +87,13 @@ Li et al. 2022, Fig. 1a (orange markers). The native-oxide thickness is not repo
 | model | mean abs. error | G(80 K) | G(300 K) |
 |---|---|---|---|
 | measured | – | 52 | 138 |
-| this model, oxide 1 nm | 6% | 56 | 147 |
-| this model, oxide 2 nm | 6% | 50 | 133 |
-| DMM (Debye), oxide 1.5 nm | 113% | 95 | 328 |
-| AMM (Debye), oxide 1.5 nm | 170% | 125 | 412 |
+| this model, oxide 1.5 nm (fit of w) | 2% | 53 | 140 |
+| this model, oxide 1.0 nm | 6% | 56 | 147 |
+| this model, oxide 2.0 nm | 6% | 50 | 133 |
+| DMM (Debye) + e-ph, oxide 1.5 nm | 85% | 91 | 266 |
+| AMM (Debye) + e-ph, oxide 1.5 nm | 128% | 118 | 319 |
 
-The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ plus a fraction w of its diffuson channels; w = 0.27 is fitted to this curve (oxide 1.5 nm; 1.0–2.0 nm gives w = 0.24–0.32). One parameter reproduces the whole 80–350 K temperature dependence. The Sandell stacks (PMMA on native SiO₂/Si) are the held-out test of this glass treatment.
+The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ plus a fraction w of its diffuson channels; w = 0.27 is fitted to this curve (oxide 1.5 nm; 1.0–2.0 nm gives w = 0.24–0.32). One parameter reproduces the whole 80–350 K temperature dependence. The Sandell stacks (PMMA on native SiO₂/Si) were not used in the fit of w (they were used to choose the polymer-contact treatment, EXPERIMENTS H8–H9).
 
 ![parity](results/parity.png)
 
@@ -102,41 +103,54 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
 
 ### What this shows (and does not)
 
-* **Against experiment (fast tier):** on the three temperature-dependent
-  metal/crystal datasets the error is 5–7%, including two that were never
-  fitted (Al/GaN and epitaxial Al/sapphire). Raw AMM/DMM are off by 77–225%,
-  and even AMM/DMM with the same electron–phonon treatment are off by 27–68%.
-  Room-temperature values are reproduced within 4%: Al/Si 398 vs 381 and
-  Al/GaN 441 vs 425 MW m⁻² K⁻¹.
-* **Against atomistic ground truth (coherent interfaces):** the AGF tier
-  reproduces independent references, AlN/GaN within 6% of DFT-NEGF and
-  AlN/4H-SiC within 4% of measurement. Over five coherent pairs, the fast
-  tier is within 15% of AGF (19% leave-one-out); full-dispersion DMM is off
-  by 66%, and Debye DMM/AMM by factors of 4–16.
-* **Where the model is weak:**
-  * The metal/polymer stacks (Sandell, 12.1%) are close to, but not better
-    than, AMM with the same e-ph/series treatment (10%); Ni is −25%.
-  * **The >400 K rise of Al/Si and Al/GaN is under-predicted about 4×**
-    (0.10 and 0.07 vs 0.43 and 0.39 MW m⁻² K⁻²); see Limitations 1.
-  * For six measured epitaxial semiconductor and nitride/oxide interfaces
-    (section C), the fast tier's mean error is 25%: AlN/SiC +40% at worst,
-    TiN/oxide about −30%. DMM and AMM are off by 236% and 461%.
-  * For TiN on three different substrates, the fast tier reproduces the
-    measured near-equality (within 6%).
-  * See Limitations.
-* **Blind tests.** After η was frozen, fast-tier predictions for new coherent
-  pairs (GaN/ZnO, GaAs/AlAs(110), TiN/MgO(001)) were committed to the
-  repository *before* their AGF references were computed
+* **Against experiment (fast tier), metal on crystal.**
+  * Al/Si sample 1 (fit set) 4.6%; the never-fitted Al/GaN 6.9% and epitaxial
+    Al/sapphire 6.2%. Room-temperature values: Al/Si 398 vs 381 (+4.5%),
+    Al/GaN 441 vs 425 (+3.9%) MW m⁻² K⁻¹.
+  * The strongest baseline is full-dispersion DMM on the same MACE spectra
+    with the same e-ph resistance: 18%, 13% and 14% on these sets. Raw Debye
+    AMM/DMM are off by 33–181%.
+  * **Honest exceptions:** on Al/sapphire the Debye AMM with our e-ph
+    resistance scores 4.6% (better than this model's 6.2%, though it is
+    off by 54–58% on Al/Si and Al/GaN). On Li's *second* Al/Si specimen
+    (never fitted) this model is 24% high, worse than full-dispersion
+    DMM + e-ph (12%).
+  * The two nominally identical Al/Si specimens differ by 23% at 300 K and by
+    4× in their >400 K slope (0.43 vs 0.10 MW m⁻² K⁻²). Specimen-to-specimen
+    variation of ~20% bounds what any structure-only model can claim.
+* **Against atomistic ground truth (coherent interfaces).**
+  * Over five coherent pairs the fast tier's harmonic `G_el` is within 15% of
+    MACE-AGF (16% through the CLI's automatic matching; 19% leave-one-out).
+    Full-dispersion DMM is off by 66%, Debye DMM/AMM by 406–446%.
+  * The AGF tier reproduces DFT-NEGF for AlN/GaN (281 vs ~300).
+  * **Compare like with like:** harmonic AGF/NEGF ↔ `G_el`; anharmonic NEMD ↔
+    `G_pp` (with `--local-equilibrium` for NEMD's temperature convention);
+    experiment ↔ `G`. The inelastic channel (fitted on Al/Si) adds 20–110%
+    for nearly matched semiconductors (e.g. Si/Ge 137 → 254), so `G` is *not*
+    an estimate of harmonic AGF. It has not been validated against anharmonic
+    NEMD for non-Al pairs.
+* **Blind tests.** After η was frozen, fast-tier predictions for three new
+  coherent pairs (GaN/ZnO, GaAs/AlAs(110), TiN/MgO(001)) were committed to
+  the repository *before* their AGF references were computed
   (`data/reference/preregistered_agf_predictions.json`, see git history).
-  All three landed within 13% (−13%, −12%, −7%; mean 11%), while Debye
-  DMM/AMM were off by 286–1485%.
-* **"Atomistic ground truth" is itself method-dependent.** For GaN/AlN at
-  300 K, harmonic Green's functions give ~280–300 MW m⁻² K⁻¹, while
-  anharmonic MLIP-NEMD gives 600–700 and measurements 320–490.
-  * `G_elastic` (fast tier) and the AGF tier estimate the harmonic quantity.
-  * `G` (fast tier, including the inelastic channel calibrated on
-    experiment) estimates the anharmonic or measured quantity.
-  * Both are printed by `tbc.py`.
+  All three landed within 13% (−13%, −12%, −7%), while full-dispersion DMM was
+  off by +8% to +48% and Debye DMM/AMM by 286–907%.
+* **Where the model is weak:**
+  * **The >400 K rise:** 0.10 and 0.07 vs measured 0.43 and 0.39 MW m⁻² K⁻²
+    for Al/Si sample 1 and Al/GaN (about 4× too weak). It matches Li's second
+    Al/Si specimen (0.14 vs 0.10), but for Al/sapphire it predicts a rise
+    (0.25) where Cheng measured a flat curve (−0.04). See Limitations 1.
+  * **Metal/polymer stacks (Sandell): 12.1%,** against 39–47% for AMM/DMM with
+    the same e-ph/series treatment. Ni is −25%. These stacks were used to choose
+    the polymer-contact treatment, so they are not a blind test.
+  * **Measured epitaxial semiconductor and nitride/oxide interfaces (section
+    C): 25% mean error.** AlN/SiC is +40% at worst, TiN/oxide about −30%;
+    DMM and AMM are off by 236% and 387%. Harmonic AGF itself is 35% off on
+    these real wafers.
+  * **Chang:** the ratio depends on the unreported diamond termination: 1.36
+    for bulk-terminated (quoted) vs 5.68 for H-terminated diamond. The 8%
+    agreement should be read with that caveat.
+  * See Limitations.
 
 ---
 
@@ -193,6 +207,10 @@ The older MACE-MP-0 softens Si optical modes by 28% and is not used.
     interfaces relax by misfit dislocations ~6–10 nm apart and stay coherent
     in between. The tolerance was raised from 3% to 5% after seeing that
     GaN/SiC (4.1% MACE misfit) was otherwise treated as diffuse.
+  * Misfit is judged on the plane lattices rescaled to the experimental
+    (input-structure) atomic volume: MACE-OMAT-0 lattice constants are off by
+    1–2%, comparable to the misfits themselves (MACE puts Si/Ge at 5.2%, the
+    real value is 4.2%).
   * The common supercell period L_c gives p(ω) = p∞ + (1−p∞)exp[−(L_c/λ)²],
     with p∞ = A_cell/A_common.
   * Non-epitaxial interfaces (sputtered or polycrystalline films:
@@ -260,6 +278,14 @@ The older MACE-MP-0 softens Si optical modes by 28% and is not used.
   metals G_ep is 1–5 GW m⁻² K⁻¹, so the uncertainty hardly matters.
 * A thin adhesion layer adds g·d in parallel.
 * Metals with no data at all trigger a warning and the term is omitted.
+* Elemental metal sides are detected automatically (`--no-eph` switches the
+  electron terms off, e.g. to compare with atomistic MD/AGF, which have no
+  electrons).
+* **Metal/metal interfaces:** electrons cross directly. The electron diffuse
+  mismatch model of Gundrum, Cahill & Averback (PRB 72, 245426, 2005),
+  G_e = Z₁Z₂/[4(Z₁+Z₂)] with Z = γTv_F, is added in parallel with the
+  phonon path (e-ph → interface phonons → e-ph). It is known to over-predict
+  Al/Cu about 2× (7.3 vs ~4 GW m⁻² K⁻¹ measured) and is not validated here.
 
 ## 3. Method (AGF tier)
 
@@ -282,6 +308,10 @@ Checks:
 1. **High-temperature slope (a named target, only partly met).**
    * The model's G rises above 400 K for Al/Si and Al/GaN, but at 0.10 and
      0.07 MW m⁻² K⁻² against measured 0.43 and 0.39.
+   * Li's *second* Al/Si specimen has a slope of only 0.10 (model 0.14), and
+     Cheng's Al/sapphire is flat (−0.04; model 0.25). The measured slope
+     therefore varies 4× between two nominally identical Al/Si specimens of
+     the same study, which no structure-only model can reproduce.
    * Adding the slope to the calibration objective (`TBC_SLOPE_WEIGHT`, still
      calibrated on Al/Si only) reproduces the slope but loses the
      room-temperature values and the other held-out data:
@@ -355,6 +385,16 @@ Checks:
 10. **Licensing.** MACE-OMAT-0 weights are under the Academic Software
     License. A commercially licensed universal potential is a drop-in
     replacement in `phonons.py`, `bonding.py` and `agf.py`.
+11. **The inelastic channel is calibrated on one metal/semiconductor
+    dataset (Al/Si) and has not been checked against anharmonic NEMD for
+    semiconductor pairs.** It roughly doubles G for nearly matched pairs
+    (GaAs/AlAs, Si/Ge). MLIP-NEMD for AlN/GaN (600–700) lies above it, so it
+    is not obviously too large, but it is unverified.
+12. **The MACE-AGF references inherit MACE errors.** For Si/Ge the AGF gives
+    126 MW m⁻² K⁻¹, below ab initio estimates of 170–218 (`unseen_sanity.json`;
+    MACE Ge is ~10% soft and Ge is strained 5.2% in the AGF supercell).
+13. **Metal/metal interfaces** (barrier and liner stacks: Cu/Ta, W/TiN, …)
+    rely on the unvalidated electron DMM (factor ~2).
 
 ## 5. Running it
 

@@ -165,7 +165,8 @@ def chang_ratio(T=300.0, P=None, bond=None, t_tic=10e-9):
 BOND_KEYS = {("Al", "Si"): "Al_Si", ("Al", "GaN"): "Al_GaN", ("Cu", "TiC"): "Cu_TiC",
              ("TiC", "C"): "TiC_C", ("Au", "PMMA"): "Au_PMMA", ("Ti", "PMMA"): "Ti_PMMA",
              ("Ni", "PMMA"): "Ni_PMMA", ("PMMA", "SiO2"): "PMMA_SiO2",
-             ("Ag", "PMMA"): "Ag_PMMA", ("Pt", "PMMA"): "Pt_PMMA"}
+             ("Ag", "PMMA"): "Ag_PMMA", ("Pt", "PMMA"): "Pt_PMMA",
+             ("Cu", "C"): "Cu_C_bare"}   # bulk-terminated diamond (as in the Chang validation)
 
 
 MOLECULAR_CONTACTS_IDEAL = True
