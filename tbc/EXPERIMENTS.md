@@ -221,7 +221,7 @@ q-mesh), and min(M₁, M₂) of two noisy spectra is biased low.
 
 * Fast-tier prediction 163 MW m⁻² K⁻¹ committed (7861f12, 14:32 UTC) before the
   MACE-AGF run (2×2 in-plane FC supercell, 512 atoms, Si strained +1.5%, nk = 8).
-* AGF: 104.6. The fast tier is +56% (full-dispersion DMM +138%, Debye
+* AGF: 104.6 (nk = 8), 105.9 (nk = 12, the reference; converged to 1%). The fast tier is +54% (full-dispersion DMM +135%, Debye
   DMM/AMM +627/+833%).
 * Spectrally, the fast tier is ~2× too transmissive at 3–6 THz. Plausible cause:
   the polar (100) III-V/Si interface (Ga–Si / P–Si bonds), whose relaxed bonding
