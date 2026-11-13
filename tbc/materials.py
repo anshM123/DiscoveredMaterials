@@ -43,6 +43,13 @@ def sic_4h(a=3.081, c=10.085):
     return Atoms(["Si"] * 4 + ["C"] * 4, cell=cell, scaled_positions=sp, pbc=True)
 
 
+def beta_si3n4(a=7.608, c=2.911):
+    """beta-Si3N4 (P6_3/m), c along z."""
+    from ase.spacegroup import crystal
+    return crystal(["Si", "N", "N"], basis=[(0.1733, 0.7694, 0.25), (1 / 3, 2 / 3, 0.25), (0.3323, 0.0301, 0.25)],
+                   spacegroup=176, cellpar=[a, a, c, 90, 90, 120], primitive_cell=False)
+
+
 CRYSTALS = {
     "Al":  dict(build=lambda: bulk("Al", "fcc", a=4.04), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
     "Cu":  dict(build=lambda: bulk("Cu", "fcc", a=3.61), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
@@ -71,6 +78,24 @@ CRYSTALS = {
     # ZnO wurtzite: Z*=2.1, eps_inf=3.7 (Zaoui et al. / standard values; isotropic approx.)
     "ZnO": dict(build=lambda: wurtzite("Zn", "O", 3.25, 5.207, 0.382), sc=[4, 4, 3], mesh=[28, 28, 18], normals=HEX_0001,
                 nac=dict(Z=2.1, eps=3.7, cation="Zn")),
+    # ---- additional microelectronics materials (structure guesses; MACE-relaxed) ----
+    "TiN": dict(build=lambda: bulk("TiN", "rocksalt", a=4.24), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111),
+    "MgO": dict(build=lambda: bulk("MgO", "rocksalt", a=4.21), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                nac=dict(Z=1.98, eps=2.95, cation="Mg")),
+    "W":   dict(build=lambda: bulk("W", "bcc", a=3.165), sc=[5, 5, 5], mesh=[40, 40, 40], normals=CUBIC_111),
+    "Mo":  dict(build=lambda: bulk("Mo", "bcc", a=3.147), sc=[5, 5, 5], mesh=[40, 40, 40], normals=CUBIC_111),
+    "Ta":  dict(build=lambda: bulk("Ta", "bcc", a=3.301), sc=[5, 5, 5], mesh=[40, 40, 40], normals=CUBIC_111),
+    "Pt":  dict(build=lambda: bulk("Pt", "fcc", a=3.92), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
+    "Ag":  dict(build=lambda: bulk("Ag", "fcc", a=4.086), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
+    "Co":  dict(build=lambda: bulk("Co", "hcp", a=2.507, c=4.07), sc=[4, 4, 3], mesh=[32, 32, 20], normals=HEX_0001),
+    "Ru":  dict(build=lambda: bulk("Ru", "hcp", a=2.706, c=4.282), sc=[4, 4, 3], mesh=[32, 32, 20], normals=HEX_0001),
+    "InP": dict(build=lambda: bulk("InP", "zincblende", a=5.869), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                nac=dict(Z=2.55, eps=9.6, cation="In")),
+    "GaP": dict(build=lambda: bulk("GaP", "zincblende", a=5.451), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                nac=dict(Z=2.15, eps=9.1, cation="Ga")),
+    "cBN": dict(build=lambda: bulk("BN", "zincblende", a=3.615), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
+                nac=dict(Z=1.9, eps=4.5, cation="B")),
+    "Si3N4": dict(build=lambda: beta_si3n4(), sc=[2, 2, 4], mesh=[12, 12, 24], normals=HEX_0001),
     # sapphire; Born charge Z(Al)=2.9, eps_inf=3.1: Heid, Strauch & Bohnen, PRB 61, 12059 (2000)
     "Al2O3": dict(build=lambda: corundum(), sc=[2, 2, 1], mesh=[14, 14, 5], normals=HEX_0001,
                   nac=dict(Z=2.9, eps=3.1, cation="Al")),

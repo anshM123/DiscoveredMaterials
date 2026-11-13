@@ -124,6 +124,13 @@ Accuracy checks (THz, MACE vs experiment):
 | f_max GaN / AlN / AlAs (LO) | 21.3 / 27.0 / 12.0 | ≈22.2 / 27.3 / 12.1 |
 | f_max sapphire | 25.9 | ≈25–27 |
 | f_max GaAs / Ge | 8.1 / 7.9 | 8.75 / 9.1 (MACE ~10% soft) |
+| f_max TiN / MgO / W / Pt | 17.7 / 21.0 / 6.6 / 5.6 | ≈17.5 / 21.7 / 6.5 / 5.8 |
+| f_max Mo / Ag / InP / GaP / cBN | 7.8 / 4.7 / 9.7 / 11.3 / 37.0 | ≈8.6 / 5.1 / 10.4 / 12.1 / 39.1 |
+
+Library (30 materials, phonons cached): Al, Cu, Au, Ni, Ti, Ag, Pt, Co, Ru, W,
+Mo, Ta, TiN, TiC, Si, Ge, C (diamond), cBN, 3C-/4H-SiC, GaN, AlN, ZnO, GaAs,
+AlAs, InP, GaP, MgO, sapphire, β-Si₃N₄; amorphous PMMA and SiO₂. Any other
+crystal can be given as a structure file.
 
 The older MACE-MP-0 softens Si optical modes by 28% and is not used.
 

@@ -36,30 +36,25 @@ PL_MIN = 8.5                     # Angstrom, principal-layer thickness
 
 def oriented_unit(name, miller):
     """Relaxed bulk of `name`, re-cut so that a3 spans one period along the
-    normal and a1, a2 are in-plane. Returns (atoms, normal_unit_vector)."""
-    from ase.build import surface, bulk
+    normal and a1, a2 are in-plane. Miller indices refer to the spglib
+    standardised conventional cell (cubic for fcc/bcc/diamond/zincblende/
+    rocksalt, hexagonal for wurtzite/hcp/corundum ...), so any crystal works."""
+    from ase.build import surface
+    from ase import Atoms
+    import spglib
     from phonons import relax
     from materials import CRYSTALS
     b = relax(CRYSTALS[name]["build"]())
-    if miller == "0001":
-        u = b.copy()
+    lat, frac, nums = spglib.standardize_cell((b.cell[:], b.get_scaled_positions(), b.numbers),
+                                              to_primitive=False, no_idealize=False, symprec=1e-3)
+    conv = Atoms(numbers=nums, cell=lat, scaled_positions=frac, pbc=True)
+    digits = [int(c) for c in miller.replace("-", "")]
+    if len(digits) == 4:                 # hkil -> hkl
+        digits = [digits[0], digits[1], digits[3]]
+    if tuple(digits) == (0, 0, 1) and abs(conv.cell.angles()[2] - 120) < 1:
+        u = conv.copy()                  # hexagonal c-axis: the conventional cell already is the unit
     else:
-        hkl = tuple(int(c) for c in miller.replace("-", ""))
-        if name in ("Si", "C", "Ge"):
-            a = np.linalg.norm(b.cell[0]) * np.sqrt(2)
-            conv = bulk(name, "diamond", a=a, cubic=True)
-        elif name in ("SiC3C", "GaAs", "AlAs"):
-            from materials import CRYSTALS as C_
-            prim = b
-            a = np.linalg.norm(prim.cell[0]) * np.sqrt(2)
-            syms = sorted(set(prim.get_chemical_symbols()), key=prim.get_chemical_symbols().index)
-            conv = bulk("".join(syms), "zincblende", a=a, cubic=True)
-        elif name in ("Al", "Cu", "Au", "Ni"):
-            a = np.linalg.norm(b.cell[0]) * np.sqrt(2)
-            conv = bulk(name, "fcc", a=a, cubic=True)
-        else:
-            raise ValueError("oriented_unit: add cubic cell for " + name)
-        u = surface(conv, hkl, 1, vacuum=None, periodic=True)
+        u = surface(conv, tuple(digits), 1, vacuum=None, periodic=True)
     # rotate so that a1 || x and the in-plane normal || z
     c = u.cell.array
     n = np.cross(c[0], c[1]); n /= np.linalg.norm(n)
