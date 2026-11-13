@@ -136,17 +136,17 @@ def force_constants(at):
 
 def sound_velocities(at, eps=0.005):
     """Isotropic sound velocities (m/s) from the relaxed-ion elastic constants
-    of the glass: +-eps normal and shear strains, ions relaxed (float64 MACE),
+    of the glass: +-eps normal and shear strains, ions relaxed (float32 MACE),
     C11 and C44 averaged over the three axes; vL = sqrt(C11/rho), vT = sqrt(C44/rho)."""
     from ase.optimize import FIRE
-    calc = _calcs()[1]()
+    calc = _calcs()[0]()          # float32: stress differences converge to ~1%
     rho = np.sum(at.get_masses()) * 1.66053906660e-27 / (at.get_volume() * 1e-30)
     cell0 = at.cell.array.copy()
 
     def stress(e):
         a = at.copy(); a.calc = calc
         a.set_cell(cell0 @ (np.eye(3) + e), scale_atoms=True)
-        FIRE(a, logfile=None).run(fmax=0.005, steps=500)
+        FIRE(a, logfile=None).run(fmax=0.02, steps=300)
         return a.get_stress(voigt=False) * 160.21766208e9          # eV/A^3 -> Pa
 
     C11, C44 = [], []
