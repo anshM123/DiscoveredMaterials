@@ -95,9 +95,10 @@ def main():
           "The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent interfaces. "
           "Independent check: AlN/GaN 281 vs ~300 MW m⁻² K⁻¹ from DFT-NEGF (Polanco & Lindsay, PRB 99, 075202, 2019). "
           "Harmonic AGF describes a perfect interface without anharmonic channels; against measured wafers it is "
-          "−43% (AlN/GaN), +4% (AlN/SiC) and −52% (GaN/SiC) (section C). "
-          "**Which fast-tier output to compare with which reference:** harmonic AGF/NEGF ↔ `G_el`; anharmonic NEMD or "
-          "experiment ↔ `G` (adds the inelastic channel calibrated on Al/Si). The table gives both; `G` is "
+          "−43% (AlN/GaN), +4% (AlN/SiC), −52% (GaN/SiC) and −44% (TiN/MgO) (section C). "
+          "**Which fast-tier output to compare with which reference:** harmonic AGF/NEGF ↔ `G_el`; anharmonic NEMD ↔ "
+          "`G_pp` in the local-equilibrium convention (`--local-equilibrium`); experiment ↔ `G` (adds the inelastic "
+          "channel calibrated on Al/Si and, for metals, the electron terms). The table gives both; `G` is "
           "expected to exceed harmonic AGF. `G_el (CLI)` is the CLI's automatic coincidence-matching path, "
           "`G_el` the coherent setting used to calibrate η.", "",
           "| interface | strain in AGF | **AGF** | fast tier G_el | G_el (CLI) | fast tier G (anharmonic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |",
