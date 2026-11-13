@@ -58,7 +58,27 @@ def oriented_unit(name, miller):
     if tuple(digits) == (0, 0, 1) and abs(conv.cell.angles()[2] - 120) < 1:
         u = conv.copy()                  # hexagonal c-axis: the conventional cell already is the unit
     else:
-        u = surface(conv, tuple(digits), 1, vacuum=None, periodic=True)
+        # the stacking period along the normal can span several surface layers
+        # (zincblende/diamond/fcc (111): three, ABC). Take the smallest number of
+        # layers whose periodic cell reproduces the bulk exactly (atomic volume and
+        # coordination of every atom); one layer alone gave an AAA-stacked, wrong
+        # crystal for (111) (EXPERIMENTS, fourth round).
+        from ase.neighborlist import neighbor_list
+        vol_at = conv.get_volume() / len(conv)
+        d = neighbor_list("d", conv, 3.5); rc = 1.2 * d.min()
+        cn0 = sorted(np.bincount(neighbor_list("i", conv, rc), minlength=len(conv)))
+        u = None
+        for nl in range(1, 7):
+            t = surface(conv, tuple(digits), nl, vacuum=None, periodic=True)
+            if abs(t.get_volume() / len(t) / vol_at - 1) > 1e-3:
+                continue
+            cn = np.bincount(neighbor_list("i", t, rc), minlength=len(t))
+            if set(cn.tolist()) <= set(cn0) and np.allclose(np.bincount(cn, minlength=20)[:20] / len(t),
+                                                            np.bincount(cn0, minlength=20)[:20] / len(cn0)):
+                u = t
+                break
+        if u is None:
+            raise RuntimeError(f"no periodic oriented unit of {name} ({miller}) reproduces the bulk")
     # rotate so that a1 || x and the in-plane normal || z
     c = u.cell.array
     n = np.cross(c[0], c[1]); n /= np.linalg.norm(n)
