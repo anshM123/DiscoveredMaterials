@@ -193,7 +193,11 @@ q-mesh), and min(M₁, M₂) of two noisy spectra is biased low.
   (frequency-independent) τ_spec there: AGF MAD by T unchanged (31/17/12/15%).
 * (b) Gaussian smoothing of M, M_k (σ = 0.15 THz): 50 K 32 → 25%, but 300 K
   15 → 17% (fit set of η); σ = 0.3: 26% / 16%.
-* Not merged: no strict improvement without recalibrating η, α, b. Disclosed as
+* (c) smoothing σ = 0.15 THz **with full recalibration** (η 0.63 → 0.62, α, b
+  1.42, 5.20 → 1.56, 4.44, w unchanged 0.27): 50 K 32 → 26%, but regressions on
+  guarded metrics: Al/GaN 6.9 → 7.9%, Al/sapphire 6.2 → 6.4%, AGF (300 K)
+  15.4 → 16.9%, Chang 8 → 17%. Rejected.
+* Not merged: no strict improvement, even after recalibrating η, α, b. Disclosed as
   README Limitation 16; the CLI warns below 150 K. Code kept behind flags
   (`LOWW_DEBYE`, `LOWW_CONTINUUM`, `SMOOTH_THZ`, all off).
 
