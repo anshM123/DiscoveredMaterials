@@ -68,6 +68,9 @@ CRYSTALS = {
                  nac=dict(Z=2.07, eps=10.9, cation="Ga")),
     "AlAs": dict(build=lambda: bulk("AlAs", "zincblende", a=5.661), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111,
                  nac=dict(Z=2.17, eps=8.2, cation="Al")),
+    # ZnO wurtzite: Z*=2.1, eps_inf=3.7 (Zaoui et al. / standard values; isotropic approx.)
+    "ZnO": dict(build=lambda: wurtzite("Zn", "O", 3.25, 5.207, 0.382), sc=[4, 4, 3], mesh=[28, 28, 18], normals=HEX_0001,
+                nac=dict(Z=2.1, eps=3.7, cation="Zn")),
     # sapphire; Born charge Z(Al)=2.9, eps_inf=3.1: Heid, Strauch & Bohnen, PRB 61, 12059 (2000)
     "Al2O3": dict(build=lambda: corundum(), sc=[2, 2, 1], mesh=[14, 14, 5], normals=HEX_0001,
                   nac=dict(Z=2.9, eps=3.1, cation="Al")),
