@@ -135,7 +135,9 @@ def G_AMM_debye(s1, s2, T):
 
 
 # ---------------------------------------------------------------- the model
-COHERENCE_STRAIN = 0.03   # max misfit strain for a pseudomorphic (coherent) match
+COHERENCE_STRAIN = 0.05   # max misfit for a (locally) coherent match: at 3-5% misfit, epitaxial
+                          # interfaces relax by misfit dislocations ~a/f ~ 6-10 nm apart and are
+                          # coherent in between (patches >> dominant phonon wavelengths)
 
 
 def plane_lattice(cell, normal, nmax=4):

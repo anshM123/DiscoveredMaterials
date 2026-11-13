@@ -5,10 +5,10 @@ Mean absolute error against measurement. AMM/DMM are the Debye models of Little 
 | dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph |
 |---|---|---|---|---|---|
 | Al/Si sample1, 80–700 K (calibration) | 4.6% | 183.0% | 105.7% | 61.6% | 32.7% |
-| Al/GaN, 80–700 K (**held out**) | 7.0% | 225.2% | 128.3% | 68.3% | 36.8% |
-| Al/sapphire (Cheng 2020), 80–700 K (**held out**) | 6.1% | 76.7% | 141.8% | 27.0% | 54.1% |
+| Al/GaN, 80–700 K (**held out**) | 6.9% | 225.2% | 128.3% | 68.3% | 36.8% |
+| Al/sapphire (Cheng 2020), 80–700 K (**held out**) | 6.2% | 76.7% | 141.8% | 27.0% | 54.1% |
 | Sandell 2020, 3 metal/PMMA/Si stacks (**held out**) | 19.6% | 22.3% | 79.4% | 10.2% | 39.2% |
-| Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | 1.37 | 1.97 | 1.10 | 1.80 | 1.08 |
+| Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | 1.36 | 1.97 | 1.10 | 1.80 | 1.08 |
 
 Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 57, Au/Ti/PMMA/Si 115 / 96, Au/Ni/PMMA/Si 139 / 84
 
@@ -18,11 +18,12 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 
 | interface | strain in AGF | **AGF** | fast tier (elastic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | -2.9% | **281** | 246 (-12%) | 445 (+59%) | 1376 (+390%) | 3767 (+1241%) |
-| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 539 (+11%) | 755 (+55%) | 1849 (+280%) | 2940 (+504%) |
-| GaAs(100)/AlAs(100) | +0.7% | **170** | 135 (-20%) | 171 (+1%) | 594 (+250%) | 898 (+429%) |
-| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 187 (+27%) | 374 (+154%) | 1291 (+776%) | 1058 (+618%) |
-| **mean abs. deviation from AGF** | | | 18% | 67% | 424% | 698% |
+| AlN(0001)/GaN(0001) | -2.9% | **281** | 243 (-14%) | 445 (+59%) | 1376 (+390%) | 3767 (+1241%) |
+| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 531 (+9%) | 755 (+55%) | 1849 (+280%) | 2940 (+504%) |
+| GaAs(100)/AlAs(100) | +0.7% | **170** | 133 (-21%) | 171 (+1%) | 594 (+250%) | 898 (+429%) |
+| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 184 (+25%) | 374 (+154%) | 1291 (+776%) | 1058 (+618%) |
+| Si(100)/Ge(100) | -5.2% | **126** | 135 (+8%) | 204 (+62%) | 547 (+335%) | 2086 (+1560%) |
+| **mean abs. deviation from AGF** | | | 15% | 66% | 406% | 870% |
 
 ### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)
 
@@ -30,7 +31,7 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 
 | interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |
 |---|---|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | 490 | 379 | 251 | 281 | 1376 | 3767 |
-| AlN(0001)/4H-SiC(0001) | 470 | 662 | 541 | 487 | 1849 | 2940 |
-| GaN(0001)/4H-SiC(0001) | 305 | 473 | 374 | 147 | 1291 | 1058 |
-| **mean abs. error** | | 40% | | 33% | 266% | 480% |
+| AlN(0001)/GaN(0001) | 490 | 378 | 247 | 281 | 1376 | 3767 |
+| AlN(0001)/4H-SiC(0001) | 470 | 657 | 533 | 487 | 1849 | 2940 |
+| GaN(0001)/4H-SiC(0001) | 305 | 312 | 189 | 147 | 1291 | 1058 |
+| **mean abs. error** | | 22% | | 33% | 266% | 480% |
