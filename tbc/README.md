@@ -325,6 +325,7 @@ python tbc.py Al/111 Si/111 --metal Al                   # metal side: adds elec
 python tbc.py Cu/111 C/111 --metal Cu --polycrystalline  # sputtered films: diffuse
 python tbc.py my_crystal.cif:001 Si/100                  # any crystal from a structure file
 python tbc.py Au PMMA --metal Au --Kn 3.9e19             # supply an interfacial stiffness
+python tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" --metal Al   # multilayer: films as NAME:thickness_nm
 bash tests/smoke.sh                                      # every interface class runs
 python make_report.py                                    # regenerate all numbers in this README
 ```

@@ -73,7 +73,8 @@ def force_constants32(sl):
     calc32 = _calcs()[0]
     u = PhonopyAtoms(symbols=sl.get_chemical_symbols(), cell=sl.cell[:], scaled_positions=sl.get_scaled_positions())
     ph = Phonopy(u, supercell_matrix=np.eye(3, dtype=int), primitive_matrix="P")
-    ph.generate_displacements(distance=0.01)
+    # one-sided displacements (no symmetry: 3N instead of 6N force calls)
+    ph.generate_displacements(distance=0.01, is_plusminus=os.environ.get("AGF_PLUSMINUS", "0") == "1")
     c = calc32(); F = []
     n = len(ph.supercells_with_displacements)
     for k, sc in enumerate(ph.supercells_with_displacements):
