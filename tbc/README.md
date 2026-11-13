@@ -67,6 +67,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | TiN(100)/MgO(100) | **394** | 366 (-7%) | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
 | GaP(100)/Si(100) | **106** | 163 (+54%) | 163 (+54%) | 249 (+135%) | 760 (+618%) | 976 (+821%) |
 | GaAs(100)/Ge(100) | **117** | 238 (+104%) | 238 (+104%) | 243 (+108%) | 649 (+456%) | 1227 (+951%) |
+| Si(110)/Ge(110) | **157** | 132 (-16%) | 135 (-14%) | 199 (+27%) | 547 (+248%) | 403 (+156%) |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -134,12 +135,13 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     for nearly matched semiconductors (e.g. Si/Ge 137 → 254), so `G` is *not*
     an estimate of harmonic AGF. It has not been validated against anharmonic
     NEMD for non-Al pairs.
-* **Blind tests.** After η was frozen, fast-tier predictions for five new
+* **Blind tests.** After η was frozen, fast-tier predictions for six new
   coherent pairs were committed to the repository *before* their AGF
   references were computed (`data/reference/preregistered_agf_predictions.json`,
   see git history).
-  * The three pairs that are not III-V/IV landed within 13% (GaN/ZnO −13%,
-    GaAs/AlAs(110) −12%, TiN/MgO(001) −7%).
+  * The four pairs that are not III-V/IV landed within 16% (GaN/ZnO −13%,
+    GaAs/AlAs(110) −12%, TiN/MgO(001) −7%, and, in a fourth round with a new
+    orientation, Si(110)/Ge(110) −16%).
   * **Both heterovalent III-V/IV (100) pairs failed:** GaP/Si(100) 163 vs 106
     (+54%) and GaAs/Ge(100) 238 vs 117 (+104%). The second was predicted after
     the first failed, specifically to test this class.
@@ -149,11 +151,11 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     and the fast tier, which assumes bulk-like bonding, cannot see them.
   * The fit-set III-V/IV pairs show the same sign (AlN/SiC +9%, GaN/SiC
     +28%). The CLI now warns for this class and recommends `--agf`.
-  * Mean over the five: 38% (the three non-III-V/IV pairs 11%); over all ten
-    AGF pairs at 300 K, 27% (the six non-III-V/IV pairs 13%). The III-V/IV
+  * Mean over the six: 34% (the four non-III-V/IV pairs 12%); over all eleven
+    AGF pairs at 300 K, 26% (the seven non-III-V/IV pairs 13%). The III-V/IV
     "class" is a hypothesis drawn from two failures: the fit-set AlN/SiC (+9%)
     is indistinguishable from Si/Ge (+8%). On the blind pairs full-dispersion
-    DMM is at 64% and Debye DMM/AMM at 286–951%.
+    DMM is at 58% and Debye DMM/AMM at 156–951%.
 * **Where the model is weak:**
   * **The >400 K rise:** 0.10 and 0.07 vs measured 0.43 and 0.39 MW m⁻² K⁻²
     for Al/Si sample 1 and Al/GaN (4–6× too weak). It matches Li's second

@@ -24,8 +24,8 @@ every caveat in `tbc/README.md`):
   4.6% (this model 6.2%); on Li's second Al/Si specimen (310 at 300 K, 19% below
   specimen 1) this model is 24% off, full-dispersion DMM + e-ph 12%.
 * Atomistic ground truth (MACE-AGF): 15% on the 5 fit-set coherent pairs (η is
-  fitted on them); 27% over all 10 pairs. Of five pre-registered blind tests,
-  the three pairs that are not III-V/IV are within 13%; both
+  fitted on them); 26% over all 11 pairs. Of six pre-registered blind tests,
+  the four pairs that are not III-V/IV are within 16% (mean 12%); both
   heterovalent III-V/IV (100) pairs failed (+54%, +104%), and the tool now
   warns for that class.
 

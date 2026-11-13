@@ -260,3 +260,11 @@ itself (convergence check in k-mesh below).
 | "Isovalent" mislabels GaN/ZnO and TiN/MgO; III-V/IV class drawn from two points | relabelled "not III-V/IV"; presented as a hypothesis (AlN/SiC +9% ≈ Si/Ge +8%) |
 | Low-T statistics stale; landing README omitted exceptions; Chang H-termination missing in SUBMISSION; 4× vs 5.6× slope; specimen 19%/23%; T ranges; η enters Al/Si; Ni −25/−26 | all corrected; landing README lists the exceptions; AGF all-10-pairs figure (27% at 300 K) added |
 | Headline G vs harmonic references | CLI prints which column to compare with which reference, and by how much G exceeds G_el |
+
+### Fourth round of blind tests (new orientations, not III-V/IV)
+
+* Pre-registered (eea45be, 16:26 UTC): Si(110)/Ge(110) 132, GaAs(111)/AlAs(111) 138.
+* Si(110)/Ge(110): MACE-AGF 157.0, fast tier −16% (CLI path −14%; full-dispersion
+  DMM +27%). Slightly outside the earlier "within 13%" range, so that statement
+  is now "within 16%".
+* GaAs(111)/AlAs(111): see below when finished.
