@@ -13,6 +13,9 @@ HBAR = 1.054571817e-34
 KB = 1.380649e-23
 AMU = 1.66053906660e-27
 THETA_SIDE = "stiff"
+LOCAL_EQ_EXPERIMENT = False   # H15: measured G in a partial local-equilibrium convention (set from params.json)
+LOCAL_EQ_TL = None            # onset temperature of the local-equilibrium fraction; from params.json
+LOCAL_EQ_N = None             # None: f = T/(T+T_L); else f = 1/(1+(T_L/T)^n) (sharp onset)
 INELASTIC_AMORPHOUS = False   # inelastic channel only for crystal/crystal interfaces
 K_RESOLVED_SPECULAR = True    # match specular channels at equal k_par
 SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
@@ -31,6 +34,9 @@ try:                          # frozen global parameters
     import json as _json, os as _os
     _P = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "params.json")))
     SPEC_EFFICIENCY = float(_P.get("spec_efficiency", SPEC_EFFICIENCY))
+    if "local_eq_TL" in _P:
+        LOCAL_EQ_EXPERIMENT, LOCAL_EQ_TL = True, float(_P["local_eq_TL"])
+        LOCAL_EQ_N = float(_P["local_eq_n"]) if _P.get("local_eq_n") else None
     if "spec_efficiency_hetero" in _P:
         SPEC_EFFICIENCY_HETERO = float(_P["spec_efficiency_hetero"])
     W_DIFFUSON = float(_P.get("w_diffuson", W_DIFFUSON))
@@ -490,18 +496,31 @@ class Interface:
         th = self.theta_stiff() if THETA_SIDE == "stiff" else self.theta_soft()
         return 1.0 - np.exp(-alpha * (T / th) * np.exp(-th / (b * T)))
 
-    def G_pp(self, T, alpha=0.0, b=1.0, noneq=False):
+    def G_pp(self, T, alpha=0.0, b=1.0, noneq=None):
         """Phonon-phonon conductance. Elastic channel (specular/diffuse mix of
         full-dispersion transmissions, times the bonding factor) plus the
         inelastic conversion channel:
-            G = G_el + P(T) (G_max - G_el)
-        noneq=True applies the Zeng-Chen local-equilibrium correction
-        (not used by the frozen model; kept for comparison)."""
+            G_L = G_el + P(T) (G_max - G_el)       (Landauer, emitted-phonon convention)
+        Temperature convention (Zeng & Chen correction 1/G = 1/G_L - f/2 (1/G_rad1 + 1/G_rad2)):
+          noneq=False: f = 0, Landauer (as harmonic AGF/NEGF);
+          noneq=True : f = 1, full local equilibrium (as NEMD temperature drops);
+          noneq=None : the convention of a measured (TDTR/FDTR) temperature drop,
+                       f(T) = T / (T + T_L) (H15): the substrate is in local
+                       equilibrium only where phonon mean free paths (~1/T) are
+                       short compared with the probed region; T_L is global,
+                       calibrated on Al/Si with alpha and b."""
         Gel = self.G_elastic(T)
         GL = Gel + self.P_inel(T, alpha, b) * max(self.G_max(T) - Gel, 0.0)
-        if not noneq:
+        if noneq is None:
+            if LOCAL_EQ_EXPERIMENT and LOCAL_EQ_TL:
+                f = (1.0 / (1.0 + (LOCAL_EQ_TL / T) ** LOCAL_EQ_N)) if LOCAL_EQ_N else T / (T + LOCAL_EQ_TL)
+            else:
+                f = 0.0
+        else:
+            f = 1.0 if noneq else 0.0
+        if f == 0.0:
             return GL
-        R = 1 / GL - 0.5 * (1 / self.s1.G_rad(T) + 1 / self.s2.G_rad(T))
+        R = 1 / GL - f * 0.5 * (1 / self.s1.G_rad(T) + 1 / self.s2.G_rad(T))
         return 1 / R if R > 1e-3 / GL else np.inf          # identical sides: no resistance
 
 

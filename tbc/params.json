@@ -2,7 +2,15 @@
  "alpha": 1.5774,
  "b": 3.8349,
  "calibrated_on": "Li et al. 2022 Al/Si sample 1 (12 points, 82-705 K); objective: log error + 0 x (slope >400 K error)^2",
- "rms_log_error": 0.0583,
+ "rms_log_error": 0.0422,
+ "local_eq_TL": 772.6,
+ "local_eq_n": 8.0,
+ "local_eq_note": "measured G in a partial local-equilibrium convention: fraction f(T) = 1/(1+(T_L/T)^n) of the Zeng-Chen correction (H15c); n fixed, T_L fitted on the Al/Si curve with alpha, b frozen",
+ "fit_check": {
+  "G300": 394.8,
+  "slope_above_400K": 0.315,
+  "measured_slope": 0.426
+ },
  "spec_efficiency": 0.74,
  "spec_efficiency_note": "fit to MACE-AGF at 300 K, two valence classes (III-V/IV vs all other pairs); spec_efficiency: 10 pairs, LOO mean abs dev 14%; spec_efficiency_hetero: 4 pairs, LOO mean abs dev 29%",
  "w_diffuson": 0.27,

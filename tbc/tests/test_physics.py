@@ -25,7 +25,8 @@ def test_identical_crystals_transmit_fully(name, normal):
     I = Interface(s, Side(name, normal))
     for T in (100, 300, 700):
         assert abs(I.G_elastic(T) / s.G_rad(T) - 1) < 2e-3          # no interface -> radiation limit
-        assert abs(I.G_pp(T, P["alpha"], P["b"]) / s.G_rad(T) - 1) < 2e-3
+        assert abs(I.G_pp(T, P["alpha"], P["b"], noneq=False) / s.G_rad(T) - 1) < 2e-3   # Landauer convention
+        assert I.G_pp(T, P["alpha"], P["b"], noneq=True) == np.inf        # local equilibrium: no interface
 
 
 @pytest.mark.parametrize("a,b", [(("AlN", "0001"), ("GaN", "0001")), (("Al", "111"), ("Si", "111")),
@@ -38,7 +39,8 @@ def test_reciprocity_and_bounds(a, b):
         g12, g21 = I12.G_elastic(T), I21.G_elastic(T)
         assert abs(g12 / g21 - 1) < 1e-6                                # detailed balance
         assert g12 <= min(s1.G_rad(T), s2.G_rad(T)) * (1 + 1e-6)       # Landauer bound
-        assert I12.G_pp(T, P["alpha"], P["b"]) >= g12                   # inelastic channel only adds
+        assert I12.G_pp(T, P["alpha"], P["b"], noneq=False) >= g12      # inelastic channel only adds
+        assert I12.G_pp(T, P["alpha"], P["b"]) >= I12.G_pp(T, P["alpha"], P["b"], noneq=False)   # measured convention >= Landauer
 
 
 @pytest.mark.parametrize("name,normal", [("GaN", "0001"), ("Si", "111")])
@@ -148,3 +150,15 @@ def test_amm_reciprocal():
     for a, b in [(("Pt", "111"), ("Si", "111")), (("Al", "111"), ("GaN", "0001"))]:
         s1, s2 = Side(*a), Side(*b)
         assert abs(G_AMM_debye(s1, s2, 300) / G_AMM_debye(s2, s1, 300) - 1) < 1e-3   # angular quadrature
+
+
+def test_two_class_specular_efficiency_and_measured_convention():
+    import model
+    from materials import heterovalent
+    assert "III-V" in heterovalent("GaAs", "Ge") and not heterovalent("GaAs", "AlAs") and not heterovalent("Si", "Ge")
+    if model.SPEC_EFFICIENCY_HETERO is not None:
+        assert model.spec_efficiency("GaP", "Si") == model.SPEC_EFFICIENCY_HETERO
+        assert model.spec_efficiency("AlN", "GaN") == model.SPEC_EFFICIENCY
+    I = Interface(Side("Al", "111"), Side("Si", "111"))
+    # the local-equilibrium fraction of a measured temperature drop is negligible at room temperature
+    assert abs(I.G_pp(300, P["alpha"], P["b"]) / I.G_pp(300, P["alpha"], P["b"], noneq=False) - 1) < 0.01
