@@ -48,6 +48,35 @@ def resolve_name(name):
     return name
 
 
+_GROUP = {**{e: "II" for e in ("Zn", "Cd", "Mg", "Hg", "Be")}, **{e: "III" for e in ("B", "Al", "Ga", "In")},
+          **{e: "IV" for e in ("C", "Si", "Ge", "Sn")}, **{e: "V" for e in ("N", "P", "As", "Sb")},
+          **{e: "VI" for e in ("O", "S", "Se", "Te")}}
+
+
+def compound_class(name):
+    """'IV', 'III-V', 'II-VI', ... for covalent/ionic semiconductors; None otherwise."""
+    from materials import CRYSTALS
+    if name not in CRYSTALS or is_metal(name):
+        return None
+    try:
+        el = sorted(set(CRYSTALS[name]["build"]().get_chemical_symbols()))
+    except Exception:
+        return None
+    g = sorted({_GROUP.get(e) for e in el}, key=lambda x: (x is None, x))
+    if None in g:
+        return None
+    return "-".join(sorted(g, key=lambda x: ["II", "III", "IV", "V", "VI"].index(x)))
+
+
+def heterovalent(a, b):
+    """Label like 'III-V/IV' if the two semiconductors have different valence classes
+    and one of them is elemental group IV (polar-on-nonpolar); else ''."""
+    ca, cb = compound_class(a), compound_class(b)
+    if ca and cb and ca != cb and "IV" in (ca, cb):
+        return f"{ca}/{cb}"
+    return ""
+
+
 def parse(spec):
     """'Name/normal' (library material) or 'path/to/file.cif:hkl' (any crystal)."""
     if ":" in spec and os.path.exists(spec.rsplit(":", 1)[0]):
@@ -224,7 +253,7 @@ def main():
                "(Gundrum et al. 2005, ~4 GW measured). Not validated here: factor-2 estimate")
     elif I.Lc is not None and I.p_inf > 0.5 and not (metals or any(is_metal(n) for n in (na, nb))):
         acc = ("coherent crystalline pair: G_el within ~15% of harmonic MACE-AGF at 200-700 K for 5 fit pairs and "
-               "3 of 4 blind tests (polar GaP/Si(100): +54%), but 15-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
+               "the 3 isovalent blind tests (heterovalent pairs: see warning if shown), but 15-55% LOW below ~100 K for stiff nitrides (k-space undersampling); measured "
                "epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
         if Tlo < 150:
             acc += ". WARNING: T < 150 K requested"
@@ -241,6 +270,11 @@ def main():
     if bond is not None and a.Kn is None:
         print(f"bonding stiffness from data/bonding.json key '{bkey}'" if bkey else
               "bonding stiffness: physisorbed-contact fallback (Au/PMMA ratio)")
+    het = heterovalent(na, nb)
+    if het:
+        acc += ("; WARNING: heterovalent " + het + " interface: for all four such MACE-AGF pairs the fast tier is HIGH "
+                "(AlN/SiC +9%, GaN/SiC +28%, blind GaP/Si(100) +54%, blind GaAs/Ge(100) +104%), because MACE relaxes "
+                "the electron-deficient interfacial bonds to stretched, soft ones the fast tier cannot see; use --agf")
     if {na, nb} & {"TiN", "TiC"}:
         acc += ("; NOTE: TiN/TiC are metallic but treated as phonon-only (no electron data): with a metal on the "
                 "other side G is a lower bound")

@@ -66,6 +66,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaAs(110)/AlAs(110) | **154** | 135 (-12%) | 135 (-12%) | 166 (+8%) | 594 (+286%) | 928 (+504%) |
 | TiN(100)/MgO(100) | **394** | 366 (-7%) | 366 (-7%) | 470 (+19%) | 2167 (+450%) | 3971 (+907%) |
 | GaP(100)/Si(100) | **106** | 163 (+54%) | 163 (+54%) | 249 (+135%) | 760 (+618%) | 976 (+821%) |
+| GaAs(100)/Ge(100) | **117** | 238 (+104%) | 238 (+104%) | 243 (+108%) | 649 (+456%) | 1227 (+951%) |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -131,16 +132,23 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
     for nearly matched semiconductors (e.g. Si/Ge 137 → 254), so `G` is *not*
     an estimate of harmonic AGF. It has not been validated against anharmonic
     NEMD for non-Al pairs.
-* **Blind tests.** After η was frozen, fast-tier predictions for four new
+* **Blind tests.** After η was frozen, fast-tier predictions for five new
   coherent pairs were committed to the repository *before* their AGF
   references were computed (`data/reference/preregistered_agf_predictions.json`,
-  see git history). Three landed within 13% (GaN/ZnO −13%, GaAs/AlAs(110) −12%,
-  TiN/MgO(001) −7%). **The fourth, GaP(100)/Si(100) (second round), failed:
-  163 predicted vs 106 MW m⁻² K⁻¹ from AGF (+54%; k-mesh converged to 1%)**; the fast tier is ~2× too
-  transmissive at 3–6 THz, plausibly because the polar (100) III-V/Si
-  interface bonding scatters more than bulk channel matching assumes. Mean
-  over the four: 22%, against 53% for full-dispersion DMM and 286–907% for
-  Debye DMM/AMM.
+  see git history).
+  * The three isovalent pairs landed within 13% (GaN/ZnO −13%,
+    GaAs/AlAs(110) −12%, TiN/MgO(001) −7%).
+  * **Both heterovalent III-V/IV (100) pairs failed:** GaP/Si(100) 163 vs 106
+    (+54%) and GaAs/Ge(100) 238 vs 117 (+104%). The second was predicted after
+    the first failed, specifically to test this class.
+  * Diagnosis: MACE relaxes the electron-deficient interfacial cation–group-IV
+    bonds to 2.64 Å (Ga–Ge) and 2.68 Å (Ga–Si, partly five-fold coordinated),
+    against ~2.45 / 2.36 Å in bulk. These soft, stretched bonds scatter strongly,
+    and the fast tier, which assumes bulk-like bonding, cannot see them.
+  * The fit-set heterovalent pairs show the same sign (AlN/SiC +9%, GaN/SiC
+    +28%). The CLI now warns for this class and recommends `--agf`.
+  * Mean over the five: 38% (isovalent 11%), against 64% for full-dispersion
+    DMM and 286–951% for Debye DMM/AMM.
 * **Where the model is weak:**
   * **The >400 K rise:** 0.10 and 0.07 vs measured 0.43 and 0.39 MW m⁻² K⁻²
     for Al/Si sample 1 and Al/GaN (about 4× too weak). It matches Li's second
@@ -436,6 +444,11 @@ Checks:
     hypotheses (EXPERIMENTS.md). They are validation sets, not untouched test
     sets; only the pre-registered AGF blind values are blind in the strict
     sense.
+18. **Heterovalent (polar-on-nonpolar) interfaces are over-predicted.** For
+    III-V/IV pairs the fast tier is high against MACE-AGF in all four cases
+    (+9%, +28%, and +54% / +104% in two failed blind tests), because the
+    interfacial bonds are electron-deficient and relax to soft, stretched
+    configurations. Run the AGF tier for such interfaces.
 
 ## 5. Running it
 

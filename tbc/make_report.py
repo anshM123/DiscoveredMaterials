@@ -26,7 +26,8 @@ AGF_SETS = [("AlN0001_GaN0001", ("AlN", "0001"), ("GaN", "0001")),
 AGF_BLIND = [("GaN0001_ZnO0001", ("GaN", "0001"), ("ZnO", "0001")),
              ("GaAs110_AlAs110", ("GaAs", "110"), ("AlAs", "110")),
              ("TiN100_MgO100", ("TiN", "100"), ("MgO", "100")),
-             ("GaP100_Si100", ("GaP", "100"), ("Si", "100"))]     # second round (pre-registered 163)
+             ("GaP100_Si100", ("GaP", "100"), ("Si", "100")),     # second round (pre-registered 163)
+             ("GaAs100_Ge100", ("GaAs", "100"), ("Ge", "100"))]   # third round (pre-registered 238)
 
 
 def agf_table(T=300.0, sets=None):

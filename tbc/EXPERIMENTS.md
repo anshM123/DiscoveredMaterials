@@ -235,3 +235,16 @@ interface (bonding.py `GaP_Si100`): K_n = 5.5×10²⁰ N m⁻³, K/K_ref = 0.97
 over-prediction must come from elsewhere: eigenvector/polarity mismatch at the
 heterovalent interface that channel counting cannot see, or the AGF supercell
 itself (convergence check in k-mesh below).
+
+### Fifth blind test (third round): GaAs(100)/Ge(100) — failed, confirming a class
+
+* Predicted 238 (472408b, 15:08 UTC) after the GaP/Si failure, to test whether
+  heterovalent III-V/IV (100) interfaces are a systematic weakness.
+* MACE-AGF (nk = 12): 116.7, so the fast tier is +104%.
+* Relaxed AGF superlattices: Ga–Ge 2.64 Å and As–Ge 2.55 Å at the interfaces
+  (bulk GaAs 2.49, Ge 2.49); GaP/Si: Ga–Si 2.68 ± 0.14 Å with some five-fold
+  coordinated atoms. Isovalent GaAs/AlAs: no distortion (2.48–2.49 Å).
+* All four heterovalent AGF pairs are over-predicted (AlN/SiC +9%, GaN/SiC
+  +28%, GaP/Si +54%, GaAs/Ge +104%); the isovalent ones are within −21% to +9%.
+* Action: a CLI warning for heterovalent pairs (`tbc.heterovalent`), README
+  Limitation 18. No correction fitted (it would be fitted to these blind tests).
