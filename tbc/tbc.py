@@ -8,6 +8,7 @@ Examples
   python tbc.py AlN/0001 GaN/0001 --T 100:800:50
   python tbc.py Au PMMA --metal Au --Kn 1.2e19
   python tbc.py my_crystal.cif:001 Si/100          # any crystal from a structure file
+  python tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" --metal Al   # multilayer stack
 
 A material must be defined in materials.py (CRYSTALS: a structure guess; or
 AMORPHOUS: density, sound velocities). Phonons of a new crystal are computed
@@ -48,7 +49,56 @@ def ensure(name):
         compute(name)
 
 
+def stack_main(argv):
+    """tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" [--metal Al] [--T ...]
+    Layers separated by '|'; a finite film is NAME[/hkl]:thickness_nm. The first
+    and last layers are semi-infinite. Interfaces in series, thin-film
+    resistances (glassy films with Cahill-Watson-Pohl T-dependence), electron-
+    phonon resistance of the metal (if --metal)."""
+    from predict import film_k
+    from materials import FILM_K
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--stack", required=True)
+    ap.add_argument("--metal", default=None)
+    ap.add_argument("--T", default="100:700:100")
+    ap.add_argument("--polycrystalline", action="store_true")
+    a = ap.parse_args(argv)
+    layers = []
+    for tok in a.stack.split("|"):
+        tok = tok.strip()
+        name, _, thick = tok.partition(":")
+        nm, sa = parse(name)
+        ensure(nm)
+        layers.append((nm, sa, float(thick) * 1e-9 if thick else None))
+    P = load_params()
+    if ":" in a.T:
+        t0, t1, dt = map(float, a.T.split(":")); Ts = np.arange(t0, t1 + 1e-9, dt)
+    else:
+        Ts = [float(a.T)]
+    ifs = []
+    for (n1, s1_, _), (n2, s2_, _) in zip(layers[:-1], layers[1:]):
+        bond = bonding_for(n1, n2, s1_, s2_)
+        ifs.append(Interface(Side(n1, s1_), Side(n2, s2_), K=bond[0] if bond else None,
+                             Kref=bond[1] if bond else None, epitaxial=not a.polycrystalline))
+    print("stack:", " | ".join(f"{n}{'/' + s if s else ''}{'(%.1f nm)' % (t * 1e9) if t else ''}" for n, s, t in layers),
+          f"  metal: {a.metal or '-'}")
+    print("   T(K)   G_total(MW/m2K)  R_total(m2K/GW)   per-interface G (MW/m2K)")
+    for T in Ts:
+        R = 1 / G_ep(a.metal, T) if a.metal else 0.0
+        gs = [I.G_pp(T, P["alpha"], P["b"]) for I in ifs]
+        R += sum(1 / g for g in gs)
+        for n, _, t in layers[1:-1]:
+            if t:
+                if n not in FILM_K:
+                    raise SystemExit(f"error: no film conductivity for {n}; add it to materials.FILM_K")
+                R += t / film_k(n, T)
+        print(f"{T:7.0f} {1e-6 / R:14.1f} {1e9 * R:15.3f}    " + "  ".join(f"{g / 1e6:.0f}" for g in gs))
+
+
 def main():
+    import sys as _sys
+    if "--stack" in _sys.argv:
+        return stack_main(_sys.argv[1:])
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("a"); ap.add_argument("b")
     ap.add_argument("--T", default="100:700:100", help="start:stop:step in K, or a single T")

@@ -2,9 +2,10 @@
 Al(111) 4x4 and Si(111) 3x3 (hexagonal, a = A_LAT), for atomistic Green's-function
 references of metal/glass and glass/semiconductor interfaces.
 
-Protocol: random SiO2 at the experimental density 2.20 g/cm^3 -> Langevin MD at
-5000 K (4 ps) -> linear quench to 300 K (12 ps) -> 300 K (2 ps) -> relaxation
-(float64). Cached in data/glass/.
+Protocol used for the cached glass: random SiO2 at the experimental density
+2.20 g/cm^3 -> Langevin MD at 4000 K (2 ps) -> linear quench to 300 K (4 ps,
+~1e15 K/s, typical of MD glasses) -> 300 K (0.5 ps) -> relaxation (float64).
+MACE-OMAT-0 without D3 (covalent oxide). Cached in data/glass/.
 """
 import os, sys, json, warnings
 import numpy as np
@@ -21,7 +22,9 @@ def make_glass(n_units=32, seed=0, T_melt=5000.0, t_melt=4.0, t_quench=12.0, t_a
     from ase.md.langevin import Langevin
     from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
     from ase.optimize import FIRE
-    from bonding import calc32, calc
+    from mace.calculators import mace_mp
+    calc32 = lambda: mace_mp(model="medium-omat-0", default_dtype="float32", device="cpu")   # no D3: covalent SiO2
+    calc = lambda: mace_mp(model="medium-omat-0", default_dtype="float64", device="cpu")
     rng = np.random.default_rng(seed)
     mass = n_units * 60.084 / 6.02214076e23          # g
     vol = mass / RHO * 1e24                            # A^3

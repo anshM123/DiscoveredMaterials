@@ -48,13 +48,21 @@ def build(name, glass, n_cryst=4, n_glass=3, gap=2.0):
     return Atoms(syms, positions=pos, cell=cell, pbc=True), tag, strain
 
 
+def _calcs():
+    """MACE-OMAT-0 without D3 (covalent oxide/semiconductor/metal bonding;
+    D3 makes MD/FC ~3x slower for no meaningful change here)."""
+    from mace.calculators import mace_mp
+    return (lambda: mace_mp(model="medium-omat-0", default_dtype="float32", device="cpu"),
+            lambda: mace_mp(model="medium-omat-0", default_dtype="float64", device="cpu"))
+
+
 def relax(sl):
     from ase.filters import FrechetCellFilter
     from ase.optimize import FIRE
-    from bonding import calc32, calc
+    calc32, calc = _calcs()
     s = sl.copy()
-    s.calc = calc32(); FIRE(FrechetCellFilter(s, mask=[0, 0, 1, 0, 0, 0]), logfile=None).run(fmax=0.03, steps=800)
-    s.calc = calc(); FIRE(FrechetCellFilter(s, mask=[0, 0, 1, 0, 0, 0]), logfile=None).run(fmax=0.01, steps=300)
+    s.calc = calc32(); FIRE(FrechetCellFilter(s, mask=[0, 0, 1, 0, 0, 0]), logfile=None).run(fmax=0.03, steps=400)
+    s.calc = calc(); FIRE(FrechetCellFilter(s, mask=[0, 0, 1, 0, 0, 0]), logfile=None).run(fmax=0.02, steps=100)
     return s
 
 
@@ -62,7 +70,7 @@ def force_constants32(sl):
     from phonopy import Phonopy
     from phonopy.structure.atoms import PhonopyAtoms
     from ase import Atoms
-    from bonding import calc32
+    calc32 = _calcs()[0]
     u = PhonopyAtoms(symbols=sl.get_chemical_symbols(), cell=sl.cell[:], scaled_positions=sl.get_scaled_positions())
     ph = Phonopy(u, supercell_matrix=np.eye(3, dtype=int), primitive_matrix="P")
     ph.generate_displacements(distance=0.01)
