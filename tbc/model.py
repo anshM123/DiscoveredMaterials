@@ -19,7 +19,9 @@ SPECTRAL_IMPEDANCE = True     # bonding factor with lattice impedance rho*v_g(w)
 K_IMPEDANCE = True            # impedance factor per (k_par, w) in the specular channel
 SPEC_EFFICIENCY = 1.0         # specular efficiency between different crystals (set from params.json)
 W_DIFFUSON = 1.0              # interfacial coupling weight of glass diffusons (set from params.json)
-GLASS_FLUX = {"SiO2": os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "glass", "aSiO2_32_flux.npz")}
+_GLASS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "glass")
+GLASS_FLUX = {"SiO2": os.path.join(_GLASS_DIR, "aSiO2_32_flux.npz"),       # glass.py SiO2
+              "aAl2O3": os.path.join(_GLASS_DIR, "aAl2O3_20_flux.npz")}   # glass.py aAl2O3
 try:                          # frozen global parameters
     import json as _json, os as _os
     _P = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "params.json")))

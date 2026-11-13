@@ -192,7 +192,7 @@ def main():
     if not (s1.crystal and s2.crystal):
         import model as _model
         amo = [x.name for x in (s1, s2) if not x.crystal]
-        if any(n in _model.GLASS_FLUX for n in amo):
+        if any(n in _model.GLASS_FLUX and os.path.exists(_model.GLASS_FLUX[n]) for n in amo):
             acc = ("glass with a MACE glass model (propagons + fitted diffuson weight): Al/native-SiO2/Si G(T) "
                    "within ~2% (fit set); metal/PMMA/SiO2 stacks ~12% mean (Ni -25%)")
         elif "PMMA" in amo:

@@ -215,7 +215,17 @@ _sio2_units = 2200 / (60.08e-3 / 6.02214076e23)
 SIO2 = Amorphous("SiO2", rho=2200.0, vL=5953.0, vT=3743.0,
                  n_atoms=_sio2_units * 3, m_avg=60.08 / 3,
                  omega_max_THz=0.0, notes="Debye cutoff from atom density")
-AMORPHOUS = {"PMMA": PMMA, "SiO2": SIO2}
+# Amorphous Al2O3 (ALD / anodic alumina, the common gate and passivation
+# dielectric): rho = 3050 kg/m3; sound velocities from the elastic constants
+# typical of ALD alumina, E ~ 170 GPa and Poisson ratio ~0.24 (nanoindentation
+# range E = 150-180 GPa): vL = 8100, vT = 4740 m/s. (Cross-check: the MACE
+# melt-quenched glass of glass.py gives values stiffer by ~15-25%, as it does
+# for a-SiO2: 6910/4750 vs 5953/3743 m/s measured for fused silica.)
+_al2o3_units = 3050 / (101.961e-3 / 6.02214076e23)
+AAL2O3 = Amorphous("aAl2O3", rho=3050.0, vL=8100.0, vT=4740.0,
+                   n_atoms=_al2o3_units * 5, m_avg=101.961 / 5,
+                   omega_max_THz=0.0, notes="Debye cutoff from atom density")
+AMORPHOUS = {"PMMA": PMMA, "SiO2": SIO2, "aAl2O3": AAL2O3}
 
 
 def register_structure(path, miller, name=None):
