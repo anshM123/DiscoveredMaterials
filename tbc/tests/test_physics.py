@@ -111,3 +111,35 @@ def test_eph_estimated_metals_and_physisorption_rule():
         assert bonding_for("Ti", "PMMA") is None and bonding_for("PMMA", "SiO2") is None
         (K, _), (Kr, _) = bonding_for("Au", "PMMA")
         assert K < Kr                                             # weak (vdW) contact
+
+
+def test_resistance_network_consistency():
+    """One network for every mode: order independence, 2-layer metal/metal equals
+    the single-interface formula, Sandell path = generic stack path."""
+    import warnings
+    from predict import network, interface, bonding_for, sandell_stack, G_edmm
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mk = lambda spec: ([(n, t) for n, _, t in spec],
+                           [interface(a, b, na, nb, bonding=bonding_for(a, b, na, nb))
+                            for (a, na, _), (b, nb, _) in zip(spec[:-1], spec[1:])])
+        fwd = [("Al", "111", None), ("SiO2", None, 1.5e-9), ("Si", "100", None)]
+        g1 = network(*mk(fwd), 300.0, P)[0]
+        g2 = network(*mk(fwd[::-1]), 300.0, P)[0]
+        assert abs(g1 / g2 - 1) < 1e-9
+        L, I = mk([("Al", "111", None), ("Cu", "111", None)])
+        g = network(L, I, 300.0, P)[0]
+        gpp = I[0].G_pp(300.0, P["alpha"], P["b"])
+        ref = G_edmm("Al", "Cu", 300.0) + 1 / (1 / G_ep("Al", 300) + 1 / gpp + 1 / G_ep("Cu", 300))
+        assert abs(g / ref - 1) < 1e-9
+        bond = {("Au", "PMMA"): bonding_for("Au", "PMMA")}
+        gs = sandell_stack("Ti", bond=bond)[0]
+        L, I = mk([("Au", None, None), ("Ti", None, 2.4e-9), ("PMMA", None, 0.0), ("SiO2", None, 2.05e-9), ("Si", "100", None)])
+        assert abs(network(L, I, 300.0, P)[0] / gs - 1) < 1e-9
+        assert network(L, I, 300.0, P, metals=set())[0] > 0       # phonons-only mode runs
+
+
+def test_amm_reciprocal():
+    for a, b in [(("Pt", "111"), ("Si", "111")), (("Al", "111"), ("GaN", "0001"))]:
+        s1, s2 = Side(*a), Side(*b)
+        assert abs(G_AMM_debye(s1, s2, 300) / G_AMM_debye(s2, s1, 300) - 1) < 1e-3   # angular quadrature

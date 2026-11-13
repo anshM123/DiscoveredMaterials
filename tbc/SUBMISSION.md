@@ -49,7 +49,7 @@ and DMM, and an expected-accuracy statement for the interface class. Runtime on 
 * a G(T) curve takes seconds;
 * an AGF reference takes ~1 h.
 
-There are 21 physics-invariant tests and a smoke test covering every interface class.
+There are 23 physics-invariant tests and a smoke test covering every interface class.
 
 ## Results (from `make_report.py`; details and figures in README)
 
