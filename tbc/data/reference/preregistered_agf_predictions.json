@@ -9,7 +9,9 @@
   "GaP(100)/Si(100)": 163,
   "GaAs(100)/Ge(100)": 238,
   "Si(110)/Ge(110)": 132,
-  "GaAs(111)/AlAs(111)": 138
+  "GaAs(111)/AlAs(111)": 138,
+  "InP(100)/GaAs(100)": 105,
+  "TiN(110)/MgO(110)": 388
  },
  "results_AGF_MW_m2K": {
   "GaN(0001)/ZnO(0001)": 207.3,
@@ -34,5 +36,6 @@
  "third_round_note": "GaAs(100)/Ge(100) predicted (238 MW m^-2 K^-1, same frozen eta, coherent setting = CLI path) and committed on 2026-11-13 ~10:10 EST, after the GaP/Si failure and before its MACE-AGF run: tests whether heterovalent III-V/IV (100) interfaces are a systematic weakness.",
  "third_round_result_note": "GaAs(100)/Ge(100): MACE-AGF (nk=12, 2x2 in-plane FC supercell, Ge strained +0.5%) = 116.7 MW m^-2 K^-1 vs pre-registered 238 (+104%). Second failed blind test; with GaP/Si it identifies heterovalent III-V/IV (100) interfaces as a class the fast tier over-predicts: MACE relaxes the interfacial cation-group-IV bonds to 2.64 A (Ga-Ge) and 2.68 A (Ga-Si, partly 5-fold coordinated) vs ~2.45/2.36 A in bulk; the isovalent GaAs/AlAs interface shows no such distortion.",
  "fourth_round_note": "Si(110)/Ge(110) (132, coherent setting; CLI path 135) and GaAs(111)/AlAs(111) (138) predicted and committed on 2026-11-13 ~11:40 EST before their MACE-AGF runs: non-III-V/IV pairs in new orientations, to test the 'within ~13%' statement.",
- "fourth_round_result_note": "Si(110)/Ge(110): MACE-AGF 157.0 vs pre-registered 132 (-16%). GaAs(111)/AlAs(111): the first AGF run returned 15.3 from a wrongly built (AAA-stacked) superlattice, caught by the new coordination check; after fixing agf.oriented_unit (three bilayers per (111) period) the AGF gives 226.8 (structure check passed), vs pre-registered 138: -39%. The fast tier predicts ~135 for GaAs/AlAs in all three orientations, the AGF 154 (110), 170 (100), 227 (111)."
+ "fourth_round_result_note": "Si(110)/Ge(110): MACE-AGF 157.0 vs pre-registered 132 (-16%). GaAs(111)/AlAs(111): the first AGF run returned 15.3 from a wrongly built (AAA-stacked) superlattice, caught by the new coordination check; after fixing agf.oriented_unit (three bilayers per (111) period) the AGF gives 226.8 (structure check passed), vs pre-registered 138: -39%. The fast tier predicts ~135 for GaAs/AlAs in all three orientations, the AGF 154 (110), 170 (100), 227 (111).",
+ "fifth_round_note": "InP(100)/GaAs(100) (105; CLI 106) and TiN(110)/MgO(110) (388; CLI 389) predicted and committed on 2026-11-13 ~14:15 EST before their MACE-AGF runs (non-III-V/IV pairs)."
 }
