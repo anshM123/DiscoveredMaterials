@@ -7,7 +7,9 @@
   "GaAs(110)/AlAs(110)": 135,
   "TiN(100)/MgO(100)": 366,
   "GaP(100)/Si(100)": 163,
-  "GaAs(100)/Ge(100)": 238
+  "GaAs(100)/Ge(100)": 238,
+  "Si(110)/Ge(110)": 132,
+  "GaAs(111)/AlAs(111)": 138
  },
  "results_AGF_MW_m2K": {
   "GaN(0001)/ZnO(0001)": 207.3,
@@ -26,5 +28,6 @@
  "second_round_note": "GaP(100)/Si(100) predicted and committed on 2026-11-13 (~09:35 EST) before its MACE-AGF reference was run; same frozen eta = 0.63, coherent setting Lc = surface lattice parameter (CLI path: 163 as well).",
  "second_round_result_note": "GaP(100)/Si(100): MACE-AGF (2x2 in-plane FC supercell, Si strained +1.5%) = 104.6 (nk=8) and 105.9 MW m^-2 K^-1 (nk=12, converged to 1%; the nk=12 value is the reference) vs pre-registered 163: the fast tier over-predicts by 54% (3-6 THz ~2x too transmissive). Reported as a failed blind test. Interfacial bond stiffness is bulk-like (K/Kref 0.97), so weak bonding is not the cause.",
  "third_round_note": "GaAs(100)/Ge(100) predicted (238 MW m^-2 K^-1, same frozen eta, coherent setting = CLI path) and committed on 2026-11-13 ~10:10 EST, after the GaP/Si failure and before its MACE-AGF run: tests whether heterovalent III-V/IV (100) interfaces are a systematic weakness.",
- "third_round_result_note": "GaAs(100)/Ge(100): MACE-AGF (nk=12, 2x2 in-plane FC supercell, Ge strained +0.5%) = 116.7 MW m^-2 K^-1 vs pre-registered 238 (+104%). Second failed blind test; with GaP/Si it identifies heterovalent III-V/IV (100) interfaces as a class the fast tier over-predicts: MACE relaxes the interfacial cation-group-IV bonds to 2.64 A (Ga-Ge) and 2.68 A (Ga-Si, partly 5-fold coordinated) vs ~2.45/2.36 A in bulk; the isovalent GaAs/AlAs interface shows no such distortion."
+ "third_round_result_note": "GaAs(100)/Ge(100): MACE-AGF (nk=12, 2x2 in-plane FC supercell, Ge strained +0.5%) = 116.7 MW m^-2 K^-1 vs pre-registered 238 (+104%). Second failed blind test; with GaP/Si it identifies heterovalent III-V/IV (100) interfaces as a class the fast tier over-predicts: MACE relaxes the interfacial cation-group-IV bonds to 2.64 A (Ga-Ge) and 2.68 A (Ga-Si, partly 5-fold coordinated) vs ~2.45/2.36 A in bulk; the isovalent GaAs/AlAs interface shows no such distortion.",
+ "fourth_round_note": "Si(110)/Ge(110) (132, coherent setting; CLI path 135) and GaAs(111)/AlAs(111) (138) predicted and committed on 2026-11-13 ~11:40 EST before their MACE-AGF runs: non-III-V/IV pairs in new orientations, to test the 'within ~13%' statement."
 }
