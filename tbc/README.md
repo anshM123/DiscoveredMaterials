@@ -54,7 +54,7 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | Si(100)/Ge(100) | -5.2% | **126** | 135 (+8%) | 204 (+62%) | 547 (+335%) | 2086 (+1560%) |
 | **mean abs. deviation from AGF** | | | 15% | 66% | 406% | 870% |
 
-### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)
+### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, held out)
 
 Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). * Epitaxial TiN on MgO(001), MgO(111) and sapphire: Costescu, Wall & Cahill, PRB 67, 054302 (2003) found the same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) (approximate; TiN electron-phonon term omitted: no g data). Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.
 
@@ -63,10 +63,14 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
 | AlN(0001)/GaN(0001) | 490 | 378 | 247 | 281 | 1376 | 3767 |
 | AlN(0001)/4H-SiC(0001) | 470 | 657 | 533 | 487 | 1849 | 2940 |
 | GaN(0001)/4H-SiC(0001) | 305 | 312 | 189 | 147 | 1291 | 1058 |
-| TiN(001)/MgO(001) * | 700 | 511 | 366 | nan | 2167 | 3932 |
-| TiN(111)/MgO(111) * | 700 | 495 | 337 | nan | 2167 | 3932 |
-| TiN(111)/sapphire(0001) * | 700 | 482 | 372 | nan | 2088 | 3497 |
+| TiN(001)/MgO(001) * | 700 | 511 | 366 | – | 2167 | 3932 |
+| TiN(111)/MgO(111) * | 700 | 495 | 337 | – | 2167 | 3932 |
+| TiN(111)/sapphire(0001) * | 700 | 482 | 372 | – | 2088 | 3497 |
 | **mean abs. error** | | 25% | | 33% | 236% | 461% |
+
+![parity](results/parity.png)
+
+*Parity plot of every validated case: experiments (Li, Cheng, Sandell; all temperatures), measured epitaxial interfaces (section C) and MACE-AGF references (section B), for this model and for the Debye AMM/DMM.*
 
 <!-- RESULTS:END -->
 
@@ -88,9 +92,11 @@ Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.go
   * The metal/polymer stacks (Sandell) are no better than AMM with the same
     e-ph/series treatment.
   * The >400 K slope of Al/Si and Al/GaN is under-predicted by about 2×.
-  * For measured epitaxial semiconductor interfaces (section C), the fast
-    tier's mean error is 22% (AlN/SiC +40% is the worst); DMM and AMM are off
-    by 266% and 480%.
+  * For six measured epitaxial semiconductor and nitride/oxide interfaces
+    (section C), the fast tier's mean error is 25%: AlN/SiC +40% at worst,
+    TiN/oxide about −30%. DMM and AMM are off by 236% and 461%.
+  * For TiN on three different substrates, the fast tier reproduces the
+    measured near-equality (within 6%).
   * See Limitations.
 * **"Atomistic ground truth" is itself method-dependent.** For GaN/AlN at
   300 K, harmonic Green's functions give ~280–300 MW m⁻² K⁻¹, while

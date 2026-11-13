@@ -84,7 +84,7 @@ def main():
             ("TiN(001)/MgO(001) *", ("TiN", "100"), ("MgO", "100"), 700, "TiN100_MgO100"),
             ("TiN(111)/MgO(111) *", ("TiN", "111"), ("MgO", "111"), 700, "-"),
             ("TiN(111)/sapphire(0001) *", ("TiN", "111"), ("Al2O3", "0001"), 700, "-")]
-    L += ["### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)", "",
+    L += ["### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, held out)", "",
           "Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). "
           "* Epitaxial TiN on MgO(001), MgO(111) and sapphire: Costescu, Wall & Cahill, PRB 67, 054302 (2003) found the "
           "same conductance on all three; ~700 MW m⁻² K⁻¹ at room temperature as cited by Wilson et al., PRB 91, 115414 (2015) "
@@ -93,6 +93,7 @@ def main():
           "| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |",
           "|---|---|---|---|---|---|---|"]
     errs = {k: [] for k in ("fast", "agf", "dmm", "amm")}
+    meas_rows = []
     for name, a, b, gm, lab in meas:
         s1, s2 = Side(*a), Side(*b)
         I = Interface(s1, s2)
@@ -105,9 +106,14 @@ def main():
         gd, gam = G_DMM_debye(s1, s2, 300.0) * MW, G_AMM_debye(s1, s2, 300.0) * MW
         for k, v in (("fast", gt), ("agf", ga), ("dmm", gd), ("amm", gam)):
             errs[k].append(abs(v / gm - 1) * 100)
-        L.append(f"| {name} | {gm} | {gt:.0f} | {ge:.0f} | {ga:.0f} | {gd:.0f} | {gam:.0f} |")
+        meas_rows.append(dict(ref=gm, model=gt, AMM=gam, DMM=gd))
+        L.append(f"| {name} | {gm} | {gt:.0f} | {ge:.0f} | {'–' if np.isnan(ga) else f'{ga:.0f}'} | {gd:.0f} | {gam:.0f} |")
     L.append(f"| **mean abs. error** | | {np.nanmean(errs['fast']):.0f}% | | {np.nanmean(errs['agf']):.0f}% | {np.nanmean(errs['dmm']):.0f}% | {np.nanmean(errs['amm']):.0f}% |")
     L.append("")
+    L += ["![parity](results/parity.png)", "",
+          "*Parity plot of every validated case: experiments (Li, Cheng, Sandell; all temperatures), measured epitaxial "
+          "interfaces (section C) and MACE-AGF references (section B), for this model and for the Debye AMM/DMM.*", ""]
+    parity(res, agf, meas_rows)
     txt = "\n".join(L)
     open(os.path.join(OUT, "summary.md"), "w").write(txt)
     readme = os.path.join(HERE, "README.md")
@@ -117,6 +123,34 @@ def main():
                    "<!-- RESULTS:BEGIN -->\n" + txt.replace("\\", "\\\\") + "\n<!-- RESULTS:END -->", s, flags=re.S)
         open(readme, "w").write(s)
     print(txt)
+
+
+def parity(res, agf, meas_rows):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(6.2, 6))
+    groups = []
+    for key, rows in res["li2022"].items():
+        groups.append((key, [(r["measured"], r["model"], r["AMM"], r["DMM"]) for r in rows]))
+    groups.append(("Sandell metal/PMMA/Si", [(r["measured"], r["model"], r["AMM"], r["DMM"]) for r in res["sandell2020"].values()]))
+    groups.append(("epitaxial semic./nitride (meas.)", [(r["ref"], r["model"], r["AMM"], r["DMM"]) for r in meas_rows]))
+    groups.append(("MACE-AGF (elastic)", [(r["AGF"], r["fast_elastic"], r["AMM"], r["DMM"]) for r in agf]))
+    marks = ["o", "s", "^", "D", "v", "P"]
+    for (lab, pts), mk in zip(groups, marks):
+        p = np.array(pts)
+        ax.scatter(p[:, 0], p[:, 1], marker=mk, s=28, label=f"this model: {lab}", zorder=3)
+        ax.scatter(p[:, 0], p[:, 3], marker=mk, s=14, facecolors="none", edgecolors="0.6", zorder=2)
+        ax.scatter(p[:, 0], p[:, 2], marker=mk, s=14, facecolors="none", edgecolors="0.85", zorder=1)
+    x = np.array([30, 6000])
+    ax.plot(x, x, "k-", lw=1); ax.plot(x, 1.25 * x, "k:", lw=0.8); ax.plot(x, x / 1.25, "k:", lw=0.8)
+    ax.scatter([], [], facecolors="none", edgecolors="0.6", label="DMM (Debye), open grey")
+    ax.scatter([], [], facecolors="none", edgecolors="0.85", label="AMM (Debye), open light grey")
+    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlim(40, 1200); ax.set_ylim(40, 6000)
+    ax.set_xlabel("reference G (measured or MACE-AGF), MW m$^{-2}$ K$^{-1}$")
+    ax.set_ylabel("predicted G, MW m$^{-2}$ K$^{-1}$")
+    ax.legend(fontsize=6.5, loc="upper left"); ax.set_title("All validations (dotted: ±25%)")
+    fig.tight_layout(); fig.savefig(os.path.join(OUT, "parity.png"), dpi=150)
 
 
 if __name__ == "__main__":
