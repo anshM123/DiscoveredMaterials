@@ -75,6 +75,30 @@ def main():
         mk = lambda k: np.mean([abs(r[k] / r["AGF"] - 1) for r in agf]) * 100
         L.append(f"| **mean abs. deviation from AGF** | | | {mk('fast_elastic'):.0f}% | {mk('DMM_full'):.0f}% | {mk('DMM'):.0f}% | {mk('AMM'):.0f}% |")
     L.append("")
+    # C. measured conductances of real coherent semiconductor interfaces
+    from predict import load_params as _lp
+    Pp = _lp()
+    meas = [("AlN(0001)/GaN(0001)", ("AlN", "0001"), ("GaN", "0001"), 490, "AlN0001_GaN0001"),
+            ("AlN(0001)/4H-SiC(0001)", ("AlN", "0001"), ("SiC4H", "0001"), 470, "AlN0001_SiC4H0001"),
+            ("GaN(0001)/4H-SiC(0001)", ("GaN", "0001"), ("SiC4H", "0001"), 305, "GaN0001_SiC4H0001")]
+    L += ["### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)", "",
+          "Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). "
+          "Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.", "",
+          "| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |",
+          "|---|---|---|---|---|---|---|"]
+    errs = {k: [] for k in ("fast", "agf", "dmm", "amm")}
+    for name, a, b, gm, lab in meas:
+        s1, s2 = Side(*a), Side(*b)
+        I = Interface(s1, s2)
+        gt = I.G_pp(300.0, Pp["alpha"], Pp["b"]) * MW; ge = I.G_elastic(300.0) * MW
+        pa = os.path.join(AGF_DIR, f"{lab}.json")
+        ga = float(np.interp(300, json.load(open(pa))["T"], json.load(open(pa))["G"])) * MW if os.path.exists(pa) else float("nan")
+        gd, gam = G_DMM_debye(s1, s2, 300.0) * MW, G_AMM_debye(s1, s2, 300.0) * MW
+        for k, v in (("fast", gt), ("agf", ga), ("dmm", gd), ("amm", gam)):
+            errs[k].append(abs(v / gm - 1) * 100)
+        L.append(f"| {name} | {gm} | {gt:.0f} | {ge:.0f} | {ga:.0f} | {gd:.0f} | {gam:.0f} |")
+    L.append(f"| **mean abs. error** | | {np.nanmean(errs['fast']):.0f}% | | {np.nanmean(errs['agf']):.0f}% | {np.nanmean(errs['dmm']):.0f}% | {np.nanmean(errs['amm']):.0f}% |")
+    L.append("")
     txt = "\n".join(L)
     open(os.path.join(OUT, "summary.md"), "w").write(txt)
     readme = os.path.join(HERE, "README.md")

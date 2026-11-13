@@ -1,251 +1,281 @@
-# Transferable thermal boundary conductance from computed phonons
+# Thermal boundary conductance from computed phonons: a two-tier framework
 
-Submission draft for **Discovered Materials Grand Challenge 05 — Predicting Heat
+Submission for **Discovered Materials Grand Challenge 05 — Predicting Heat
 Transport across Solid Interfaces**: *"Build a computationally tractable
 framework that predicts the thermal boundary conductance G(T) and resistance
 R_K(T) = 1/G(T) across specified solid–solid interfaces without fitting a
 conductance to each specimen. Demonstrate transferable improvement over the
 acoustic and diffuse mismatch models (AMM/DMM)."*
 
-Everything runs on a laptop CPU. A new crystalline material costs about one
-minute of MACE force evaluations plus phonopy. A G(T) curve takes
-milliseconds.
+All inputs are computed from the atomic structure with a universal machine-learned
+interatomic potential (**MACE-OMAT-0**), plus a short list of cited literature
+constants. Nothing is fitted per specimen. The framework has two tiers.
 
-**Status — read this first.** This is a working, reproducible framework with
-an honest validation, not a finished prize claim. Calibrated on Al/Si only (2 global
-parameters), it predicts the held-out Al/GaN G(T) curve to 5.4% (80–700 K)
-and the Cu/TiC/diamond enhancement to 9%. It beats AMM/DMM by a wide margin on
-metal/semiconductor interfaces. It does **not** beat AMM on the metal/polymer stacks, and it
-reproduces only about half of the measured >400 K slope. See [Results](#2-results) and
-[Limitations](#3-limitations-honest-list).
+| tier | applies to | cost (4-core laptop CPU) | what it is |
+|---|---|---|---|
+| **fast** (`tbc.py`) | any interface: crystalline, incommensurate, polycrystalline, amorphous, metal/non-metal, stacks | seconds per G(T) curve after a one-off phonon calculation (~1–5 min per new crystal) | Landauer model on full MACE phonon spectra: k∥-resolved specular + diffuse elastic transmission, MACE+D3 interfacial bond stiffness, anharmonic (inelastic) channel, electron–phonon resistance, series layers |
+| **AGF** (`tbc.py --agf`, `agf.py`) | coherent (lattice-matched, ≤ ~5% misfit) crystalline pairs | ~1 CPU-hour per interface | atomistic Green's function with MACE force constants of the actual interface (harmonic, perfect interface) |
 
----
+Global parameters (all frozen in `params.json`, none per specimen):
+* α, b of the inelastic channel, fitted to **one** dataset (Al/Si, Li et al. 2022);
+* the specular efficiency η, fitted to the MACE-AGF references.
 
-## 1. Method
-
-`G` is computed as a series network of physically distinct resistances.
-
-```
-1/G_total = 1/G_ep(metal)  +  Σ_interfaces 1/G_pp  +  Σ_films d/κ
-```
-
-### 1.1 Phonons from a universal interatomic potential (no fitting)
-`phonons.py` relaxes each crystal and computes harmonic force constants with
-**MACE-OMAT-0** (`medium-omat-0`) and phonopy. On a full Brillouin-zone mesh
-(no symmetry reduction, so velocity projections are exact) it builds the
-interface-normal spectral flux, i.e. the number of phonon channels per unit
-area crossing a plane of normal **n**:
-
-    M_n(ω) = 1/(2 V N_q) Σ_qj |v_qj·n| δ(ω − ω_qj)
-
-It also stores the DOS, the polarization-resolved flux, Debye-averaged sound
-velocities and the mean-square displacement. Polar crystals (GaN, AlN) include
-LO–TO splitting using literature Born charges.
-Spot checks against experiment:
-
-| | MACE-OMAT-0 | experiment |
-|---|---|---|
-| Si TO(Γ), LA(X), TA(L) | 15.1, 12.3, 3.5 THz | 15.5, 12.3, 3.4 THz |
-| f_max Al / Cu / Ni / diamond | 9.5 / 7.2 / 8.7 / 38.4 THz | ~9.7 / 7.3 / 8.9 / 39.9 THz |
-| f_max GaN / AlN (LO) | 21.3 / 27.0 THz | 22.2 / 27.3 THz |
-
-(MACE-MP-0, the older model, softens Si optical modes by 28% and is **not** used.)
-Amorphous solids (PMMA, SiO₂) use an isotropic Debye spectrum built from
-measured density and sound velocities, with the Swartz–Pohl atom-density cutoff.
-
-### 1.2 Elastic transmission: specular + diffuse, from full dispersion
-* **Diffuse** (full-dispersion DMM): `τ_d = M₂/(M₁+M₂)`.
-* **Specular** (momentum-conserving limit):
-  `τ_s = [4Z₁Z₂/(Z₁+Z₂)²]·min(M₁,M₂)/M₁` with spectral impedance
-  `Z_i(ω) = ρ_i·4M_i/D_i`. It equals 1 for two identical crystals and obeys
-  reciprocity. This removes DMM's best-known defect, a finite resistance
-  between identical materials, which matters for acoustically similar
-  epitaxial pairs such as AlN/GaN.
-* **Specularity from coherence, not from fitting**. The two interface-plane
-  Bravais lattices (any orientation) are matched in the aligned epitaxial
-  orientation. The smallest common supercell whose 2×2 map is a strain of at
-  most 3% gives the in-plane period `L_c` and the fraction
-  `p∞ = A_cell/A_common`. Parallel momentum is conserved
-  modulo 2π/L_c, so
-  `p(ω) = p∞ + (1−p∞)·exp[−(L_c/λ)²]`, with `λ = 2π v_T/ω`.
-  A 1:1 pseudomorphic interface (AlN/GaN) is specular. Al/Si (4:3, L_c = 11.5 Å)
-  and Al/GaN (8:7, 22.8 Å) are diffuse except at long wavelengths. Interfaces
-  with an amorphous side are fully diffuse.
-
-### 1.3 Interfacial bonding from MACE + D3 (no fitting)
-`bonding.py` builds the actual interface:
-* coherent supercells for crystal pairs;
-* PMMA repeat units (methyl isobutyrate) at PMMA areal density on the metal or
-  hydroxylated-silica surface, averaged over 3 random orientations.
-
-The normal stiffness per area, `K_n = E''(δ)/A`, comes from rigid-shift energy
-scans with MACE-OMAT-0 plus D3(BJ) dispersion. The bulk-like reference is
-`K_ref = ρv²/d`, harmonic-averaged over both sides. The protocol is validated on
-bulk Al(111) cut in half: 5.5×10²⁰ (rigid shift) vs 4.9×10²⁰ N m⁻³ (ρv²/d).
-The transmission is multiplied by the spring factor
-`S(ω) = s(ω;K)/s(ω;K_ref) ≤ 1`, with `s = 1/(1+(ωZ₁Z₂/(K(Z₁+Z₂)))²)`.
-Interfaces bonded at least as stiffly as bulk are not penalised.
-
-### 1.4 Inelastic (anharmonic) channel
-Li et al. (2022) showed that at atomically sharp interfaces G keeps rising
-linearly above ~400 K, because elastic transport saturates once the soft side
-is fully excited. Here an elastically reflected phonon is converted by
-interfacial three-phonon scattering into a transmissible mode with
-probability
-
-    P(T) = 1 − exp[−α (T/Θ) e^(−Θ/(bT))],   Θ = ħω_max(stiffer side)/k_B
-
-(Umklapp-type freeze-out). The phonon conductance becomes
-`G_pp = G_el + P(T)·(G_max − G_el)`. `G_max` is the largest conductance
-reachable with **one** conversion step: the radiation limit of the soft side,
-or of the stiff-side phonons with ω ≤ 2ω_max,soft, whichever is smaller.
-This bound stops Cu/diamond, where up to 5-phonon processes would be needed,
-from gaining an unphysical channel. The channel is applied to crystal/crystal
-interfaces only, because Θ is a property of a computed crystal spectrum.
-
-**α and b are the only fitted parameters.** They are global and frozen,
-calibrated once on the Al/Si sample-1 curve of Li et al. (12 points,
-80–700 K). See `params.json` and `calibrate.py`.
-
-### 1.5 Electron–phonon resistance of metals
-Majumdar–Reddy: `G_ep = sqrt(g·κ_p(T))`. Here κ_p is the lattice thermal
-conductivity of the metal, with phonon–phonon (∝1/T) and phonon–electron
-(T-independent) parts from DFT (Tong et al. 2019). g is the measured
-electron–phonon coupling factor (sources in `materials.py`). A thin adhesion
-layer (2 nm Ti/Ni) adds a parallel volumetric channel `g·d`.
+Every number below is regenerated by `python make_report.py`.
 
 ---
 
-## 2. Results
+## 1. Results
 
-Mean absolute error vs measurement (Al/Si, Al/GaN: all temperatures; Sandell: the three
-stacks). AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown
-raw and with the same electron–phonon resistance and series layers as this model.
-Full tables: [`results/validation.md`](results/validation.md). Figures:
-[`results/li2022.png`](results/li2022.png), [`results/sandell2020.png`](results/sandell2020.png).
+<!-- RESULTS:BEGIN -->
+### A. Experiments (fast tier)
 
-| dataset (role) | this model | AMM | DMM | AMM + same e-ph/series | DMM + same e-ph/series |
+Mean absolute error against measurement. AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown raw and with the same electron–phonon resistance and series layers as this model (`+e-ph`). Only Al/Si is used for fitting (2 global parameters).
+
+| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph |
 |---|---|---|---|---|---|
-| Li 2022 Al/Si, 82–705 K (calibration) | 5.1% | 183.0% | 105.7% | 61.6% | 32.7% |
-| Li 2022 Al/GaN, 85–704 K (**prediction**) | **5.4%** | 225.2% | 128.3% | 68.3% | 36.8% |
-| Sandell 2020, 3 stacks at 300 K (**prediction**) | 24.0% | 22.3% | 79.4% | 10.2% | 39.2% |
-| Chang 2019 ratio, measured 1.48 (**prediction**) | 1.34 (-9%) | 1.97 (+33%) | 1.10 (-25%) | 1.80 (+22%) | 1.08 (-27%) |
+| Al/Si sample1, 80–700 K (calibration) | 4.6% | 183.0% | 105.7% | 61.6% | 32.7% |
+| Al/GaN, 80–700 K (**held out**) | 7.0% | 225.2% | 128.3% | 68.3% | 36.8% |
+| Al/sapphire (Cheng 2020), 80–700 K (**held out**) | 6.1% | 76.7% | 141.8% | 27.0% | 54.1% |
+| Sandell 2020, 3 metal/PMMA/Si stacks (**held out**) | 19.6% | 22.3% | 79.4% | 10.2% | 39.2% |
+| Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | 1.37 | 1.97 | 1.10 | 1.80 | 1.08 |
 
-What this shows:
-* **Metal/semiconductor epitaxial interfaces (Al/Si, Al/GaN)**: large, transferable
-  improvement. The Al/GaN curve was not used in calibration and is predicted to
-  5.4% over 80–700 K, versus 37% for the best baseline.
-  Room temperature: Al/Si 376 vs 381, Al/GaN 403 vs 425 MW m⁻² K⁻¹.
-  The model rises above 400 K, but with about half the measured slope
-  (0.19–0.21 vs 0.39–0.43 MW m⁻² K⁻²). See Limitations.
-* **Cu/TiC/diamond**: the interlayer enhancement is predicted as 1.34 vs 1.48
-  (AMM 1.97, DMM 1.10), assuming bulk-terminated diamond(111).
-* **Metal/polymer stacks**: the model is **not** better than AMM here. It gets the right order
-  of magnitude and the Au < Ti enhancement, but underpredicts the Ni stack by 42%
-  (81 vs 139). MACE+D3 binds the PMMA repeat unit weakly to Ni
-  (K/K_ref = 0.65), while XPS shows Ni oxidising at the real interface, a reaction a
-  rigid-shift scan of intact molecules cannot capture.
+Sandell stacks (MW m⁻² K⁻¹, measured / model): Au/PMMA/Si 59 / 57, Au/Ti/PMMA/Si 115 / 96, Au/Ni/PMMA/Si 139 / 84
 
-**Unseen interfaces (sanity check, not part of any fit):** see `data/reference/unseen_sanity.json`.
+### B. Coherent crystalline interfaces: fast tier vs MACE-AGF (300 K, harmonic)
 
-| interface, 300 K | this model | AMM | DMM | published |
-|---|---|---|---|---|
-| AlN(0001)/GaN(0001) | 639 | 3767 | 1376 | 600–700 (MLIP NEMD, pristine); 320–490 measured; ~300 NEGF |
-| Si(111)/Ge(111) | 261 | 2086 | 547 | 170–218 (ab initio lattice dynamics / Monte Carlo, planar) |
+The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent interfaces. Independent checks: AlN/GaN 281 vs ~300 MW m⁻² K⁻¹ from DFT-NEGF (Polanco & Lindsay, PRB 97, 014303, 2018); AlN/4H-SiC 487 vs ~470 measured (TDTR).
 
+| interface | strain in AGF | **AGF** | fast tier (elastic) | full-dispersion DMM | DMM (Debye) | AMM (Debye) |
+|---|---|---|---|---|---|---|
+| AlN(0001)/GaN(0001) | -2.9% | **281** | 246 (-12%) | 445 (+59%) | 1376 (+390%) | 3767 (+1241%) |
+| AlN(0001)/SiC4H(0001) | +1.1% | **487** | 539 (+11%) | 755 (+55%) | 1849 (+280%) | 2940 (+504%) |
+| GaAs(100)/AlAs(100) | +0.7% | **170** | 135 (-20%) | 171 (+1%) | 594 (+250%) | 898 (+429%) |
+| GaN(0001)/SiC4H(0001) | +4.1% | **147** | 187 (+27%) | 374 (+154%) | 1291 (+776%) | 1058 (+618%) |
+| **mean abs. deviation from AGF** | | | 18% | 67% | 424% | 698% |
+
+### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)
+
+Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.
+
+| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |
+|---|---|---|---|---|---|---|
+| AlN(0001)/GaN(0001) | 490 | 379 | 251 | 281 | 1376 | 3767 |
+| AlN(0001)/4H-SiC(0001) | 470 | 662 | 541 | 487 | 1849 | 2940 |
+| GaN(0001)/4H-SiC(0001) | 305 | 473 | 374 | 147 | 1291 | 1058 |
+| **mean abs. error** | | 40% | | 33% | 266% | 480% |
+
+<!-- RESULTS:END -->
+
+### What this shows (and does not)
+
+* **Against experiment (fast tier):** on the three temperature-dependent
+  metal/crystal datasets the error is 5–7%, including two that were never
+  fitted (Al/GaN and epitaxial Al/sapphire). Raw AMM/DMM are off by 77–225%,
+  and even AMM/DMM with the same electron–phonon treatment are off by 27–68%.
+  The model also reproduces the qualitative contrast between the two
+  experiments: Al/Si keeps rising above 400 K, while harmonic-matched
+  Al/sapphire plateaus.
+* **Against atomistic ground truth (coherent interfaces):** the AGF tier
+  reproduces independent references, AlN/GaN within 6% of DFT-NEGF and
+  AlN/4H-SiC within 4% of measurement. The fast tier is within ~20–25% of AGF;
+  DMM and AMM are off by factors of 2–14.
+* **Where the model is weak:**
+  * The metal/polymer stacks (Sandell) are no better than AMM with the same
+    e-ph/series treatment.
+  * The >400 K slope of Al/Si and Al/GaN is under-predicted by about 2×.
+  * For real epitaxial semiconductor interfaces (section C), errors are
+    20–55%, although DMM/AMM are 2–8× worse.
+  * See Limitations.
+* **"Atomistic ground truth" is itself method-dependent.** For GaN/AlN at
+  300 K, harmonic Green's functions give ~280–300 MW m⁻² K⁻¹, while
+  anharmonic MLIP-NEMD gives 600–700 and measurements 320–490.
+  * `G_elastic` (fast tier) and the AGF tier estimate the harmonic quantity.
+  * `G` (fast tier, including the inelastic channel calibrated on
+    experiment) estimates the anharmonic or measured quantity.
+  * Both are printed by `tbc.py`.
 
 ---
 
-## 3. Limitations (honest list)
+## 2. Method (fast tier)
 
-1. **High-temperature slope is about half the measured value.** Above 400 K the
-   model rises (0.19–0.21 MW m⁻² K⁻²), but Li et al. measure 0.39–0.43. Part of
-   the rise is cancelled by the falling electron–phonon conductance of Al
-   (κ_p ∝ 1/T); g of Al is itself uncertain by about 2× (pump-probe vs
-   equilibrium DFT values, Brown et al. PRB 94, 075120 (2016)).
-2. **Low-temperature Al/Si is overpredicted by up to 17% at 80 K.** This comes
-   from the long-wavelength specular channel. Real interfaces have some
-   roughness that the coherence-based specularity ignores.
-3. **The inelastic channel rests on one experiment.** α and b are calibrated
-   only on Al/Si. The Al/GaN prediction tests transfer to a second substrate
-   with the same metal, not to other metals.
-4. **Very weak (van der Waals, H-terminated) contacts fail.** For Cu on
-   H-terminated diamond, MACE+D3 gives K/K_ref = 0.04. The spring factor then
-   collapses G to about 1 MW m⁻² K⁻¹, far below measured metal/H-diamond values
-   (tens of MW m⁻² K⁻¹). Either MACE+D3 underbinds such contacts or other
-   channels carry heat (e.g. cross-interface electron–phonon coupling). The
-   Chang prediction therefore assumes bulk-terminated diamond(111).
-5. **The polymer description is crude (and fails for Ni).** PMMA is a Debye solid (measured
-   sound velocities, atom-density cutoff). Its contact stiffness comes from
-   PMMA repeat units on the surface: 3 orientations, MACE-OMAT-0 + D3. OMat
-   training data contain few molecular systems.
-6. **Composite interlayers are idealised.** The 10 nm TiC film is a bulk-like
-   resistance (κ = 20 W m⁻¹ K⁻¹) between two ideal-epitaxy interfaces. The
-   measured dependence on TiC crystallinity and thickness (Chang et al.) is
-   not modelled.
-7. **Epitaxial orientation is assumed, not computed.** The coherence length
-   comes from an automatic supercell match of the two interface-plane
-   lattices, for any orientation: (111), (100), (110), (0001), and mixed
-   pairs such as GaN(0001)/Si(100). The match assumes the aligned orientation
-   (shortest in-plane lattice vectors parallel: cube-on-cube, close-packed
-   rows parallel) within 3% misfit. Rotated epitaxial relations (e.g. R30°)
-   are not searched. Pass `Interface(..., Lc=...)` to override.
-8. **Literature inputs** that are not computed: the electron–phonon coupling g
-   of each metal, Born charges of polar crystals, and sound velocities and
-   density of amorphous solids. Each has its source in `materials.py`.
-9. **Comparison convention.** Conductances are Landauer conductances with
-   emitted-phonon temperatures (the AGF convention). The Zeng–Chen
-   local-equilibrium correction is available (`noneq=True`) but switched off:
-   it overshot the low-T Al/Si data by 2×. Comparing with NEMD temperature
-   drops at highly transmitting interfaces would need that correction.
-10. **No hidden-set guarantee.** The validation covers 3 datasets and 6
-    interfaces. Industrial interfaces with intermixing, oxides or amorphous
-    interlayers need their structure supplied explicitly.
+```
+1/G_total = 1/G_ep(metal) + Σ_interfaces 1/G_pp + Σ_films d/κ
+G_pp      = G_el + P(T) · (G_max − G_el)
+G_el      = ∫ ħω M₁(ω) τ(ω) S(ω) ∂n/∂T dω
+τ(ω)      = p(ω) τ_spec(ω) + (1 − p(ω)) τ_DMM(ω)
+```
 
-11. **MACE-OMAT-0 accuracy varies by material.** Si, Al, Cu, Ni, diamond, GaN and AlN
-    are within ~5% of measured phonon frequencies. Ge is softened by about 13%
-    (f_max 7.9 vs ~9.1 THz) and Si TA modes by about 10%. Each such error propagates
-    directly into M(ω) and G.
----
+**Phonons (no fitting).** `phonons.py` relaxes each crystal and computes
+harmonic force constants with MACE-OMAT-0 + phonopy; polar crystals include
+LO–TO splitting from literature Born charges. From a full-BZ mesh it builds the
+interface-normal spectral flux M_n(ω) = 1/(2VN) Σ|v·n| δ(ω−ω_q), and from
+q_z columns the **k∥-resolved channel counts** (exact level-crossing counting).
 
-## 4. Running it
+Accuracy checks (THz, MACE vs experiment):
+
+| quantity | MACE-OMAT-0 | experiment |
+|---|---|---|
+| Si TO(Γ) / LA(X) / TA(L) | 15.1 / 12.3 / 3.5 | 15.5 / 12.3 / 3.4 |
+| f_max Al / Cu / Ni | 9.5 / 7.2 / 8.7 | ≈9.7 / 7.3 / 8.9 |
+| f_max diamond / 4H-SiC | 38.4 / 28.7 | ≈39.9 / 28.9 |
+| f_max GaN / AlN / AlAs (LO) | 21.3 / 27.0 / 12.0 | ≈22.2 / 27.3 / 12.1 |
+| f_max sapphire | 25.9 | ≈25–27 |
+| f_max GaAs / Ge | 8.1 / 7.9 | 8.75 / 9.1 (MACE ~10% soft) |
+
+The older MACE-MP-0 softens Si optical modes by 28% and is not used.
+
+**Elastic transmission.**
+* τ_DMM = M₂/(M₁+M₂) on full dispersion.
+* τ_spec counts only channels that conserve the in-plane wavevector:
+  Σ_k TZ_k min(M₁ₖ, M₂ₖ)/M₁, with a per-(k, ω) impedance factor from the
+  crossing-mode group velocities, times the specular efficiency η between
+  different crystals.
+  * It equals 1 for identical crystals, which removes DMM's finite resistance
+    between identical materials.
+  * The momentum-conserving bound alone over-counts because it cannot see
+    eigenvector mismatch. η, fitted to MACE-AGF on coherent pairs, corrects
+    that (leave-one-out error ≈ 24%).
+* **Specularity comes from structure, not fitting.**
+  * The two interface-plane Bravais lattices are matched automatically for
+    any orientation ((111), (100), (110), (0001), mixed), in the aligned
+    epitaxial orientation, within 3% misfit.
+  * The common supercell period L_c gives p(ω) = p∞ + (1−p∞)exp[−(L_c/λ)²],
+    with p∞ = A_cell/A_common.
+  * Non-epitaxial interfaces (sputtered or polycrystalline films:
+    `--polycrystalline`) and amorphous sides are fully diffuse.
+
+**Interfacial bonding (no fitting).**
+* `bonding.py` computes the normal interfacial stiffness K = E″/A by
+  rigid-shift scans of the actual interface with MACE-OMAT-0 + D3(BJ). It does
+  this for coherent crystal pairs and for PMMA repeat units on metal or
+  hydroxylated silica, at PMMA areal density, averaged over 3 orientations.
+* Reference stiffness K_ref = ρv²/d (harmonic mean of both sides). This is
+  validated by cutting bulk Al(111) in half: 5.5×10²⁰ by rigid shift vs
+  4.9×10²⁰ N m⁻³ from ρv²/d.
+* The transmission is multiplied by S(ω) = s(K)/s(K_ref) ≤ 1, a spring factor
+  that uses the **lattice** impedance ρ·v_g(ω).
+
+**Inelastic channel.**
+* An elastically reflected phonon is converted by interfacial three-phonon
+  scattering with probability P(T) = 1 − exp[−α(T/Θ)e^(−Θ/bT)], where
+  Θ = ħω_max/k_B of the stiffer side.
+* G_max is the conductance reachable with one conversion step.
+* Applied to crystal/crystal interfaces only.
+* α, b are fitted once on Al/Si.
+
+**Electron–phonon resistance.** Majumdar–Reddy G_ep = √(g κ_p(T)):
+* κ_p of each metal is the lattice conductivity, with phonon–phonon and
+  phonon–electron parts from DFT (Tong et al. 2019).
+* g is measured (sources in `materials.py`).
+* A thin adhesion layer adds g·d in parallel.
+* Metals without data trigger a warning and the term is omitted.
+
+## 3. Method (AGF tier)
+
+`agf.py` builds the actual coherent interface: a [L×n | R×n] superlattice with
+R strained onto L, relaxed with MACE. It computes force constants with phonopy
+on a ≥9 Å in-plane supercell, splits the structure into ≥8.5 Å principal
+layers, and evaluates:
+
+* lead surface Green's functions by Sancho–Rubio decimation;
+* Ξ(ω,k∥) = Tr[Γ_L G Γ_R G†] on an 8×8 k∥ mesh;
+* the Landauer G(T).
+
+Checks:
+* k-mesh/frequency convergence is within 2%.
+* Force constants are shared among equidistant periodic images, so D(k) is
+  exactly Hermitian.
+
+## 4. Limitations (honest list)
+
+1. **High-temperature slope.**
+   * The Al/Si and Al/GaN rise above 400 K is under-predicted by about 2×.
+   * Six global reformulations were tested; none improved it without
+     degrading held-out data:
+     * equilibrium-DFT electron–phonon coupling of Al;
+     * coherence-only specularity;
+     * a soft-side "transmission-deficit" inelastic channel, with both Θ
+       choices.
+   * Al/Si rises while harmonic-matched Al/sapphire plateaus, which points to
+     sample-specific factors (sharpness, defects) that are not inputs.
+2. **Molecule–metal chemistry is outside MACE-OMAT-0's domain.**
+   * For Ni/PMMA, reactive MD (700 K, confined film) and chemisorbed starting
+     geometries were tried. MACE never binds the carbonyl to Ni, while XPS
+     shows Ni–O bonds.
+   * The polymer-contact stiffnesses (Au, Ti, Ni, silica) therefore carry
+     this uncertainty.
+   * An adsorption-trained potential (OC20/UMA) would be the fix; it could
+     not be downloaded in this environment.
+   * Even an ideal Ni contact would only raise the Ni stack from 84 to about
+     94 MW m⁻² K⁻¹: the shared PMMA/SiO₂/native-oxide path dominates.
+3. **Real vs perfect coherent interfaces.**
+   * Harmonic AGF/NEGF and anharmonic NEMD differ by about 2× for GaN/AlN.
+   * Measured wafers lie in between.
+   * Both the harmonic (G_elastic, AGF) and the anharmonic (G) estimates are
+     reported.
+4. **Weak (van der Waals, H-terminated) contacts** are only qualitatively
+   right. Cu on H-terminated diamond gives ~12 MW m⁻² K⁻¹, below typical
+   metal/H-diamond values. The Chang prediction assumes bulk-terminated
+   diamond(111).
+5. **Polymers and glasses** are Debye solids built from measured sound
+   velocities and density.
+6. **Epitaxial orientation is assumed aligned**: shortest in-plane vectors
+   parallel, within 3% misfit. Rotated epitaxy is not searched; override with
+   `Interface(..., Lc=...)` or `--polycrystalline`.
+7. **AGF tier scope.**
+   * Lattice-matched pairs only (the R side is strained).
+   * Memory limits the in-plane force-constant supercell to about 600 atoms.
+8. **MACE accuracy varies.** Ge and GaAs are ~8–13% soft; Si TA ~10% soft.
+9. **Literature inputs:** electron–phonon coupling g, Born charges, and
+   amorphous sound velocities.
+10. **Licensing.** MACE-OMAT-0 weights are under the Academic Software
+    License. A commercially licensed universal potential is a drop-in
+    replacement in `phonons.py`, `bonding.py` and `agf.py`.
+
+## 5. Running it
 
 ```bash
 pip install -r requirements.txt
-python phonons.py Al Si GaN          # MACE-OMAT-0 phonons (cached in data/phonons)
-python bonding.py Al_Si Au_PMMA      # optional: interfacial stiffness (cached in data/bonding.json)
-python calibrate.py                  # re-derive the 2 global parameters (Al/Si only)
-python validate.py                   # reproduce the three datasets -> results/
-python tbc.py AlN/0001 GaN/0001 --T 100:800:50          # any interface
-python tbc.py Al/111 Si/111 --metal Al --T 300 --json
-python tbc.py Au PMMA --metal Au --Kn 3.9e19             # supply a computed stiffness
+python tbc.py AlN/0001 GaN/0001 --T 100:800:50          # fast tier, any library material
+python tbc.py AlN/0001 GaN/0001 --T 300 --agf          # + AGF tier (~1 CPU-hour first time, cached)
+python tbc.py Al/111 Si/111 --metal Al                   # metal side: adds electron-phonon resistance
+python tbc.py Cu/111 C/111 --metal Cu --polycrystalline  # sputtered films: diffuse
+python tbc.py my_crystal.cif:001 Si/100                  # any crystal from a structure file
+python tbc.py Au PMMA --metal Au --Kn 3.9e19             # supply an interfacial stiffness
+bash tests/smoke.sh                                      # every interface class runs
+python make_report.py                                    # regenerate all numbers in this README
 ```
 
-To add a material, put a structure guess in `materials.CRYSTALS`, or density
-and sound velocities in `materials.AMORPHOUS`. Phonons are computed
-automatically on first use.
+Outputs: G, R_K, the phonon conductance, the elastic-only conductance, the
+inelastic probability, Debye AMM and DMM, and (with `--agf`) the AGF value.
 
 | file | content |
 |---|---|
-| `phonons.py` | MACE-OMAT-0 + phonopy → M_n(ω), D(ω), MSD, sound velocities |
-| `model.py` | Debye AMM / DMM baselines; specular+diffuse elastic, bonding, inelastic channel |
-| `bonding.py` | MACE+D3 interface construction and rigid-shift stiffness |
-| `predict.py` | e-ph resistance, stacks for the reference systems |
-| `calibrate.py` | fits α, b on Al/Si only |
-| `validate.py` | all comparisons, tables and figures in `results/` |
-| `tbc.py` | command-line predictor for an arbitrary interface |
-| `data/reference/` | the experimental data used, with provenance |
-| `scripts/digitize_li2022.py` | extracts Li et al. Fig. 1 from the vector PDF |
+| `phonons.py` | MACE-OMAT-0 + phonopy → M_n(ω), D(ω), k∥-resolved channel spectra |
+| `model.py` | baselines; specular/diffuse elastic, coherence matching, bonding, inelastic channel |
+| `bonding.py` | MACE+D3 interface construction and rigid-shift stiffness (incl. reactive/chemisorbed protocols tested) |
+| `agf.py` | MACE atomistic Green's function (accurate tier) |
+| `predict.py` | electron–phonon resistance, stacks for the reference systems |
+| `calibrate.py`, `calibrate_spec.py` | the only fits: α, b (Al/Si) and η (AGF) |
+| `validate.py`, `make_report.py` | all comparisons, tables, figures (`results/`) |
+| `tbc.py` | command-line predictor |
+| `data/reference/` | experimental and literature data with provenance |
 
-## 5. Data provenance
-* **Li et al., Nat. Commun. 13, 4901 (2022)**: G(T) of Al/Si (samples 1, 2) and Al/GaN.
-  Marker centres were read from the vector graphics of the open-access PDF.
-  Check: 380.6 / 424.9 / 310.3 at 300 K vs 379 / 423 / 309 quoted in the text.
-* **Sandell et al., Nanomaterials 10, 670 (2020)**: Table 2 (combined boundary
-  conductance and κ_PMMA) and Eq. (2) (open-access full text, Europe PMC).
-* **Chang et al., ACS AMI 11, 26507 (2019)**: abstract value (+48% with a highly
-  crystalline 10 nm TiC interlayer). The paper itself is paywalled. Only the ratio is used.
+## 6. Data provenance
 
-Licensing note: the MACE-OMAT-0 weights are distributed under the Academic
-Software License. Commercial use needs a separately licensed universal
-potential, which is a drop-in replacement in `phonons.py`/`bonding.py`.
+* **Li et al., Nat. Commun. 13, 4901 (2022).** G(T) of Al/Si and Al/GaN, read
+  from the vector PDF (`scripts/digitize_li2022.py`). Check: 380.6/424.9 vs
+  379/423 MW m⁻² K⁻¹ quoted at 300 K.
+* **Cheng et al., Commun. Phys. 3, 115 (2020), arXiv:1906.05484.** Epitaxial
+  Al/sapphire G(T); markers detected in the raster figure (~2%).
+* **Sandell et al., Nanomaterials 10, 670 (2020).** Table 2 and Eq. (2), via
+  Europe PMC.
+* **Chang et al., ACS AMI 11, 26507 (2019).** +48% with a 10 nm crystalline
+  TiC interlayer (abstract).
+* **Polanco & Lindsay, PRB 97, 014303 (2018), OSTI 1494888.** DFT-NEGF GaN/AlN.
+* **Measured AlN/GaN, AlN/SiC, GaN/SiC (TDTR), APL 125, 032104 (2024), and
+  ab initio Si/Ge.** See `data/reference/unseen_sanity.json`.
+* **Tong et al., PRB 100, 144306 (2019).** DFT lattice κ of metals.
+* **Brown et al., PRB 94, 075120 (2016).** Equilibrium g of Al.
+* **Electron–phonon coupling g.** Hostetler 1999, Elsayed-Ali 1987, Kang &
+  Choi 2020, Lin et al. 2008.

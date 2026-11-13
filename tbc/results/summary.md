@@ -23,3 +23,14 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaAs(100)/AlAs(100) | +0.7% | **170** | 135 (-20%) | 171 (+1%) | 594 (+250%) | 898 (+429%) |
 | GaN(0001)/SiC4H(0001) | +4.1% | **147** | 187 (+27%) | 374 (+154%) | 1291 (+776%) | 1058 (+618%) |
 | **mean abs. deviation from AGF** | | | 18% | 67% | 424% | 698% |
+
+### C. Measured conductance of epitaxial semiconductor interfaces (300 K, held out)
+
+Multi-frequency TDTR on GaN-on-SiC, GaN-on-AlN and AlN-on-SiC wafers (par.nsf.gov 10498482). Real interfaces contain defects and anharmonic transport; harmonic AGF is a perfect-interface reference.
+
+| interface | measured | fast tier (total) | fast tier (elastic) | AGF (harmonic) | DMM (Debye) | AMM (Debye) |
+|---|---|---|---|---|---|---|
+| AlN(0001)/GaN(0001) | 490 | 379 | 251 | 281 | 1376 | 3767 |
+| AlN(0001)/4H-SiC(0001) | 470 | 662 | 541 | 487 | 1849 | 2940 |
+| GaN(0001)/4H-SiC(0001) | 305 | 473 | 374 | 147 | 1291 | 1058 |
+| **mean abs. error** | | 40% | | 33% | 266% | 480% |
