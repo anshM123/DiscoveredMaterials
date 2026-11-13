@@ -390,8 +390,11 @@ Checks:
 11. **The inelastic channel is calibrated on one metal/semiconductor
     dataset (Al/Si) and has not been checked against anharmonic NEMD for
     semiconductor pairs.** It roughly doubles G for nearly matched pairs
-    (GaAs/AlAs, Si/Ge). MLIP-NEMD for AlN/GaN (600–700) lies above it, so it
-    is not obviously too large, but it is unverified.
+    (GaAs/AlAs, Si/Ge). The one anharmonic atomistic reference available,
+    MLIP-NEMD for AlN/GaN (600–700 MW m⁻² K⁻¹, arXiv:2503.05084), lies above it:
+    in NEMD's local-equilibrium convention (`--local-equilibrium`) the fast
+    tier gives G_pp = 501 (harmonic G_el 294), i.e. 17–28% low. So it is not
+    obviously too large, but it is checked on one pair only.
 12. **The MACE-AGF references inherit MACE errors.** For Si/Ge the AGF gives
     126 MW m⁻² K⁻¹, below ab initio estimates of 170–218 (`unseen_sanity.json`;
     MACE Ge is ~10% soft and Ge is strained 5.2% in the AGF supercell).
