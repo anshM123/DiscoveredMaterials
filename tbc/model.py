@@ -40,8 +40,10 @@ class Side:
             self.M = d[f"M_{normal}"]
             self.Mperp = d[f"Mperp_{normal}"]
             self.D = d["D"]
-            # in-plane surface lattice parameter for (111)/(0001) normals (Angstrom)
-            self.a_surf = float(np.linalg.norm(d["a_cell"][0]))
+            # 2D Bravais lattice of the interface plane (Angstrom), any normal
+            nvec = np.asarray(CRYSTALS[name]["normals"][normal], float)
+            self.plane = plane_lattice(d["a_cell"], nvec)
+            self.a_surf = float(np.linalg.norm(self.plane[0]))
             self.rho = float(d["rho"])
             self.vL, self.vT = float(d["vL"]), float(d["vT"])
             self.n_atoms = float(d["n_atoms"])
@@ -62,6 +64,7 @@ class Side:
             self.D = np.where(W <= self.vL * self.kD, W ** 2 / (2 * np.pi ** 2 * self.vL ** 3), 0.0) + \
                 np.where(W <= self.vT * self.kD, 2 * W ** 2 / (2 * np.pi ** 2 * self.vT ** 3), 0.0)
             self.a_surf = None
+            self.plane = None
             # isotropic solid: flux-weighted fraction of displacement along n is 1/2
             self.Mperp = 0.5 * ML + 0.5 * MT
         nz = np.nonzero(self.M > 1e-6 * self.M.max())[0]
@@ -123,24 +126,89 @@ def G_AMM_debye(s1, s2, T):
 COHERENCE_STRAIN = 0.03   # max misfit strain for a pseudomorphic (coherent) match
 
 
-def coincidence_length(s1, s2, nmax=12, tol=COHERENCE_STRAIN):
-    """Smallest common in-plane period (Angstrom) of two hexagonal surface
-    lattices in the aligned orientation (close-packed rows parallel, the
-    usual epitaxial relation for (111)/(0001) stacks) within misfit strain
-    tol; None if a side is amorphous."""
-    if s1.a_surf is None or s2.a_surf is None:
+def plane_lattice(cell, normal, nmax=4):
+    """Reduced 2D basis (2x2, in-plane orthonormal coordinates, Angstrom) of
+    the Bravais-lattice plane perpendicular to `normal`. Works for any
+    orientation: (111), (100), (110), (0001), ... Frame: e1 along the shortest
+    in-plane lattice vector, second vector at a positive angle."""
+    cell = np.asarray(cell, float)
+    n = normal / np.linalg.norm(normal)
+    r = np.arange(-nmax, nmax + 1)
+    I = np.array(np.meshgrid(r, r, r)).reshape(3, -1).T
+    V = I @ cell
+    L = np.linalg.norm(V, axis=1)
+    ok = (L > 1e-6) & (np.abs(V @ n) < 1e-4 * np.maximum(L, 1))
+    V, L = V[ok], L[ok]
+    order = np.argsort(L, kind="stable")
+    v1 = V[order[0]]
+    for k in order[1:]:
+        if np.linalg.norm(np.cross(v1, V[k])) > 1e-3 * L[order[0]] * L[k]:
+            v2 = V[k]; break
+    e1 = v1 / np.linalg.norm(v1); e2 = np.cross(n, e1)
+    b = np.array([[v1 @ e1, v1 @ e2], [v2 @ e1, v2 @ e2]])
+    if b[1, 1] < 0:
+        b[1] = -b[1]
+    return b
+
+
+def _area(b):
+    return abs(b[0, 0] * b[1, 1] - b[0, 1] * b[1, 0])
+
+
+def coincidence_cell(s1, s2, nmax=12, tol=COHERENCE_STRAIN, dtheta=1.0):
+    """Smallest common supercell of the two interface-plane lattices in the
+    aligned orientation (shortest in-plane lattice vectors of both sides
+    parallel: close-packed rows parallel for (111)/(0001), cube-on-cube for
+    (100)/(110)), within misfit strain tol. Returns (Lc, p_inf) with Lc the
+    longest common supercell vector (Angstrom) and p_inf = area of the smaller
+    primitive plane cell / common cell area; None if a side is amorphous or no
+    match exists (-> diffuse)."""
+    if s1.plane is None or s2.plane is None:
         return None
+    r = np.arange(-nmax, nmax + 1)
+    I = np.array(np.meshgrid(r, r)).reshape(2, -1).T
+    I = I[np.any(I != 0, axis=1)]
+
+    def cand(b):
+        U = I @ b
+        return U, np.linalg.norm(U, axis=1), np.degrees(np.arctan2(U[:, 1], U[:, 0]))
+    U, LU, TU = cand(s1.plane)
+    Wv, LW, TW = cand(s2.plane)
+    pairs = []
+    for i in np.argsort(LU):
+        if LU[i] > nmax * max(s1.a_surf, s2.a_surf):
+            break
+        m = (np.abs(np.log(LW / LU[i])) <= tol) & (np.abs((TW - TU[i] + 180) % 360 - 180) <= dtheta)
+        for j in np.nonzero(m)[0]:
+            pairs.append((LU[i], U[i], Wv[j]))
     best = None
-    for f1 in (1.0,):
-        for f2 in (1.0,):
-            a1, a2 = s1.a_surf * f1, s2.a_surf * f2
-            for n1 in range(1, nmax + 1):
-                for n2 in range(1, nmax + 1):
-                    if abs(n1 * a1 / (n2 * a2) - 1) <= tol:
-                        L = max(n1 * a1, n2 * a2)
-                        if best is None or L < best:
-                            best = L
-    return best
+    for a in range(len(pairs)):
+        for c in range(a + 1, len(pairs)):
+            u1, w1, u2, w2 = pairs[a][1], pairs[a][2], pairs[c][1], pairs[c][2]
+            Au, Aw = abs(u1[0] * u2[1] - u1[1] * u2[0]), abs(w1[0] * w2[1] - w1[1] * w2[0])
+            if min(Au, Aw) < 1e-6:
+                continue
+            A = max(Au, Aw)
+            # the full 2x2 map between the two supercells must be a small
+            # strain (singular values within tol) with negligible rotation;
+            # rejects spurious cells spanned by long, nearly parallel vectors
+            Tm = np.column_stack([w1, w2]) @ np.linalg.inv(np.column_stack([u1, u2]))
+            Uu, sv, Vt = np.linalg.svd(Tm)
+            Rm = Uu @ Vt
+            if np.max(np.abs(np.log(sv))) > tol or abs(np.degrees(np.arctan2(Rm[1, 0], Rm[0, 0]))) > dtheta:
+                continue
+            Lc = max(np.linalg.norm(u1), np.linalg.norm(u2), np.linalg.norm(w1), np.linalg.norm(w2))
+            if best is None or A < best[0] - 1e-6 or (abs(A - best[0]) < 1e-6 and Lc < best[1]):
+                best = (A, Lc)
+    if best is None:
+        return None
+    p_inf = min(_area(s1.plane), _area(s2.plane)) / best[0]
+    return best[1], min(1.0, p_inf)
+
+
+def coincidence_length(s1, s2, **kw):
+    c = coincidence_cell(s1, s2, **kw)
+    return None if c is None else c[0]
 
 
 def spring_factor(w, K, Z1, Z2):
@@ -168,7 +236,12 @@ class Interface:
         self.K, self.Kref, self.sharp = K, Kref, sharp
         M1, M2 = s1.M, s2.M
         self.tau_dmm = np.divide(M2, M1 + M2, out=np.zeros_like(W), where=(M1 + M2) > 0)
-        self.Lc = coincidence_length(s1, s2) if Lc == "auto" else Lc
+        cc = coincidence_cell(s1, s2) if Lc == "auto" else None
+        if Lc == "auto":
+            self.Lc, self.p_inf = (cc if cc is not None else (None, 0.0))
+        else:
+            self.Lc = Lc
+            self.p_inf = None if Lc is None else min(1.0, (min(s1.a_surf, s2.a_surf) / Lc) ** 2)
         self.tau_spec = self.specular_transmission()
         self.p_spec = self.specularity(W)
         self.tau_el = self.p_spec * self.tau_spec + (1 - self.p_spec) * self.tau_dmm
@@ -197,8 +270,7 @@ class Interface:
         lambda = 2 pi v_T,min / w. Amorphous side -> Lc None -> p = 0."""
         if self.Lc is None:
             return np.zeros_like(w)
-        a = min(self.s1.a_surf, self.s2.a_surf)
-        p_inf = min(1.0, (a / self.Lc) ** 2)
+        p_inf = self.p_inf
         vs = min(self.s1.vT, self.s2.vT)
         lam = np.divide(2 * np.pi * vs, w, out=np.full_like(w, np.inf), where=w > 0)
         return p_inf + (1 - p_inf) * np.exp(-(self.Lc * 1e-10 / lam) ** 2)

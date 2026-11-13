@@ -52,9 +52,9 @@ Global parameters (calibrated on Al/Si sample 1 only): alpha = 4.1214, b = 1.121
 
 | stack | measured | model | variant: w/o bonding factor | variant: inelastic channel also on amorphous | AMM | DMM | AMM+e-ph | DMM+e-ph |
 |---|---|---|---|---|---|---|---|---|
-| Au/PMMA/Si | 59 | **67** | 86 | 84 | 86 | 159 | 66 | 101 |
-| Au/Ti/PMMA/Si | 115 | **146** | 146 | 178 | 134 | 168 | 124 | 153 |
-| Au/Ni/PMMA/Si | 139 | **143** | 143 | 179 | 133 | 171 | 124 | 157 |
+| Au/PMMA/Si | 59 | **53** | 86 | 70 | 86 | 159 | 66 | 101 |
+| Au/Ti/PMMA/Si | 115 | **92** | 146 | 123 | 134 | 168 | 124 | 153 |
+| Au/Ni/PMMA/Si | 139 | **81** | 143 | 114 | 133 | 171 | 124 | 157 |
 
 ## Chang et al. 2019 - G(Cu/TiC 10 nm/diamond) / G(Cu/diamond) at 300 K (PREDICTION), measured 1.48
 

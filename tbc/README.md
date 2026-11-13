@@ -12,13 +12,12 @@ minute of MACE force evaluations plus phonopy. A G(T) curve takes
 milliseconds.
 
 **Status — read this first.** This is a working, reproducible framework with
-an honest validation, not a finished prize claim. Calibrated on Al/Si only,
-it predicts the held-out Al/GaN G(T) curve to about 5% (80–700 K). It also
-predicts the Cu/TiC/diamond enhancement, and the Au/[Ti,Ni]/PMMA/Si stacks
-within experimental error to ~25% (see [Results](#results)). It is far better
-than AMM/DMM on all three datasets. Known weaknesses are listed in
-[Limitations](#limitations), including one regime where the model fails
-(very weakly bonded, H-terminated contacts).
+an honest validation, not a finished prize claim. Calibrated on Al/Si only (2 global
+parameters), it predicts the held-out Al/GaN G(T) curve to 5.4% (80–700 K)
+and the Cu/TiC/diamond enhancement to 9%. It beats AMM/DMM by a wide margin on
+metal/semiconductor interfaces. It does **not** beat AMM on the metal/polymer stacks, and it
+reproduces only about half of the measured >400 K slope. See [Results](#2-results) and
+[Limitations](#3-limitations-honest-list).
 
 ---
 
@@ -62,11 +61,13 @@ measured density and sound velocities, with the Swartz–Pohl atom-density cutof
   reciprocity. This removes DMM's best-known defect, a finite resistance
   between identical materials, which matters for acoustically similar
   epitaxial pairs such as AlN/GaN.
-* **Specularity from coherence, not from fitting**. Two hexagonal (111)/(0001)
-  lattices in the aligned epitaxial orientation share an in-plane period `L_c`,
-  the smallest coincidence within 3% misfit. Parallel momentum is conserved
+* **Specularity from coherence, not from fitting**. The two interface-plane
+  Bravais lattices (any orientation) are matched in the aligned epitaxial
+  orientation. The smallest common supercell whose 2×2 map is a strain of at
+  most 3% gives the in-plane period `L_c` and the fraction
+  `p∞ = A_cell/A_common`. Parallel momentum is conserved
   modulo 2π/L_c, so
-  `p(ω) = p∞ + (1−p∞)·exp[−(L_c/λ)²]`, with `p∞ = (a/L_c)²` and `λ = 2π v_T/ω`.
+  `p(ω) = p∞ + (1−p∞)·exp[−(L_c/λ)²]`, with `λ = 2π v_T/ω`.
   A 1:1 pseudomorphic interface (AlN/GaN) is specular. Al/Si (4:3, L_c = 11.5 Å)
   and Al/GaN (8:7, 22.8 Å) are diffuse except at long wavelengths. Interfaces
   with an amorphous side are fully diffuse.
@@ -117,7 +118,41 @@ layer (2 nm Ti/Ni) adds a parallel volumetric channel `g·d`.
 
 ## 2. Results
 
-RESULTS_PLACEHOLDER
+Mean absolute error vs measurement (Al/Si, Al/GaN: all temperatures; Sandell: the three
+stacks). AMM/DMM are the Debye models of Little (1959) and Swartz & Pohl (1989), shown
+raw and with the same electron–phonon resistance and series layers as this model.
+Full tables: [`results/validation.md`](results/validation.md). Figures:
+[`results/li2022.png`](results/li2022.png), [`results/sandell2020.png`](results/sandell2020.png).
+
+| dataset (role) | this model | AMM | DMM | AMM + same e-ph/series | DMM + same e-ph/series |
+|---|---|---|---|---|---|
+| Li 2022 Al/Si, 82–705 K (calibration) | 5.1% | 183.0% | 105.7% | 61.6% | 32.7% |
+| Li 2022 Al/GaN, 85–704 K (**prediction**) | **5.4%** | 225.2% | 128.3% | 68.3% | 36.8% |
+| Sandell 2020, 3 stacks at 300 K (**prediction**) | 24.0% | 22.3% | 79.4% | 10.2% | 39.2% |
+| Chang 2019 ratio, measured 1.48 (**prediction**) | 1.34 (-9%) | 1.97 (+33%) | 1.10 (-25%) | 1.80 (+22%) | 1.08 (-27%) |
+
+What this shows:
+* **Metal/semiconductor epitaxial interfaces (Al/Si, Al/GaN)**: large, transferable
+  improvement. The Al/GaN curve was not used in calibration and is predicted to
+  5.4% over 80–700 K, versus 37% for the best baseline.
+  Room temperature: Al/Si 376 vs 381, Al/GaN 403 vs 425 MW m⁻² K⁻¹.
+  The model rises above 400 K, but with about half the measured slope
+  (0.19–0.21 vs 0.39–0.43 MW m⁻² K⁻²). See Limitations.
+* **Cu/TiC/diamond**: the interlayer enhancement is predicted as 1.34 vs 1.48
+  (AMM 1.97, DMM 1.10), assuming bulk-terminated diamond(111).
+* **Metal/polymer stacks**: the model is **not** better than AMM here. It gets the right order
+  of magnitude and the Au < Ti enhancement, but underpredicts the Ni stack by 42%
+  (81 vs 139). MACE+D3 binds the PMMA repeat unit weakly to Ni
+  (K/K_ref = 0.65), while XPS shows Ni oxidising at the real interface, a reaction a
+  rigid-shift scan of intact molecules cannot capture.
+
+**Unseen interfaces (sanity check, not part of any fit):** see `data/reference/unseen_sanity.json`.
+
+| interface, 300 K | this model | AMM | DMM | published |
+|---|---|---|---|---|
+| AlN(0001)/GaN(0001) | 639 | 3767 | 1376 | 600–700 (MLIP NEMD, pristine); 320–490 measured; ~300 NEGF |
+| Si(111)/Ge(111) | 261 | 2086 | 547 | 170–218 (ab initio lattice dynamics / Monte Carlo, planar) |
+
 
 ---
 
@@ -140,7 +175,7 @@ RESULTS_PLACEHOLDER
    (tens of MW m⁻² K⁻¹). Either MACE+D3 underbinds such contacts or other
    channels carry heat (e.g. cross-interface electron–phonon coupling). The
    Chang prediction therefore assumes bulk-terminated diamond(111).
-5. **The polymer description is crude.** PMMA is a Debye solid (measured
+5. **The polymer description is crude (and fails for Ni).** PMMA is a Debye solid (measured
    sound velocities, atom-density cutoff). Its contact stiffness comes from
    PMMA repeat units on the surface: 3 orientations, MACE-OMAT-0 + D3. OMat
    training data contain few molecular systems.
@@ -148,9 +183,13 @@ RESULTS_PLACEHOLDER
    resistance (κ = 20 W m⁻¹ K⁻¹) between two ideal-epitaxy interfaces. The
    measured dependence on TiC crystallinity and thickness (Chang et al.) is
    not modelled.
-7. **Only (111)/(0001) hexagonal surface matching is implemented** for the
-   coherence length. Other orientations are treated as fully diffuse unless
-   L_c is passed explicitly (`Interface(..., Lc=...)`).
+7. **Epitaxial orientation is assumed, not computed.** The coherence length
+   comes from an automatic supercell match of the two interface-plane
+   lattices, for any orientation: (111), (100), (110), (0001), and mixed
+   pairs such as GaN(0001)/Si(100). The match assumes the aligned orientation
+   (shortest in-plane lattice vectors parallel: cube-on-cube, close-packed
+   rows parallel) within 3% misfit. Rotated epitaxial relations (e.g. R30°)
+   are not searched. Pass `Interface(..., Lc=...)` to override.
 8. **Literature inputs** that are not computed: the electron–phonon coupling g
    of each metal, Born charges of polar crystals, and sound velocities and
    density of amorphous solids. Each has its source in `materials.py`.
@@ -163,6 +202,10 @@ RESULTS_PLACEHOLDER
     interfaces. Industrial interfaces with intermixing, oxides or amorphous
     interlayers need their structure supplied explicitly.
 
+11. **MACE-OMAT-0 accuracy varies by material.** Si, Al, Cu, Ni, diamond, GaN and AlN
+    are within ~5% of measured phonon frequencies. Ge is softened by about 13%
+    (f_max 7.9 vs ~9.1 THz) and Si TA modes by about 10%. Each such error propagates
+    directly into M(ω) and G.
 ---
 
 ## 4. Running it

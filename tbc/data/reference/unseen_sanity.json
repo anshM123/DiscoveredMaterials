@@ -1,0 +1,8 @@
+{"note": "Literature ranges for interfaces NOT used in calibration or validation; sanity check only (values collected via web search, Nov 2026).",
+ "AlN/GaN (0001), 300 K": {"measured_bonded_APL2024": 320, "measured_cited": 490, "NEGF": 300,
+                          "MLIP_NEMD_pristine": [600, 700],
+                          "sources": ["Wafer-scale bonded GaN-AlN with high interface thermal conductance, APL 125, 032104 (2024)",
+                                      "arXiv:2503.05084 (MLIP NEMD, standalone GaN/AlN)"]},
+ "Si/Ge (planar), 300 K": {"MonteCarlo_ab_initio": 218, "ab_initio_lattice_dynamics_highT": 170,
+                          "sources": ["arXiv:2406.19068", "arXiv:1710.10100"]},
+ "units": "MW m^-2 K^-1"}

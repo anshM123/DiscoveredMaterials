@@ -34,6 +34,7 @@ CRYSTALS = {
     "Ni":  dict(build=lambda: bulk("Ni", "fcc", a=3.52), sc=[4, 4, 4], mesh=[40, 40, 40], normals=CUBIC_111),
     "Ti":  dict(build=lambda: bulk("Ti", "hcp", a=2.95, c=4.68), sc=[4, 4, 3], mesh=[32, 32, 20], normals=HEX_0001),
     "Si":  dict(build=lambda: bulk("Si", "diamond", a=5.43), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111),
+    "Ge":  dict(build=lambda: bulk("Ge", "diamond", a=5.658), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111),
     "C":   dict(build=lambda: bulk("C", "diamond", a=3.567), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111),
     "TiC": dict(build=lambda: bulk("TiC", "rocksalt", a=4.33), sc=[4, 4, 4], mesh=[36, 36, 36], normals=CUBIC_111),
     "GaN": dict(build=lambda: wurtzite("Ga", "N", 3.19, 5.19, 0.377), sc=[4, 4, 3], mesh=[28, 28, 18], normals=HEX_0001,
