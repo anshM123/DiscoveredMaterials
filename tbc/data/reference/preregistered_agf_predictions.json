@@ -55,7 +55,11 @@
    "InP(110)/GaAs(110)": 123,
    "GaP(110)/Si(110)": 117
   },
-  "results_AGF_MW_m2K": {},
-  "deviation": {}
+  "results_AGF_MW_m2K": {
+   "AlAs(100)/Ge(100)": 107.6
+  },
+  "deviation": {
+   "AlAs(100)/Ge(100)": "-4%"
+  }
  }
 }
