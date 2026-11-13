@@ -111,8 +111,8 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
   tier is within 15% of AGF (19% leave-one-out); full-dispersion DMM is off
   by 66%, and Debye DMM/AMM by factors of 4–16.
 * **Where the model is weak:**
-  * The metal/polymer stacks (Sandell, 17.7%) are still no better than AMM
-    with the same e-ph/series treatment (10%).
+  * The metal/polymer stacks (Sandell, 12.1%) are close to, but not better
+    than, AMM with the same e-ph/series treatment (10%); Ni is −25%.
   * **The >400 K rise of Al/Si and Al/GaN is under-predicted about 4×**
     (0.10 and 0.07 vs 0.43 and 0.39 MW m⁻² K⁻²); see Limitations 1.
   * For six measured epitaxial semiconductor and nitride/oxide interfaces
@@ -216,9 +216,21 @@ The older MACE-MP-0 softens Si optical modes by 28% and is not used.
   M_eff = M_prop + w·(M_Debye − M_prop).
 * w = 0.27 is fitted to one dataset (Li's Al/native-SiO₂/Si G(T)) and tested
   on Sandell's PMMA/native-SiO₂ stacks.
-* Molecule/surface contacts (PMMA) are treated as bonded. MACE-OMAT-0's
-  stiffness is not used for them, because it fails to bind the PMMA carbonyl
-  to Ni, which XPS shows happens.
+* Molecule/surface contacts (PMMA) are classified by chemistry, with no
+  fitted parameter:
+  * **chemisorbed** (reactive metals, whose oxide is stable: formation enthalpy
+    below −100 kJ per mol O, e.g. Ti, Al, Ni, Cu; and hydroxylated oxide
+    surfaces) are treated as bonded. MACE-OMAT-0's stiffness is not used for
+    them, because it fails to bind the PMMA carbonyl to Ni, which XPS shows
+    happens;
+  * **physisorbed** (noble metals, whose oxide is barely stable: Au, Ag, Pt,
+    Pd) bind by dispersion only, which MACE + D3 does describe, so their
+    computed rigid-shift stiffness is used (Au/PMMA: 3.9×10¹⁹ N m⁻³, about
+    1/6 of a bonded contact).
+  * This rule was introduced after the Sandell residuals were seen (Au was
+    over-predicted by 19% with every contact bonded), so the Sandell stacks
+    are no longer a fully blind test of it; the Au/PMMA stiffness itself was
+    computed earlier and is not adjusted.
 * A glass AGF (`agf_glass.py`, periodic glass lead) gives Al/a-SiO₂ = 74 MW
   m⁻² K⁻¹ at 300 K. That is a *lower bound*: a periodic glass lead turns
   diffusons into flat bands, and the measured stack (138) bounds this
@@ -235,9 +247,16 @@ The older MACE-MP-0 softens Si optical modes by 28% and is not used.
 **Electron–phonon resistance.** Majumdar–Reddy G_ep = √(g κ_p(T)):
 * κ_p of each metal is the lattice conductivity, with phonon–phonon and
   phonon–electron parts from DFT (Tong et al. 2019).
-* g is measured (sources in `materials.py`).
+* g is measured where available (Al, Cu, Au, Ni, Ti; sources in
+  `materials.py`).
+* Other metals (Ag, Pt, Co, W, Mo, Ta, Ru) use Allen's formula
+  g = 3ħγ_bλ⟨ω²⟩/(πk_B), with tabulated Sommerfeld γ and coupling λ and
+  ⟨ω²⟩ from the MACE phonon DOS. On the five measured metals it is within a
+  factor 0.42–2.7 of experiment (geometric mean 0.91), so it carries a
+  factor-2 uncertainty, and a warning is printed. For these strongly coupled
+  metals G_ep is 1–5 GW m⁻² K⁻¹, so the uncertainty hardly matters.
 * A thin adhesion layer adds g·d in parallel.
-* Metals without data trigger a warning and the term is omitted.
+* Metals with no data at all trigger a warning and the term is omitted.
 
 ## 3. Method (AGF tier)
 
@@ -298,8 +317,10 @@ Checks:
      used).
    * An adsorption-trained potential (OC20/UMA) would be the fix; it could
      not be downloaded in this environment.
-   * Even an ideal Ni contact would only raise the Ni stack from 84 to about
-     94 MW m⁻² K⁻¹: the shared PMMA/SiO₂/native-oxide path dominates.
+   * Even with the Ni contact ideal, the Ni stack is 104 MW m⁻² K⁻¹ vs 139
+     measured: the shared PMMA/SiO₂/native-oxide path (common to all three
+     stacks, ≤132) dominates, so the measured Ni > Ti ordering is not
+     reproduced.
 3. **Real vs perfect coherent interfaces.**
    * Harmonic AGF/NEGF and anharmonic NEMD differ by about 2× for GaN/AlN.
    * Measured wafers lie in between.
@@ -312,7 +333,7 @@ Checks:
 5. **Glasses: one fitted diffuson weight; polymers are Debye solids.**
    * The SiO₂ diffuson weight w is fitted to one curve (Li's native-oxide
      stack, assuming 1.5 nm of oxide; 1–2 nm gives w = 0.24–0.32).
-   * Only Sandell tests it independently: 17.7% error, with Au +19%, Ti −9%
+   * Only Sandell tests it independently: 12.1% error, with Au +2%, Ti −9%
      and Ni −25%.
    * Other glasses (a-Al₂O₃, HfO₂, …) need their own MACE melt-quench
      (`glass.py`); without one they fall back to the Debye glass, which is an

@@ -95,3 +95,19 @@ def test_glass_diffuson_weight_limits():
         assert g.M.sum() < Ma.sum()
     finally:
         model.W_DIFFUSON = w0
+
+
+def test_eph_estimated_metals_and_physisorption_rule():
+    import warnings
+    from predict import g_allen, bonding_for
+    from materials import METALS, physisorbs
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        for m in ("Pt", "W", "Ag"):
+            assert 1e8 < G_ep(m, 300) < 1e10                     # estimated, finite
+        for m in METALS:                                          # Allen within x3 of measured g
+            assert 1 / 3 < g_allen(m) / METALS[m]["g"] < 3
+        assert physisorbs("Au") and physisorbs("Ag") and not physisorbs("Ti") and not physisorbs("Ni")
+        assert bonding_for("Ti", "PMMA") is None and bonding_for("PMMA", "SiO2") is None
+        (K, _), (Kr, _) = bonding_for("Au", "PMMA")
+        assert K < Kr                                             # weak (vdW) contact

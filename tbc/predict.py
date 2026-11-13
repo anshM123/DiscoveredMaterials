@@ -20,23 +20,59 @@ def G_ep(metal, T, d=None):
     """Electron-phonon conductance (W m^-2 K^-1).
     Semi-infinite metal: Majumdar-Reddy sqrt(g kp(T)).
     Thin layer of thickness d (m) << e-ph length: volumetric coupling g*d."""
-    if metal not in METALS:
+    p = metal_params(metal)
+    if p is None:
         import warnings
         warnings.warn(f"No electron-phonon data for metal '{metal}' in materials.METALS: "
                       "the electron-phonon resistance is omitted (G is then an upper bound). "
                       "Add g and kp for this metal to include it.", stacklevel=2)
         return np.inf
-    p = METALS[metal]
     if d is not None:
         return p["g"] * d
     return np.sqrt(p["g"] * kp_metal(metal, T))
+
+
+def g_allen(metal):
+    """Allen's estimate of g (W m^-3 K^-1) from the Sommerfeld coefficient, the
+    electron-phonon coupling constant and the MACE phonon DOS (materials.py)."""
+    from materials import SOMMERFELD, LAMBDA_EP
+    from phonons import load, W
+    hbar, kB, NA = 1.054571817e-34, 1.380649e-23, 6.02214076e23
+    d = load(metal)
+    s = W > 0
+    w2 = np.sum(d["D"][s] * W[s]) / np.sum(d["D"][s] / W[s])
+    lam = LAMBDA_EP[metal]
+    gamma_b = SOMMERFELD[metal] * 1e-3 / (d["V"] / d["nat"] * NA) / (1 + lam)
+    return 3 * hbar * gamma_b * lam * w2 / (np.pi * kB)
+
+
+_METAL_CACHE = {}
+
+
+def metal_params(metal):
+    """g, kp, kp_pp for a metal: measured g (materials.METALS) where available,
+    else Allen's estimate (with a warning); None if nothing is known."""
+    from materials import SOMMERFELD, LAMBDA_EP, KP_EXTRA, KP_NOMINAL, CRYSTALS
+    if metal in METALS:
+        return METALS[metal]
+    if metal in _METAL_CACHE:
+        return _METAL_CACHE[metal]
+    if metal in SOMMERFELD and metal in LAMBDA_EP and metal in CRYSTALS:
+        import warnings
+        kp, kp_pp = KP_EXTRA.get(metal, KP_NOMINAL)
+        p = dict(g=g_allen(metal), kp=kp, kp_pp=kp_pp, estimated=True)
+        warnings.warn(f"{metal}: no measured electron-phonon coupling; Allen estimate "
+                      f"g = {p['g']:.2e} W/m^3K (factor-2 uncertainty)", stacklevel=3)
+        _METAL_CACHE[metal] = p
+        return p
+    return None
 
 
 def kp_metal(metal, T):
     """Lattice thermal conductivity of a metal vs T. Phonon-phonon part ~1/T,
     phonon-electron part T-independent (Matthiessen), both at 300 K from
     Tong et al. PRB 100, 144306 (2019), Table 2 (arXiv:1907.01364)."""
-    p = METALS[metal]
+    p = metal_params(metal)
     k_pe = 1.0 / (1.0 / p["kp"] - 1.0 / p["kp_pp"])
     return 1.0 / (T / 300.0 / p["kp_pp"] + 1.0 / k_pe)
 
@@ -105,7 +141,8 @@ def chang_ratio(T=300.0, P=None, bond=None, t_tic=10e-9):
 # ------------------------------------------------------------------ bonding
 BOND_KEYS = {("Al", "Si"): "Al_Si", ("Al", "GaN"): "Al_GaN", ("Cu", "TiC"): "Cu_TiC",
              ("TiC", "C"): "TiC_C", ("Au", "PMMA"): "Au_PMMA", ("Ti", "PMMA"): "Ti_PMMA",
-             ("Ni", "PMMA"): "Ni_PMMA", ("PMMA", "SiO2"): "PMMA_SiO2"}
+             ("Ni", "PMMA"): "Ni_PMMA", ("PMMA", "SiO2"): "PMMA_SiO2",
+             ("Ag", "PMMA"): "Ag_PMMA", ("Pt", "PMMA"): "Pt_PMMA"}
 
 
 MOLECULAR_CONTACTS_IDEAL = True
@@ -119,13 +156,28 @@ def bonding_for(a, b, na=None, nb=None, key=None):
     interfaces and does not represent dynamic coupling of short phonons.
     Returns None (ideal bond) if the interface has not been computed."""
     from bonding import load_cache, Kref
-    if MOLECULAR_CONTACTS_IDEAL and ("PMMA" in (a, b)):
-        # molecule/surface contacts: MACE-OMAT-0 (inorganic training data) does not
-        # describe them (it fails to bind the PMMA carbonyl to Ni, which XPS shows);
-        # its stiffness is therefore not used -> ideally bonded contact
-        return None
-    key = key or BOND_KEYS.get((a, b))
+    from materials import AMORPHOUS, physisorbs
     c = load_cache()
+    key = key or BOND_KEYS.get((a, b)) or BOND_KEYS.get((b, a))
+    if MOLECULAR_CONTACTS_IDEAL and ("PMMA" in (a, b)):
+        # molecule/surface contacts. Chemisorbed contacts (reactive metals, the
+        # hydroxylated oxide surface): MACE-OMAT-0 (inorganic training data) does not
+        # describe them (it fails to bind the PMMA carbonyl to Ni, which XPS shows),
+        # so they are treated as ideally bonded. Physisorbed contacts (noble metals,
+        # materials.physisorbs): dispersion-only binding, which MACE + D3 does
+        # describe -> its rigid-shift stiffness is used.
+        other = b if a == "PMMA" else a
+        if other in AMORPHOUS or not physisorbs(other):
+            return None
+        kr = Kref(a, b, na, nb)
+        if key is None or key not in c:
+            # no MACE scan for this metal: dispersion-bonded contact with the
+            # bond-strength ratio of Au/PMMA (closest computed analogue)
+            import warnings
+            warnings.warn(f"{a}/{b}: physisorbed contact without a MACE scan; using the Au/PMMA "
+                          "bond-strength ratio (run bonding.py for this pair)", stacklevel=2)
+            r = c["Au_PMMA"]["K_n"] / Kref("Au", "PMMA")["K_n"]
+            return ((r * kr["K_n"], r * kr["K_t"]), (kr["K_n"], kr["K_t"]))
     if key is None or key not in c:
         return None
     kr = Kref(a, b, na, nb)

@@ -125,6 +125,44 @@ METALS = {
     "Ti": dict(g=1.3e18, kp=6.68, kp_pp=11.92),
 }
 
+# Metals without a measured g: Allen's formula (PRL 59, 1460 (1987)),
+#   g = 3 hbar gamma_b lambda <w^2> / (pi kB),  gamma_b = gamma / (1 + lambda),
+# with <w^2> = int F w / int F/w from the MACE phonon DOS F (constant alpha^2).
+# Checked on the five metals with measured g above: ratio 0.42 (Au) .. 2.7 (Ni),
+# geometric mean 0.91 -> a factor-2 estimate (predict.g_allen).
+#   gamma  : electronic heat-capacity coefficient, mJ mol^-1 K^-2 (Kittel,
+#            Introduction to Solid State Physics, 8th ed., Table 6.2)
+#   lambda : electron-phonon coupling constant. Tong et al. (2019) Table 2
+#            (experimental column; Co: DFT); W, Mo, Ta, Ru: McMillan, Phys. Rev.
+#            167, 331 (1968), Table IV
+SOMMERFELD = {"Al": 1.35, "Cu": 0.695, "Ag": 0.646, "Au": 0.729, "Ni": 7.02, "Ti": 3.35,
+              "Pt": 6.8, "Co": 4.73, "W": 1.3, "Mo": 2.0, "Ta": 5.9, "Ru": 3.3}
+LAMBDA_EP = {"Al": 0.43, "Cu": 0.14, "Ag": 0.13, "Au": 0.15, "Ni": 0.31, "Ti": 0.38,
+             "Pt": 0.66, "Co": 0.42, "W": 0.28, "Mo": 0.41, "Ta": 0.65, "Ru": 0.38}
+# lattice conductivity (kp, kp_pp) of further metals, Tong et al. (2019) Table 2;
+# metals absent there get a nominal 10 / 15 W/mK (Tong: 2-18 W/mK for elemental
+# metals). G_ep ~ sqrt(kp), and for these strongly coupled metals G_ep >> G_phonon.
+KP_EXTRA = {"Ag": (5.59, 6.03), "Pt": (6.28, 8.72), "Co": (12.20, 20.60)}
+KP_NOMINAL = (10.0, 15.0)
+
+
+# Standard formation enthalpy of each metal's most stable oxide per mole of O
+# (kJ/mol O; CRC Handbook / NIST-JANAF). Used to classify metal / molecular-
+# solid contacts: metals whose oxide is barely stable (> -100 kJ/mol O: Au, Ag,
+# Pt, Pd) do not form metal-O bonds with ester/carbonyl oxygen and contact a
+# polymer by dispersion only (physisorption); all others chemisorb (XPS
+# reactivity series for metals on PMMA: Ti > Cr > Al > Ni > Cu >> Ag, Au).
+OXIDE_DHF_PER_O = {"Au": -1.0, "Ag": -31.1, "Pt": -67.0, "Pd": -85.4, "Cu": -168.6,
+                   "Ni": -239.7, "Co": -237.9, "Ru": -152.5, "W": -281.0, "Mo": -248.4,
+                   "Ta": -409.2, "Ti": -472.0, "Al": -558.6, "Cr": -379.9, "Fe": -274.7}
+PHYSISORB_DHF = -100.0
+
+
+def physisorbs(metal):
+    """True if a molecular solid binds to this metal by dispersion only."""
+    return OXIDE_DHF_PER_O.get(metal, -1e9) > PHYSISORB_DHF
+
+
 # Thin-film thermal conductivities used for series (bulk) resistances of
 # interlayers. TiC: ~20 W/mK (bulk TiC 21-33 W/mK); PMMA: 0.20 W/mK (accepted
 # bulk value, Sandell et al. 2020); SiO2: 1.38 W/mK (fused silica).

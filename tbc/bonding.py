@@ -451,6 +451,10 @@ def Ni_PMMA_chem(): return K_molecular_layer("Ni", chemisorbed=True)
 @job
 def Ni_PMMA_rx(): return K_molecular_layer("Ni", seeds=(0, 1), reactive=True)
 @job
+def Ag_PMMA(): return K_molecular_layer("Ag")
+@job
+def Pt_PMMA(): return K_molecular_layer("Pt")
+@job
 def PMMA_SiO2(): return K_molecular_layer("SiO2")
 @job
 def PMMA_SiO2_chem(): return K_molecular_layer("SiO2", chemisorbed=True)

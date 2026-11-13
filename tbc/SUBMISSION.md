@@ -16,9 +16,11 @@ A two-tier, structure-to-conductance framework. Nothing is fitted per specimen.
      transmission, mixed by a specularity computed from the automatic coincidence-lattice match of the
      two interface planes;
    * interfacial bond stiffness from MACE+D3 rigid-shift scans of the actual interface, entering through a
-     lattice-impedance spring factor;
+     lattice-impedance spring factor (polymer contacts: physisorbed on noble metals → computed stiffness;
+     chemisorbed on reactive metals and oxides → bonded, classified by oxide formation enthalpy);
    * an anharmonic (inelastic) channel;
-   * the metal's electron–phonon resistance (Majumdar–Reddy, with DFT lattice conductivities);
+   * the metal's electron–phonon resistance (Majumdar–Reddy, with DFT lattice conductivities; measured g,
+     or Allen's formula with the MACE phonon DOS for metals without a measurement);
    * series layers.
 3. **Accurate tier (~1 CPU-hour)** — an atomistic Green's function with MACE force constants of the actual
    relaxed coherent interface. It reproduces published DFT-NEGF for GaN/AlN (281 vs ~300 MW m⁻² K⁻¹) and the
@@ -43,7 +45,7 @@ expected-accuracy statement for the interface class. Runtime on a 4-core laptop 
 * a G(T) curve takes seconds;
 * an AGF reference takes ~1 h.
 
-There are 19 physics-invariant tests and a smoke test covering every interface class.
+There are 21 physics-invariant tests and a smoke test covering every interface class.
 
 ## Results (from `make_report.py`; details and figures in README)
 
@@ -52,7 +54,7 @@ There are 19 physics-invariant tests and a smoke test covering every interface c
 | Li 2022 Al/Si G(T), 80–700 K (fit set) | 4.6% | 106% |
 | Li 2022 Al/GaN G(T) (held out) | 6.9% | 128% |
 | Cheng 2020 epitaxial Al/sapphire G(T) (held out) | 6.2% | 77% |
-| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (held out) | 17.7% | 22% (AMM + this e-ph/series treatment: 10% — better than this model) |
+| Sandell 2020 Au/[Ti,Ni]/PMMA/Si (held out from all fits) | 12.1% (Au +2%, Ti −9%, Ni −25%) | 22% (AMM + this e-ph/series treatment: 10%) |
 | Chang 2019 TiC enhancement (held out; measured 1.48) | 1.36 | 1.97 / 1.10 |
 | 5 coherent pairs vs MACE-AGF (η fit set; leave-one-out) | 15% (LOO 19%) | 406% |
 | 3 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 11% (−13, −12, −7%) | 389% |
@@ -66,8 +68,9 @@ There are 19 physics-invariant tests and a smoke test covering every interface c
   README). Epitaxial Al/sapphire (Cheng) is flat, and no single global mechanism fits both groups' data.
 * Glasses: SiO₂ uses a MACE melt-quenched glass (propagons) plus one diffuson coupling weight, fitted to a
   single curve and tested only on Sandell. Other glasses need their own melt-quench, or fall back to an upper bound.
-* Molecule–metal chemistry, the Ni/PMMA case, is outside MACE-OMAT-0's domain. Polymer contacts are
-  therefore the least accurate class (~20–40%).
+* Molecule–metal chemistry (chemisorption, the Ni/PMMA case) is outside MACE-OMAT-0's domain, so such
+  contacts are taken as bonded. The contact-classification rule was chosen after seeing the Sandell
+  residuals (no parameter was fitted). Polymer stacks are the least accurate class (~10–25%).
 * Harmonic atomistic references (AGF/NEGF) and anharmonic NEMD differ by ~2× for GaN/AlN. The tool reports
   both the harmonic (G_elastic, AGF) and the anharmonic (G) estimate.
 * MACE-OMAT-0 is under an academic licence. A commercial universal potential is a drop-in replacement.

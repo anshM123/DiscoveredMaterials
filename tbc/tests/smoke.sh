@@ -16,5 +16,6 @@ run SiO2 Si/100
 run GaN/0001 Si/111
 run Ti/0001 GaN/0001 --metal Ti
 echo "== stack"; python tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" --metal Al --T 300 2>&1 | grep -v -i warn | tail -1
-run Pt/111 Si/111 --metal Pt || echo "(expected: Pt not defined)"
+run Pt/111 Si/111 --metal Pt
+run Ag PMMA --metal Ag
 echo SMOKE OK

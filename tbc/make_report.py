@@ -63,7 +63,7 @@ def main():
          "| dataset (role) | this model | AMM | DMM | AMM+e-ph | DMM+e-ph |", "|---|---|---|---|---|---|"]
     for key, role in [("Al/Si sample1", "calibration"), ("Al/GaN", "**held out**"), ("Al/sapphire (Cheng 2020)", "**held out**")]:
         L.append(f"| {key}, 80–700 K ({role}) | " + " | ".join(f"{mape(li[key], k):.1f}%" for k in cols) + " |")
-    L.append("| Sandell 2020, 3 metal/PMMA/Si stacks (**held out**) | " + " | ".join(f"{mape(sa, k):.1f}%" for k in cols) + " |")
+    L.append("| Sandell 2020, 3 metal/PMMA/Si stacks (held out from all fits) | " + " | ".join(f"{mape(sa, k):.1f}%" for k in cols) + " |")
     L.append(f"| Chang 2019 TiC enhancement ratio, measured 1.48 (**held out**) | {ch['model']:.2f} | {ch['AMM']:.2f} | "
              f"{ch['DMM']:.2f} | {ch['AMM_eph']:.2f} | {ch['DMM_eph']:.2f} |")
     L += ["", "Sandell stacks (MW m⁻² K⁻¹, measured / model): " +

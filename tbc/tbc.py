@@ -154,11 +154,19 @@ def main():
           f"   metal: {a.metal or '-'}   coherence length: {'diffuse' if I.Lc is None else '%.1f A' % I.Lc}")
     # expected accuracy of this interface class, from the validation in README
     if not (s1.crystal and s2.crystal):
-        acc = ("amorphous side (glass/polymer): treat as an UPPER BOUND; Debye-glass transmission over-predicts "
-               "Al/native-SiO2/Si by ~1.4-1.7x; metal/PMMA stacks ~20% mean error")
+        import model as _model
+        amo = [x.name for x in (s1, s2) if not x.crystal]
+        if any(n in _model.GLASS_FLUX for n in amo):
+            acc = ("glass with a MACE glass model (propagons + fitted diffuson weight): Al/native-SiO2/Si G(T) "
+                   "within ~2% (fit set); metal/PMMA/SiO2 stacks ~12% mean (Ni -25%)")
+        elif "PMMA" in amo:
+            acc = "polymer (Debye solid): metal/PMMA/SiO2/Si stacks ~12% mean error (Au +2%, Ti -9%, Ni -25%)"
+        else:
+            acc = ("amorphous side without a MACE glass model (Debye glass): treat as an UPPER BOUND "
+                   "(Debye SiO2 over-predicted Al/native-SiO2/Si by ~1.5x); build one with glass.py")
     elif I.Lc is not None and I.p_inf > 0.5:
-        acc = ("coherent crystalline pair: G_el within ~19% of harmonic AGF (leave-one-out, 5 pairs + 1 blind test -13%); "
-               "measured epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
+        acc = ("coherent crystalline pair: G_el within ~19% of harmonic AGF (leave-one-out, 5 pairs; 3 blind tests "
+               "-13/-12/-7%); measured epitaxial interfaces ~25% mean. For atomistic accuracy run --agf")
     elif a.metal:
         acc = "metal on crystal (incommensurate/diffuse): ~5-7% vs measured G(T) (Al/Si, Al/GaN, Al/sapphire)"
     else:
