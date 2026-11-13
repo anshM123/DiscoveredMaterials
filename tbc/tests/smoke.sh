@@ -18,6 +18,7 @@ run Ti/0001 GaN/0001 --metal Ti
 echo "== stack"; python tbc.py --stack "Al/111 | SiO2:1.5 | Si/100" --metal Al --T 300 2>&1 | grep -v -i warn | tail -1
 run Pt/111 Si/111 --metal Pt
 run Ag PMMA --metal Ag
+echo "== stack Al/a-Al2O3/GaN"; python tbc.py --stack "Al/111 | a-Al2O3:5 | GaN/0001" --T 300 2>&1 | grep -v -i warn | tail -1
 run Al/111 Cu/111
 run GaN/0001 diamond/111
 run Si/100 Ge/100 --local-equilibrium

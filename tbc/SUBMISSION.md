@@ -73,7 +73,8 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
   (model 0.25): the measured slope is specimen-dependent. Calibrating to the slope costs the room-temperature
   values (trade-off table in the README).
 * Glasses: SiO₂ uses a MACE melt-quenched glass (propagons) plus one diffuson coupling weight, fitted to a
-  single curve and tested only on Sandell. Other glasses need their own melt-quench, or fall back to an upper bound.
+  single curve and tested only on Sandell. Amorphous Al₂O₃ has its own MACE glass (weight transferred from SiO₂, not
+  validated). Other glasses need their own melt-quench (`glass.py`), or fall back to an upper bound.
 * Molecule–metal chemistry (chemisorption, the Ni/PMMA case) is outside MACE-OMAT-0's domain, so such
   contacts are taken as bonded. The contact-classification rule was chosen after seeing the Sandell
   residuals (no parameter was fitted). Polymer stacks are the least accurate class (~10–25%).

@@ -388,9 +388,15 @@ Checks:
      stack, assuming 1.5 nm of oxide; 1–2 nm gives w = 0.24–0.32).
    * Only Sandell tests it independently: 13.0% error, with Au +2%, Ti −10%
      and Ni −26%.
-   * Other glasses (a-Al₂O₃, HfO₂, …) need their own MACE melt-quench
-     (`glass.py`); without one they fall back to the Debye glass, which is an
-     upper bound.
+   * Amorphous Al₂O₃ (ALD alumina, `aAl2O3`) has its own MACE glass
+     (`python glass.py aAl2O3`: 100 atoms, density 3.05 g/cm³, mean Al
+     coordination 4.43 with 60% AlO₄, in line with ALD alumina). It uses the
+     diffuson weight fitted on SiO₂ (transferred, not validated), measured-type
+     sound velocities (E ≈ 170 GPa, ν ≈ 0.24) and the Cahill–Pohl minimum
+     conductivity (1.46 W m⁻¹ K⁻¹) for films.
+   * Other glasses (HfO₂, SiNₓ, …) need their own MACE melt-quench (add an entry
+     to `glass.GLASSES` and `materials.AMORPHOUS`); without one they fall back
+     to the Debye glass, which is an upper bound.
    * PMMA has no atomistic glass model, because MACE-OMAT-0 does not cover
      molecular solids.
 6. **Epitaxial orientation is assumed aligned**: shortest in-plane vectors
