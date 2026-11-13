@@ -26,7 +26,7 @@ A two-tier, structure-to-conductance framework. Nothing is fitted per specimen.
 3. **Accurate tier (~1 CPU-hour)** — an atomistic Green's function with MACE force constants of the actual
    relaxed coherent interface. It reproduces published DFT-NEGF for GaN/AlN (281 vs ~300 MW m⁻² K⁻¹). Being
    harmonic and defect-free, it differs from measured epitaxial wafers by 35% on average (AlN/SiC +4%,
-   AlN/GaN −43%, GaN/SiC −52%).
+   AlN/GaN −43%, GaN/SiC −52%, TiN/MgO −44%).
 4. **Four global parameters, frozen in `params.json`:**
    * α and b of the inelastic channel, fitted to one dataset (Al/Si, Li et al. 2022);
    * the specular efficiency η, fitted to five MACE-AGF references;
@@ -55,13 +55,13 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
 
 | test | this framework | strongest baseline |
 |---|---|---|
-| Li 2022 Al/Si G(T), 80–700 K, specimen 1 (fit set) | 4.6% | 18% (full-dispersion DMM + same e-ph) |
-| Li 2022 Al/Si G(T), specimen 2 (not fitted; 23% below specimen 1 at 300 K) | 24% | 12% (full-dispersion DMM + same e-ph) |
+| Li 2022 Al/Si G(T), 82–705 K, specimen 1 (fit set) | 4.6% | 18% (full-dispersion DMM + same e-ph) |
+| Li 2022 Al/Si G(T), specimen 2 (not fitted; 19% below specimen 1 at 300 K) | 24% | 12% (full-dispersion DMM + same e-ph) |
 | Li 2022 Al/GaN G(T) (not fitted; guard set in model selection) | 6.9% | 13% (full-dispersion DMM + same e-ph) |
 | Cheng 2020 epitaxial Al/sapphire G(T) (not fitted; guard set) | 6.2% | 4.6% (Debye AMM + same e-ph) |
 | Sandell 2020 Au/[Ti,Ni]/PMMA/Si (not fitted; used to choose the polymer-contact treatment) | 13.0% (Au +2%, Ti −10%, Ni −26%); 34% if PMMA's Debye cutoff counts only C and O | 39% (Debye DMM + same e-ph/series) |
 | Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.36 (5.68 for H-terminated diamond; 1.9–3.2 if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
-| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 32% at 50 K. All 10 AGF pairs: 27% at 300 K | 66% (full-dispersion DMM) |
+| 5 coherent pairs, G_el vs MACE-AGF at 300 K (η fit set; leave-one-out) | 15% (LOO 19%); 32% at 50 K. All 11 AGF pairs: 26% at 300 K | 66% (full-dispersion DMM) |
 | 6 blind coherent pairs vs MACE-AGF (predictions committed beforehand) | 34%: the four non-III-V/IV pairs 12% (−13, −12, −7, −16%); **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 58% (full-dispersion DMM) |
 | 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 25% (harmonic elastic part alone 41%) | 34% (full-dispersion DMM); 35% (harmonic AGF, 4 pairs); 236% (Debye DMM) |
 | Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 85% (Debye DMM + same e-ph) |
@@ -80,7 +80,8 @@ There are 23 physics-invariant tests and a smoke test covering every interface c
   residuals (no parameter was fitted). Polymer stacks are the least accurate class (~10–25%).
 * Harmonic atomistic references (AGF/NEGF) and anharmonic NEMD differ by ~2× for GaN/AlN. The tool reports
   both the harmonic (G_el, AGF) and the anharmonic (G_pp) estimate. The inelastic channel that separates them is
-  calibrated on Al/Si only and adds 20–110% for nearly matched semiconductor pairs; it is unverified against NEMD.
+  calibrated on Al/Si only and adds 20–110% for nearly matched semiconductor pairs; it is checked against one
+  anharmonic reference only (MLIP-NEMD AlN/GaN 600–700 vs 501 in the same temperature convention).
 * Metal/metal interfaces use the electron diffuse-mismatch model (not validated here; ~2× high for Al/Cu).
   Metallic ceramics (TiN, TiC) are treated as phonon-only solids, so metal/TiN contacts are a lower bound.
 * Al/GaN, Al/sapphire and the AGF pairs were never fitted, but served as no-regression guards in model
