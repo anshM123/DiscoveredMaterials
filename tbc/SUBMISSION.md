@@ -67,7 +67,7 @@ There are 24 physics-invariant tests and a smoke test covering every interface c
 | Chang 2019 TiC enhancement (not fitted; measured 1.48; bulk-terminated diamond and phonon-only TiC assumed) | 1.44 (7.2 for H-terminated diamond; higher if TiC electrons carry heat) | 1.10 (Debye DMM) / 1.84 (full-dispersion DMM) |
 | 14 coherent pairs, G_el vs MACE-AGF at 300 K (η calibration set; two-class η) | 15%; leave-one-out 14% (10 pairs) / 29% (4 III-V/IV pairs) | 66% on the original five (full-dispersion DMM) |
 | 9 first-round blind pairs vs MACE-AGF (committed beforehand with the single η = 0.63 of the time; since then part of the η calibration) | 31%: the seven non-III-V/IV pairs 18%; **heterovalent III-V/IV failed** (GaP/Si(100) +54%, GaAs/Ge(100) +104%) | 46% (full-dispersion DMM) |
-| Round-6 fresh blind pairs for the two-class η (committed before the AGF runs) | **6%** over four (AlAs/Ge(100) −4%, GaP/AlAs(100) +7%, TiC/TiN(100) +12%, InP/GaAs(110) −3%); fifth pending | 25% (full-dispersion DMM) |
+| Round-6 fresh blind pairs for the two-class η (committed before the AGF runs) | **5%** over five (AlAs/Ge(100) −4%, GaP/AlAs(100) +7%, TiC/TiN(100) +12%, InP/GaAs(110) −3%, GaP/Si(110) −1%) | 42% (full-dispersion DMM) |
 | 6 measured epitaxial semiconductor and nitride/oxide interfaces (not fitted) | 21% (harmonic elastic part alone 41%) | 34% (full-dispersion DMM); 35% (harmonic AGF, 4 pairs); 236% (Debye DMM) |
 | Li 2022 Al/native-SiO₂/Si G(T) (fit set of the glass diffuson weight; 8 points, 1 parameter) | 1.8% | 85% (Debye DMM + same e-ph) |
 

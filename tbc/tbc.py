@@ -251,7 +251,7 @@ def main():
                "(Gundrum et al. 2005, ~4 GW measured). Not validated here: factor-2 estimate")
     elif I.Lc is not None and I.p_inf > 0.5 and not (metals or any(is_metal(n) for n in (na, nb))):
         acc = ("coherent crystalline pair: G_el vs harmonic MACE-AGF at 300 K: leave-one-out 14% (10 pairs; two-class "
-               "specular efficiency, see README for the fresh blind round), but 25-55% LOW below ~100 K for stiff "
+               "specular efficiency; 5 fresh blind pairs 5% mean), but 25-55% LOW below ~100 K for stiff "
                "nitrides (k-space undersampling); measured epitaxial interfaces ~21% mean. For atomistic accuracy run --agf")
         if Tlo < 150:
             acc += ". WARNING: T < 150 K requested"
@@ -271,8 +271,8 @@ def main():
     het = heterovalent(na, nb)
     if het:
         acc += ("; NOTE: heterovalent " + het + " interface: its electron-deficient interfacial bonds relax to soft, "
-                "stretched ones; the fast tier uses the III-V/IV specular efficiency (fitted on only four pairs, "
-                "leave-one-out 29%); prefer --agf")
+                "stretched ones; the fast tier uses the III-V/IV specular efficiency (fitted on four pairs, leave-one-out "
+                "29%; two fresh blind III-V/IV pairs -4% and -1%); --agf for atomistic accuracy")
     if {na, nb} & {"TiN", "TiC"}:
         acc += ("; NOTE: TiN/TiC are metallic but treated as phonon-only (no electron data): with a metal on the "
                 "other side G is a lower bound")

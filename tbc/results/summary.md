@@ -51,8 +51,8 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaP(100)/AlAs(100) | other | **248** | 264 (+7%) | 245 (-1%) | 778 (+214%) | 1401 (+466%) |
 | TiC(100)/TiN(100) | other | **334** | 374 (+12%) | 416 (+24%) | 2008 (+500%) | 3325 (+894%) |
 | InP(110)/GaAs(110) | other | **127** | 123 (-3%) | 125 (-2%) | 612 (+382%) | 1148 (+804%) |
-| GaP(110)/Si(110) | III-V/IV | pending | 117 | | | |
-| **mean abs. deviation (4 done)** | | | 6% | 25% | | |
+| GaP(110)/Si(110) | III-V/IV | **118** | 117 (-1%) | 246 (+109%) | 760 (+545%) | 976 (+728%) |
+| **mean abs. deviation (5 done)** | | | 5% | 42% | | |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 

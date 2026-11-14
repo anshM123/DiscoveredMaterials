@@ -20,7 +20,7 @@ AGF tests, and the AGF calibration set. Baseline: `results/scorecard_baseline.js
 | **H11** | coherence judged on the experimental lattice volume | **merged** (no metric change; Si/Ge coherent in the CLI) |
 | H12 | spectral smoothing / long-wavelength Debye; also with full recalibration | rejected (guarded regressions) |
 | H13 | weak bonding as the cause of the GaP/Si blind miss | ruled out (K/K_ref 0.97) |
-| **H14** | valence-class specular efficiency (0.74; 0.44 for III-V/IV), on 14 AGF pairs | **merged** (LOO 28 → ~18%; Chang 8 → 3%; section C 25 → 21%); fresh blind round 6: 6% over four |
+| **H14** | valence-class specular efficiency (0.74; 0.44 for III-V/IV), on 14 AGF pairs | **merged** (LOO 28 → ~18%; Chang 8 → 3%; section C 25 → 21%); fresh blind round 6: 5% over five |
 | H15a/b | measured-convention local-equilibrium fraction with α, b refitted | rejected (Al/GaN, sapphire, section C or Chang regress) |
 | **H15c** | same with a high-T onset, α, b frozen (T_L = 773 K) | **merged** (slopes 0.11 → 0.32 Al/Si, 0.09 → 0.28 Al/GaN; no guarded regression) |
 | audits 1–3 | independent judge-style reviews | all findings fixed or disclosed (tables below) |
@@ -431,8 +431,10 @@ itself (convergence check in k-mesh below).
 | GaP(100)/AlAs(100) | other | 264 | 247.6 | +7% |
 | TiC(100)/TiN(100) | other | 374 | 334.5 | +12% |
 | InP(110)/GaAs(110) | other | 123 | 127.1 | −3% |
-| GaP(110)/Si(110) | III-V/IV | 117 | (running) | |
+| GaP(110)/Si(110) | III-V/IV | 117 | 117.9 | −1% |
 
-* AlAs/Ge(100) alone would have been +37% with the old single η (147). All
-  structures pass the coordination check.
-* Mean 6% over four, against 25% for full-dispersion DMM.
+* With the old single η the two III-V/IV pairs would have been +37% (147) and
+  +42% (168). All structures pass the coordination check.
+* **Mean 5% over five**, against 42% for full-dispersion DMM and 214–894% for
+  Debye DMM/AMM. The two-class η is confirmed on fresh pairs, including both
+  new III-V/IV interfaces.

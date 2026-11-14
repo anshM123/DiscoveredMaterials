@@ -84,8 +84,8 @@ The AGF tier (`agf.py`, `tbc.py --agf`) is the reference for perfect coherent in
 | GaP(100)/AlAs(100) | other | **248** | 264 (+7%) | 245 (-1%) | 778 (+214%) | 1401 (+466%) |
 | TiC(100)/TiN(100) | other | **334** | 374 (+12%) | 416 (+24%) | 2008 (+500%) | 3325 (+894%) |
 | InP(110)/GaAs(110) | other | **127** | 123 (-3%) | 125 (-2%) | 612 (+382%) | 1148 (+804%) |
-| GaP(110)/Si(110) | III-V/IV | pending | 117 | | | |
-| **mean abs. deviation (4 done)** | | | 6% | 25% | | |
+| GaP(110)/Si(110) | III-V/IV | **118** | 117 (-1%) | 246 (+109%) | 760 (+545%) | 976 (+728%) |
+| **mean abs. deviation (5 done)** | | | 5% | 42% | | |
 
 ### C. Measured conductance of epitaxial semiconductor and nitride/oxide interfaces (300 K, not fitted)
 
@@ -172,10 +172,12 @@ The glass is described by the propagating flux of a MACE melt-quenched a-SiO₂ 
   * **Round 6 (fresh test of H14):** five new pairs, three "other" and two
     III-V/IV, were predicted with the two-class η and committed before their
     AGF runs (section B).
-    * AlAs/Ge(100) −4% (III-V/IV; the old single η would have been +37%),
-      GaP/AlAs(100) +7%, TiC/TiN(100) +12%, InP/GaAs(110) −3%.
-    * Mean 6%, against 25% for full-dispersion DMM and 214–894% for Debye
-      DMM/AMM. GaP/Si(110) was still running at the time of writing.
+    * Results: AlAs/Ge(100) −4%, GaP/AlAs(100) +7%, TiC/TiN(100) +12%,
+      InP/GaAs(110) −3%, GaP/Si(110) −1%.
+    * For the two III-V/IV pairs the old single η would have given +37% and
+      +42%.
+    * **Mean 5%,** against 42% for full-dispersion DMM and 214–894% for Debye
+      DMM/AMM.
   * The first AGF run for GaAs/AlAs(111) came from a wrongly built (AAA-stacked)
     superlattice; a new coordination check caught it, the builder was fixed,
     and the rerun passed.
@@ -501,9 +503,10 @@ Checks:
     tier over-predicted all four III-V/IV pairs (+9%, +28%, and +54% / +104%
     in two failed blind tests): their interfacial bonds are electron-deficient
     and relax to soft, stretched configurations. H14 gives this class its own
-    efficiency (0.44), fitted on just four pairs (leave-one-out 29%); round 6
-    tests it on two new III-V/IV pairs. The CLI still recommends `--agf` for
-    them.
+    efficiency (0.44), fitted on just four pairs (leave-one-out 29%). On two
+    fresh blind III-V/IV pairs it gave −4% (AlAs/Ge(100)) and −1%
+    (GaP/Si(110)). The class assignment is a chemistry rule (III-V on group IV);
+    other heterovalent combinations (e.g. II-VI on group IV) are untested.
 
 ## 5. Running it
 

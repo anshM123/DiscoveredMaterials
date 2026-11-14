@@ -31,8 +31,8 @@ every caveat in `tbc/README.md`):
   pairs).
   * First-round blind tests (single η of the time): 31%, with the two III-V/IV
     pairs failing (+54%, +104%). That led to the two-class η.
-  * A fresh, pre-registered blind round tests it: 6% mean deviation over the
-    first four pairs (−4, +7, +12, −3%), against 25% for full-dispersion DMM.
+  * A fresh, pre-registered blind round tests it on five new pairs: **5% mean
+    deviation** (−4, +7, +12, −3, −1%), against 42% for full-dispersion DMM.
 
 Everything is in [`tbc/`](tbc/):
 
