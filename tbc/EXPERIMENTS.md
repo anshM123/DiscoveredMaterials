@@ -20,7 +20,7 @@ AGF tests, and the AGF calibration set. Baseline: `results/scorecard_baseline.js
 | **H11** | coherence judged on the experimental lattice volume | **merged** (no metric change; Si/Ge coherent in the CLI) |
 | H12 | spectral smoothing / long-wavelength Debye; also with full recalibration | rejected (guarded regressions) |
 | H13 | weak bonding as the cause of the GaP/Si blind miss | ruled out (K/K_ref 0.97) |
-| **H14** | valence-class specular efficiency (0.74; 0.44 for III-V/IV), on 14 AGF pairs | **merged** (LOO 28 → ~18%; Chang 8 → 3%; section C 25 → 21%); fresh blind round 6 |
+| **H14** | valence-class specular efficiency (0.74; 0.44 for III-V/IV), on 14 AGF pairs | **merged** (LOO 28 → ~18%; Chang 8 → 3%; section C 25 → 21%); fresh blind round 6: 6% over four |
 | H15a/b | measured-convention local-equilibrium fraction with α, b refitted | rejected (Al/GaN, sapphire, section C or Chang regress) |
 | **H15c** | same with a high-T onset, α, b frozen (T_L = 773 K) | **merged** (slopes 0.11 → 0.32 Al/Si, 0.09 → 0.28 Al/GaN; no guarded regression) |
 | audits 1–3 | independent judge-style reviews | all findings fixed or disclosed (tables below) |
@@ -422,3 +422,17 @@ itself (convergence check in k-mesh below).
   Al/GaN MAPE rises by 0.3 points against the merged H15c state (a guarded
   regression beyond the 0.2 tolerance), so it is not merged. It is a one-line
   change (`local_eq_TL` in params.json) if slope fidelity is preferred.
+
+### Round 6: fresh blind test of H14 (two-class η)
+
+| pair | class | pre-registered | MACE-AGF | deviation |
+|---|---|---|---|---|
+| AlAs(100)/Ge(100) | III-V/IV | 103 | 107.6 | −4% |
+| GaP(100)/AlAs(100) | other | 264 | 247.6 | +7% |
+| TiC(100)/TiN(100) | other | 374 | 334.5 | +12% |
+| InP(110)/GaAs(110) | other | 123 | 127.1 | −3% |
+| GaP(110)/Si(110) | III-V/IV | 117 | (running) | |
+
+* AlAs/Ge(100) alone would have been +37% with the old single η (147). All
+  structures pass the coordination check.
+* Mean 6% over four, against 25% for full-dispersion DMM.
